@@ -1,0 +1,8 @@
+*.py[cod]
+__pycache__/
+.env
+db.sqlite3
+agency_env/
+venv/
+.vscode/
+.idea/
