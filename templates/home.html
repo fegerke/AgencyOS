@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="p-5 mb-4 bg-white rounded-3 shadow-sm">
+    <div class="container-fluid py-5">
+      <h1 class="display-5 fw-bold">Bem-vindo ao AgencyOS</h1>
+      <p class="col-md-8 fs-4">Sistema Operacional de Gestão de Marketing.</p>
+      <hr>
+      <div class="row mt-4">
+          <div class="col-md-6">
+              <div class="card p-3 h-100 border-0 shadow-sm">
+                  <h5 class="text-primary">📊 Status</h5>
+                  <p class="text-muted">Aguardando conexão com Banco de Dados...</p>
+              </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card p-3 h-100 border-0 shadow-sm">
+                <h5 class="text-success">🚀 Próximos Passos</h5>
+                <p>Configurar PostgreSQL e Integração Dropbox.</p>
+            </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
