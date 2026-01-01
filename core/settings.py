@@ -15,7 +15,7 @@ SECRET_KEY = 'django-insecure-!fnw*5jz$u9ynw+qh-j3!b*x@5%*6x*^7m#vh71l4%va$5*ssy
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['agencyos-xq33.onrender.com', 'localhost', '127.0.0.1']
 
 
 # Application definition
@@ -67,7 +67,7 @@ WSGI_APPLICATION = 'core.wsgi.application'
 DATABASES = {
     'default': dj_database_url.config(
         # Se não houver uma URL de banco definida (como no seu PC), usa o Postgres local
-        default='postgres://agency_user:agency@123@@localhost:5432/agency_db',
+        default='postgres://agency_user:agency123admin@localhost:5432/agency_db',
         conn_max_age=600
     )
 }
