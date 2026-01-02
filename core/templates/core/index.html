@@ -1,0 +1,37 @@
+{% extends 'core/base.html' %}
+{% block title %}Dashboard | AgencyOS{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Olá, {{ request.user.username|capfirst }}! 👋</h2>
+    {% if agencia.logo %}
+        <img src="{{ agencia.logo.url }}" alt="Logo" style="height: 50px;" class="rounded shadow-sm">
+    {% endif %}
+</div>
+
+<div class="row g-4">
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm p-4">
+            <div class="d-flex align-items-center">
+                <div class="bg-primary text-white p-3 rounded-3 me-3" style="background-color: #6c5ce7 !important;">
+                    <i class="bi bi-people-fill fs-3"></i>
+                </div>
+                <div>
+                    <h6 class="text-muted mb-0">Total de Clientes</h6>
+                    <h3 class="fw-bold mb-0">{{ total_clientes }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-8">
+        <div class="card p-4 h-100 border-0 shadow-sm text-white" style="background: linear-gradient(90deg, #6c5ce7, #a29bfe);">
+            <h4>Ações Rápidas</h4>
+            <p>Gerencie sua agência com um clique.</p>
+            <div class="d-flex gap-2">
+                <a href="{% url 'cadastrar_cliente' %}" class="btn btn-light fw-bold text-primary shadow-sm">Novo Cliente</a>
+                <a href="{% url 'cadastrar_agencia' %}" class="btn btn-outline-light">Configurar Agência</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

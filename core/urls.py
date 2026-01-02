@@ -1,8 +1,7 @@
-from django.contrib import admin
 from django.urls import path
-from posts.views import home  # Importando a view
+from . import views
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('', home, name='home'),
+    path('configuracoes/agencia/', views.cadastrar_agencia, name='cadastrar_agencia'),
+    path('clientes/novo/', views.cadastrar_cliente, name='cadastrar_cliente'),
 ]
