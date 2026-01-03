@@ -6,3 +6,5 @@ agency_env/
 venv/
 .vscode/
 .idea/
+staticfiles/
+media/
