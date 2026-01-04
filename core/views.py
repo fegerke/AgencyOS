@@ -1,96 +1,109 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from .forms import AgenciaForm, ClienteForm, REDES_OPCOES
-from .models import Agencia, Cliente
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from .models import Agencia, Cliente, Post
+from .forms import AgenciaForm, ClienteForm, PostForm, REDES_OPCOES
 
 @login_required
 def home(request):
-    # Busca a agência do usuário logado usando a relação OneToOne
     agencia = getattr(request.user, 'minha_agencia', None)
-    
-    total_clientes = 0
-    clientes_recentes = []
-    
-    if agencia:
-        total_clientes = agencia.clientes.count()
-        # Pega os últimos 5 clientes cadastrados
-        clientes_recentes = agencia.clientes.all().order_by('-id')[:5]
-        
-    return render(request, 'core/index.html', {
+    context = {
         'agencia': agencia,
-        'total_clientes': total_clientes,
-        'clientes_recentes': clientes_recentes,
-        'total_redes': 0 # Futuramente podemos somar as redes ativas aqui
+        'total_clientes': Cliente.objects.filter(agencia=agencia).count() if agencia else 0,
+        'posts_recentes': Post.objects.filter(cliente__agencia=agencia).order_by('-data_criacao')[:5] if agencia else []
+    }
+    return render(request, 'core/index.html', context)
+
+@login_required
+def configurar_agencia(request):
+    agencia, created = Agencia.objects.get_or_create(dono=request.user)
+    
+    if request.method == 'POST':
+        form = AgenciaForm(request.POST, request.FILES, instance=agencia)
+        if form.is_valid():
+            agencia = form.save(commit=False)
+            
+            novas_redes = {}
+            for rede_id, rede_nome in REDES_OPCOES:
+                if request.POST.get(f'rede_ativa_{rede_id}'):
+                    novas_redes[rede_id] = {
+                        'perfil': request.POST.get(f'url_{rede_id}', ''),
+                        'usuario': request.POST.get(f'user_{rede_id}', ''),
+                        'senha': request.POST.get(f'pass_{rede_id}', ''),
+                    }
+            
+            agencia.redes_sociais = novas_redes 
+            agencia.save()
+            
+            messages.success(request, "Configurações salvas!")
+            return redirect('configurar_agencia')
+    else:
+        form = AgenciaForm(instance=agencia)
+
+    return render(request, 'core/configurar_agencia.html', {
+        'form': form,
+        'agencia': agencia,
+        'redes_disponiveis': REDES_OPCOES,
     })
 
 @login_required
 def listar_clientes(request):
-    agencia = getattr(request.user, 'minha_agencia', None)
-    clientes = []
-    if agencia:
-        clientes = agencia.clientes.all().order_by('nome_fantasia')
-    
+    agencia = request.user.minha_agencia
+    clientes = Cliente.objects.filter(agencia=agencia).exclude(eh_perfil_agencia=True)
     return render(request, 'core/listar_clientes.html', {'clientes': clientes})
 
 @login_required
 def cadastrar_cliente(request):
-    agencia_logada = getattr(request.user, 'minha_agencia', None)
-    
-    if not agencia_logada:
-        messages.error(request, "Você precisa configurar sua agência antes de cadastrar clientes.")
-        return redirect('configurar_agencia')
-
     if request.method == 'POST':
         form = ClienteForm(request.POST)
         if form.is_valid():
             cliente = form.save(commit=False)
-            cliente.agencia = agencia_logada
+            cliente.agencia = request.user.minha_agencia
             
-            # Lógica para processar as redes sociais vindas do formulário manual
-            dados_redes = {}
-            for codigo, nome in REDES_OPCOES:
-                perfil = request.POST.get(f'perfil_{codigo}')
-                login = request.POST.get(f'login_{codigo}')
-                senha = request.POST.get(f'senha_{codigo}')
-                
-                if perfil or login: # Só salva se houver algum dado
-                    dados_redes[codigo] = {
-                        'perfil': perfil,
-                        'login': login,
-                        'senha': senha
+            # Lógica do documento unificado
+            doc = request.POST.get('documento', '').replace('.', '').replace('/', '').replace('-', '')
+            if len(doc) > 11:
+                cliente.cnpj = doc
+                cliente.cpf = None
+            else:
+                cliente.cpf = doc
+                cliente.cnpj = None
+
+            # Redes Sociais
+            redes_cliente = {}
+            for rede_id, rede_nome in REDES_OPCOES:
+                if request.POST.get(f'rede_ativa_{rede_id}'):
+                    redes_cliente[rede_id] = {
+                        'perfil': request.POST.get(f'url_{rede_id}', ''),
+                        'usuario': request.POST.get(f'user_{rede_id}', ''),
+                        'senha': request.POST.get(f'pass_{rede_id}', ''),
                     }
-            
-            cliente.redes_sociais = dados_redes
+            cliente.redes_sociais = redes_cliente
             cliente.save()
             
-            messages.success(request, f"Cliente {cliente.nome_fantasia} cadastrado com sucesso!")
-            return redirect('index') # Redireciona para o dashboard
+            messages.success(request, "Cliente cadastrado!")
+            return redirect('listar_clientes')
     else:
         form = ClienteForm()
-
-    return render(request, 'core/cadastrar_cliente.html', {
-        'form': form,
-        'redes_opcoes': REDES_OPCOES
-    })
+    return render(request, 'core/cadastrar_cliente.html', {'form': form, 'redes_disponiveis': REDES_OPCOES})
 
 @login_required
-def configurar_agencia(request):
-    # Busca a agência usando o getattr para evitar erros caso não exista
-    agencia_instancia = getattr(request.user, 'minha_agencia', None)
+def cadastrar_post(request):
+    # Pega o cliente_id da URL se vier do botão "Novo Post" na lista de clientes
+    cliente_id = request.GET.get('cliente')
+    initial_data = {}
+    if cliente_id:
+        initial_data['cliente'] = get_object_or_404(Cliente, id=cliente_id, agencia=request.user.minha_agencia)
 
     if request.method == 'POST':
-        form = AgenciaForm(request.POST, request.FILES, instance=agencia_instancia)
+        form = PostForm(request.POST, request.FILES)
         if form.is_valid():
-            agencia = form.save(commit=False)
-            agencia.dono = request.user
-            agencia.save()
-            messages.success(request, "Dados da agência atualizados com sucesso!")
-            return redirect('index')
+            post = form.save()
+            messages.success(request, "Post agendado com sucesso!")
+            return redirect('home')
     else:
-        form = AgenciaForm(instance=agencia_instancia)
-
-    return render(request, 'core/configurar_agencia.html', {
-        'form': form,
-        'redes_opcoes': REDES_OPCOES
-    })
+        form = PostForm(initial=initial_data)
+        # Filtra para mostrar apenas clientes da agência do usuário no select
+        form.fields['cliente'].queryset = Cliente.objects.filter(agencia=request.user.minha_agencia)
+    
+    return render(request, 'core/cadastrar_post.html', {'form': form})

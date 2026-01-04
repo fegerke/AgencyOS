@@ -1,79 +1,76 @@
 from django import forms
-from .models import Agencia, Cliente
+from .models import Agencia, Cliente, Post
 
+# Opções para as redes sociais
 REDES_OPCOES = [
     ('instagram', 'Instagram'),
     ('facebook', 'Facebook'),
-    ('tiktok', 'TikTok'),
-    ('kwai', 'Kwai'),
     ('linkedin', 'LinkedIn'),
+    ('tiktok', 'TikTok'),
     ('youtube', 'YouTube'),
     ('linktree', 'Linktree'),
 ]
 
 class AgenciaForm(forms.ModelForm):
-    documento = forms.CharField(label="CPF ou CNPJ", widget=forms.TextInput(attrs={'class': 'form-control', 'id': 'doc_field'}))
     class Meta:
         model = Agencia
-        fields = ['nome_fantasia', 'razao_social', 'email', 'telefone', 'cep', 'endereco', 'bairro', 'cidade', 'estado', 'chave_pix', 'logo']
+        fields = [
+            'nome_fantasia', 'razao_social', 'cnpj', 'email', 'telefone', 
+            'logo', 'cep', 'logradouro', 'numero', 'complemento', 
+            'bairro', 'cidade', 'estado'
+        ]
         widgets = {
-            'telefone': forms.TextInput(attrs={'class': 'form-control', 'id': 'phone_field'}), # Adicionado ID
             'nome_fantasia': forms.TextInput(attrs={'class': 'form-control'}),
             'razao_social': forms.TextInput(attrs={'class': 'form-control'}),
+            'cnpj': forms.TextInput(attrs={'class': 'form-control', 'id': 'id_cnpj', 'autocomplete': 'off'}),
             'email': forms.EmailInput(attrs={'class': 'form-control'}),
-            'cep': forms.TextInput(attrs={'class': 'form-control'}),
-            'endereco': forms.TextInput(attrs={'class': 'form-control'}),
+            'telefone': forms.TextInput(attrs={'class': 'form-control', 'id': 'id_telefone'}), # Adicionado ID aqui
+            'logo': forms.FileInput(attrs={'class': 'form-control'}),
+            'cep': forms.TextInput(attrs={'class': 'form-control', 'id': 'id_cep', 'autocomplete': 'off'}),
+            'logradouro': forms.TextInput(attrs={'class': 'form-control'}),
+            'numero': forms.TextInput(attrs={'class': 'form-control'}),
+            'complemento': forms.TextInput(attrs={'class': 'form-control'}),
             'bairro': forms.TextInput(attrs={'class': 'form-control'}),
-            'cidade': forms.TextInput(attrs={'class': 'form-control'}),
+            'cidade': forms.TextInput(attrs={'class': 'form-control', 'id': 'id_cidade', 'autocomplete': 'off'}),
             'estado': forms.TextInput(attrs={'class': 'form-control'}),
-            'chave_pix': forms.TextInput(attrs={'class': 'form-control'}),
         }
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        for codigo, nome in REDES_OPCOES:
-            self.fields[f'rede_{codigo}'] = forms.CharField(label=f'@{nome}', required=False, widget=forms.TextInput(attrs={'class': 'form-control'}))
-
-    def save(self, commit=True):
-        agencia = super().save(commit=False)
-        doc = self.cleaned_data.get('documento', '').replace('.', '').replace('-', '').replace('/', '')
-        if len(doc) <= 11: agencia.cpf, agencia.tipo_pessoa = doc, 'PF'
-        else: agencia.cnpj, agencia.tipo_pessoa = doc, 'PJ'
-        redes_final = {codigo: self.cleaned_data.get(f'rede_{codigo}') for codigo, nome in REDES_OPCOES if self.cleaned_data.get(f'rede_{codigo}')}
-        agencia.redes_sociais = redes_final
-        if commit: agencia.save()
-        return agencia
 
 class ClienteForm(forms.ModelForm):
-    documento = forms.CharField(label="CPF ou CNPJ", widget=forms.TextInput(attrs={'class': 'form-control', 'id': 'doc_field'}))
+    documento = forms.CharField(
+        label="CPF ou CNPJ", 
+        required=False, 
+        widget=forms.TextInput(attrs={'class': 'form-control', 'id': 'doc_field', 'autocomplete': 'off'})
+    )
+
     class Meta:
         model = Cliente
-        fields = ['nome_fantasia', 'razao_social', 'email', 'telefone', 'cep', 'endereco', 'bairro', 'cidade', 'estado', 'nome_contato', 'whatsapp_contato']
+        fields = [
+            'tipo_pessoa', 'nome_fantasia', 'razao_social', 'email', 'telefone', 
+            'nome_contato', 'whatsapp_contato', 'cep', 'logradouro', 
+            'numero', 'complemento', 'bairro', 'cidade', 'estado'
+        ]
+        labels = {
+            'whatsapp_contato': 'Telefone Contato', # Renomeado aqui
+        }
         widgets = {
-            'telefone': forms.TextInput(attrs={'class': 'form-control', 'id': 'phone_field'}), # ID para o telefone geral
-            'whatsapp_contato': forms.TextInput(attrs={'class': 'form-control', 'id': 'whatsapp_field'}), # ID para o whatsapp do contato
-            'nome_fantasia': forms.TextInput(attrs={'class': 'form-control'}),
-            'razao_social': forms.TextInput(attrs={'class': 'form-control'}),
-            'email': forms.EmailInput(attrs={'class': 'form-control'}),
-            'cep': forms.TextInput(attrs={'class': 'form-control'}),
-            'endereco': forms.TextInput(attrs={'class': 'form-control'}),
-            'bairro': forms.TextInput(attrs={'class': 'form-control'}),
-            'cidade': forms.TextInput(attrs={'class': 'form-control'}),
-            'estado': forms.TextInput(attrs={'class': 'form-control'}),
-            'nome_contato': forms.TextInput(attrs={'class': 'form-control'}),
+            'tipo_pessoa': forms.Select(attrs={'class': 'form-select'}),
+            'telefone': forms.TextInput(attrs={'class': 'form-control', 'id': 'id_telefone'}),
+            'whatsapp_contato': forms.TextInput(attrs={'class': 'form-control', 'id': 'id_whatsapp_contato', 'autocomplete': 'off'}),
+            'cidade': forms.TextInput(attrs={'class': 'form-control', 'id': 'id_cidade', 'autocomplete': 'off'}),
+            # ... demais campos permanecem iguais
         }
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        for codigo, nome in REDES_OPCOES:
-            self.fields[f'rede_{codigo}'] = forms.CharField(label=f'@{nome}', required=False, widget=forms.TextInput(attrs={'class': 'form-control'}))
-
-    def save(self, commit=True):
-        cliente = super().save(commit=False)
-        doc = self.cleaned_data.get('documento', '').replace('.', '').replace('-', '').replace('/', '')
-        if len(doc) <= 11: cliente.cpf, cliente.tipo_pessoa = doc, 'PF'
-        else: cliente.cnpj, cliente.tipo_pessoa = doc, 'PJ'
-        redes_final = {codigo: self.cleaned_data.get(f'rede_{codigo}') for codigo, nome in REDES_OPCOES if self.cleaned_data.get(f'rede_{codigo}')}
-        cliente.redes_sociais = redes_final
-        if commit: cliente.save()
-        return cliente
+class PostForm(forms.ModelForm):
+    class Meta:
+        model = Post
+        fields = ['cliente', 'titulo', 'data_publicacao', 'rede_social', 'status', 'legenda', 'briefing_arte', 'imagem_preview']
+        widgets = {
+            'cliente': forms.Select(attrs={'class': 'form-control'}),
+            'titulo': forms.TextInput(attrs={'class': 'form-control'}),
+            'data_publicacao': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'rede_social': forms.Select(attrs={'class': 'form-control'}, choices=REDES_OPCOES),
+            'status': forms.Select(attrs={'class': 'form-control'}),
+            'legenda': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'briefing_arte': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'imagem_preview': forms.FileInput(attrs={'class': 'form-control'}),
+        }

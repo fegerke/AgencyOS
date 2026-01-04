@@ -1,6 +1,19 @@
 from django.db import models
 from django.contrib.auth.models import User
 
+class BaseEndereco(models.Model):
+    """Classe abstrata para reaproveitamento de campos de endereço"""
+    cep = models.CharField(max_length=9, blank=True, null=True)
+    logradouro = models.CharField(max_length=255, blank=True, null=True)
+    numero = models.CharField(max_length=20, blank=True, null=True)
+    complemento = models.CharField(max_length=255, blank=True, null=True)
+    bairro = models.CharField(max_length=100, blank=True, null=True)
+    cidade = models.CharField(max_length=100, blank=True, null=True)
+    estado = models.CharField(max_length=2, blank=True, null=True)
+
+    class Meta:
+        abstract = True
+
 class BaseEmpresa(models.Model):
     TIPO_PESSOA_CHOICES = [('PF', 'Pessoa Física'),('PJ', 'Pessoa Jurídica')]
     tipo_pessoa = models.CharField(max_length=2, choices=TIPO_PESSOA_CHOICES, default='PJ')
@@ -14,32 +27,23 @@ class BaseEmpresa(models.Model):
     class Meta:
         abstract = True
 
-class Agencia(BaseEmpresa):
+class Agencia(BaseEmpresa, BaseEndereco):
     dono = models.OneToOneField(User, on_delete=models.CASCADE, related_name='minha_agencia')
     logo = models.ImageField(upload_to='agencias/logos/', blank=True, null=True)
     chave_pix = models.CharField(max_length=100, blank=True, null=True)
-    cep = models.CharField(max_length=9, blank=True, null=True)
-    endereco = models.CharField(max_length=255, blank=True, null=True)
-    bairro = models.CharField(max_length=100, blank=True, null=True)
-    cidade = models.CharField(max_length=100, blank=True, null=True)
-    estado = models.CharField(max_length=2, blank=True, null=True)
+    
+    # Campo para armazenar as redes sociais (JSON)
     redes_sociais = models.JSONField(default=dict, blank=True)
 
     def __str__(self):
         return self.nome_fantasia
 
-class Cliente(BaseEmpresa):
+class Cliente(BaseEmpresa, BaseEndereco):
     agencia = models.ForeignKey(Agencia, on_delete=models.CASCADE, related_name='clientes')
-    cep = models.CharField(max_length=9, blank=True, null=True)
-    endereco = models.CharField(max_length=255, blank=True, null=True)
-    bairro = models.CharField(max_length=100, blank=True, null=True)
-    cidade = models.CharField(max_length=100, blank=True, null=True)
-    estado = models.CharField(max_length=2, blank=True, null=True)
+    eh_perfil_agencia = models.BooleanField(default=False)
     
-    # Campos de Contato Direto
-    nome_contato = models.CharField(max_length=100, blank=True, null=True, verbose_name="Pessoa de Contato")
-    whatsapp_contato = models.CharField(max_length=20, blank=True, null=True, verbose_name="WhatsApp do Contato")
-    
+    nome_contato = models.CharField(max_length=200, blank=True, null=True)
+    whatsapp_contato = models.CharField(max_length=20, blank=True, null=True)
     redes_sociais = models.JSONField(default=dict, blank=True)
     data_cadastro = models.DateTimeField(auto_now_add=True)
     ativo = models.BooleanField(default=True)

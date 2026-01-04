@@ -2,111 +2,164 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>{% block title %}AgencyOS{% endblock %}</title>
-    
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-
+    
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f4f7f6; color: #333; }
+        body { font-family: 'Inter', sans-serif; background-color: #f8f9fa; color: #333; overflow-x: hidden; }
         
-        /* Sidebar Styles */
+        /* Navbar Mobile Fixa */
+        .mobile-header {
+            display: none;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            height: 60px;
+            background: white;
+            z-index: 1060;
+            border-bottom: 1px solid #eee;
+            align-items: center;
+            padding: 0 15px;
+        }
+
+        /* Sidebar Desktop */
         .sidebar {
             width: 260px;
             height: 100vh;
+            background: white;
             position: fixed;
-            background: #ffffff;
-            border-right: 1px solid #e9ecef;
-            z-index: 1000;
+            left: 0;
+            top: 0;
+            border-right: 1px solid #eee;
+            padding: 25px 0;
+            z-index: 1050;
+            transition: transform 0.3s ease;
         }
 
-        .sidebar-brand { border-bottom: 1px solid #f8f9fa; }
-        
-        /* Logo Circle/Square Container */
-        .logo-container {
-            width: 60px;
-            height: 60px;
-            margin: 0 auto;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            background: #6c5ce7;
-            border-radius: 12px;
-        }
-        .logo-container img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
+        .main-content {
+            margin-left: 260px;
+            padding: 30px;
+            min-height: 100vh;
         }
 
         .nav-link {
-            color: #636e72;
-            padding: 12px 20px;
-            font-weight: 600;
+            padding: 12px 25px;
+            color: #666;
+            font-weight: 500;
             display: flex;
             align-items: center;
-            transition: all 0.3s;
+            gap: 12px;
+            transition: all 0.2s;
         }
-        .nav-link:hover, .nav-link.active {
+
+        .nav-link:hover {
+            background-color: #f8f9fa;
             color: #6c5ce7;
-            background-color: #f8f7ff;
         }
-        .nav-link i { margin-right: 12px; font-size: 1.2rem; }
 
-        .main-content { margin-left: 260px; padding: 30px; }
+        .nav-link.active {
+            background-color: #f1efff;
+            color: #6c5ce7;
+            border-right: 4px solid #6c5ce7;
+        }
 
-        @media (max-width: 768px) {
-            .sidebar { width: 100%; height: auto; position: relative; }
-            .main-content { margin-left: 0; }
+        .nav-link i { font-size: 1.2rem; }
+
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1040;
+        }
+
+        /* Responsividade */
+        @media (max-width: 991.98px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.active { transform: translateX(0); }
+            .main-content { margin-left: 0; padding-top: 80px; }
+            .mobile-header { display: flex; justify-content: space-between; }
+            .overlay.active { display: block; }
         }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
 <body>
 
-    <nav class="sidebar">
-        <div class="sidebar-brand p-4 text-center">
-            <div class="logo-container mb-3 shadow-sm">
-                {% if request.user.minha_agencia and request.user.minha_agencia.logo %}
-                    <img src="{{ request.user.minha_agencia.logo.url }}" alt="Logo Agência">
-                {% else %}
-                    <i class="bi bi-rocket-takeoff-fill text-white fs-3"></i>
-                {% endif %}
-            </div>
-            <h6 class="fw-bold text-dark mb-0">
-                {{ request.user.minha_agencia.nome_fantasia|default:"Minha Agência" }}
-            </h6>
+    <header class="mobile-header">
+        <button class="btn btn-light" id="btnToggle">
+            <i class="bi bi-list fs-4"></i>
+        </button>
+        <span class="fw-bold text-primary fs-5">AgencyOS</span>
+        <div style="width: 40px;"></div>
+    </header>
+
+    <div class="overlay" id="overlay"></div>
+
+    <nav class="sidebar" id="sidebar">
+        <div class="px-4 mb-4">
+            <h4 class="fw-bold text-primary mb-0">AgencyOS</h4>
+            <small class="text-muted">Gestão de Social Media</small>
         </div>
 
-        <div class="nav flex-column mt-3">
-            <a href="{% url 'index' %}" class="nav-link {% if request.resolver_match.url_name == 'index' %}active{% endif %}">
-                <i class="bi bi-grid-1x2-fill"></i> Dashboard
+        <div class="nav flex-column">
+            <a href="{% url 'home' %}" class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+                <i class="bi bi-house-door-fill"></i> Dashboard
             </a>
-            <a href="{% url 'listar_clientes' %}" class="nav-link {% if 'cliente' in request.path %}active{% endif %}">
+            
+            <a href="{% url 'listar_clientes' %}" class="nav-link {% if request.resolver_match.url_name == 'listar_clientes' %}active{% endif %}">
                 <i class="bi bi-people-fill"></i> Clientes
             </a>
-            <a href="{% url 'configurar_agencia' %}" class="nav-link {% if 'agencia' in request.path %}active{% endif %}">
-                <i class="bi bi-gear-fill"></i> Minha Agência
+
+            <a href="{% url 'cadastrar_post' %}" class="nav-link {% if request.resolver_match.url_name == 'cadastrar_post' %}active{% endif %}">
+                <i class="bi bi-megaphone-fill"></i> Agendar Post
             </a>
-            <hr class="mx-3 my-2 text-muted">
+
+            <a href="{% url 'configurar_agencia' %}" class="nav-link {% if request.resolver_match.url_name == 'configurar_agencia' %}active{% endif %}">
+                <i class="bi bi-gear-fill"></i> Configurações
+            </a>
+
+            <hr class="mx-3 my-3">
+            
             <a href="#" class="nav-link text-danger">
-                <i class="bi bi-box-arrow-right"></i> Sair
+                <i class="bi bi-box-arrow-left"></i> Sair
             </a>
         </div>
     </nav>
 
     <main class="main-content">
-        <div class="container-fluid">
-            {% block content %}{% endblock %}
-        </div>
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm border-0" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        {% block content %}{% endblock %}
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://unpkg.com/imask"></script>
+    <script>
+        const btnToggle = document.getElementById('btnToggle');
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
+
+        function toggleMenu() {
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+        }
+
+        btnToggle?.addEventListener('click', toggleMenu);
+        overlay?.addEventListener('click', toggleMenu);
+    </script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>
