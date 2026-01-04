@@ -1,92 +1,90 @@
 {% extends 'core/base.html' %}
 
-{% block title %}Meus Clientes | AgencyOS{% endblock %}
+{% block title %}Clientes | AgencyOS{% endblock %}
 
 {% block content %}
-<div class="card border-0 shadow-sm p-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h2 class="fw-bold mb-1"><i class="bi bi-people-fill text-primary me-2"></i>Meus Clientes</h2>
-            <p class="text-muted small mb-0">Gerencie a base de clientes da sua agência.</p>
-        </div>
-        <a href="{% url 'cadastrar_cliente' %}" class="btn btn-primary shadow-sm fw-bold">
-            <i class="bi bi-person-plus-fill me-2"></i>Novo Cliente
+<div class="container-fluid p-0">
+    <div class="d-flex justify-content-between align-items-center mb-4 px-2">
+        <h2 class="fw-bold mb-0 h4"><i class="bi bi-people-fill text-primary me-2"></i>Clientes</h2>
+        <a href="{% url 'cadastrar_cliente' %}" class="btn btn-primary shadow btn-sm fw-bold">
+            <i class="bi bi-plus-lg"></i> Novo
         </a>
     </div>
 
-    <div class="table-responsive">
-        <table class="table table-hover align-middle">
-            <thead class="table-light">
-                <tr>
-                    <th class="ps-3">Cliente / Empresa</th>
-                    <th>Documento</th>
-                    <th>Contato Principal</th>
-                    <th>E-mail</th>
-                    <th class="text-center">Status</th>
-                    <th class="text-end pe-3">Ações</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for cliente in clientes %}
-                <tr>
-                    <td class="ps-3">
-                        <div class="fw-bold text-dark">{{ cliente.nome_fantasia }}</div>
-                        <small class="text-muted">{{ cliente.razao_social|default:"-" }}</small>
-                    </td>
-                    <td>
-                        <span class="badge bg-light text-dark border">{{ cliente.cnpj|default:cliente.cpf|default:"-" }}</span>
-                    </td>
-                    <td>
-                        <div class="small fw-bold">{{ cliente.nome_contato|default:"-" }}</div>
-                        <div class="small text-primary">{{ cliente.whatsapp_contato|default:cliente.telefone|default:"" }}</div>
-                    </td>
-                    <td class="small">{{ cliente.email|default:"-" }}</td>
-                    <td class="text-center">
-                        {% if cliente.ativo %}
-                            <span class="badge bg-success-light text-success">Ativo</span>
-                        {% else %}
-                            <span class="badge bg-danger-light text-danger">Inativo</span>
-                        {% endif %}
-                    </td>
-                    <td class="text-end pe-3">
-                        <div class="btn-group shadow-sm">
-                            <a href="#" class="btn btn-sm btn-white border" title="Editar"><i class="bi bi-pencil-square text-primary"></i></a>
-                            <a href="#" class="btn btn-sm btn-white border" title="Ver Redes Sociais"><i class="bi bi-share text-info"></i></a>
-                        </div>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="6" class="text-center py-5">
-                        <div class="text-muted mb-3">
-                            <i class="bi bi-person-exclamation fs-1"></i>
-                        </div>
-                        <h5 class="fw-bold">Nenhum cliente cadastrado</h5>
-                        <p class="small text-muted">Comece cadastrando seu primeiro cliente agora mesmo.</p>
-                        <a href="{% url 'cadastrar_cliente' %}" class="btn btn-primary btn-sm mt-2">Cadastrar Agora</a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <div class="card border-0 shadow-sm d-none d-md-block">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-3">Empresa</th>
+                        <th>Contato</th>
+                        <th>Status</th>
+                        <th class="text-end pe-3">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cliente in clientes %}
+                    <tr>
+                        <td class="ps-3">
+                            <div class="fw-bold">{{ cliente.nome_fantasia }}</div>
+                            <small class="text-muted">{{ cliente.documento|default:"-" }}</small>
+                        </td>
+                        <td>{{ cliente.nome_contato|default:"-" }}</td>
+                        <td><span class="badge bg-success-light text-success">Ativo</span></td>
+                        <td class="text-end pe-3">
+                            <a href="#" class="btn btn-sm btn-light border"><i class="bi bi-pencil"></i></a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="d-md-none">
+        {% for cliente in clientes %}
+        <div class="card border-0 shadow-sm mb-3 p-3 position-relative">
+            <div class="d-flex align-items-center mb-2">
+                <div class="bg-primary-light rounded-circle p-2 me-3 text-primary">
+                    <i class="bi bi-building fs-4"></i>
+                </div>
+                <div style="flex: 1;">
+                    <h6 class="fw-bold mb-0 text-dark">{{ cliente.nome_fantasia }}</h6>
+                    <small class="text-muted d-block">{{ cliente.nome_contato|default:"Sem contato" }}</small>
+                </div>
+                <span class="badge bg-success-light text-success position-absolute top-0 end-0 mt-3 me-3">Ativo</span>
+            </div>
+            
+            <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top">
+                <div class="small">
+                    <i class="bi bi-whatsapp text-success me-1"></i> {{ cliente.whatsapp_contato|default:"-" }}
+                </div>
+                <div class="btn-group">
+                    <a href="tel:{{ cliente.telefone }}" class="btn btn-sm btn-outline-secondary border-0"><i class="bi bi-telephone fs-5"></i></a>
+                    <a href="#" class="btn btn-sm btn-outline-primary border-0"><i class="bi bi-pencil-square fs-5"></i></a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="text-center py-5 bg-white rounded shadow-sm">
+            <i class="bi bi-person-x fs-1 text-muted"></i>
+            <p class="mt-2 text-muted">Nenhum cliente cadastrado.</p>
+        </div>
+        {% endfor %}
     </div>
 </div>
 {% endblock %}
 
 {% block extra_css %}
 <style>
-    /* Estilos para badges suaves */
-    .bg-success-light { background-color: #e3fcef; }
-    .bg-danger-light { background-color: #ffeef0; }
-    .btn-white { background-color: #fff; }
-    .btn-white:hover { background-color: #f8f9fa; }
+    /* Cores Suaves para Mobile */
+    .bg-success-light { background-color: #e3fcef !important; color: #155724 !important; font-size: 0.7rem; }
+    .bg-primary-light { background-color: #f0eeff !important; }
     
-    .table thead th {
-        font-size: 0.85rem;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        color: #636e72;
-        border-top: none;
-    }
+    /* Ajuste para o Card Mobile */
+    .card { border-radius: 12px; }
+    
+    /* Esconder o Menu Lateral do base.html se for muito pequeno para ganhar espaço? 
+       Poderíamos adicionar um botão "Hamburguer" depois. */
 </style>
 {% endblock %}

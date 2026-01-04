@@ -46,3 +46,27 @@ class Cliente(BaseEmpresa):
 
     def __str__(self):
         return self.nome_fantasia
+    
+class Post(models.Model):
+    STATUS_CHOICES = [
+        ('planejamento', 'Planejamento'),
+        ('redacao', 'Em Redação'),
+        ('design', 'Em Design'),
+        ('aprovacao', 'Aguardando Aprovação'),
+        ('ajuste', 'Ajuste Solicitado'),
+        ('agendado', 'Agendado'),
+        ('postado', 'Postado'),
+    ]
+
+    cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name='posts')
+    titulo = models.CharField(max_length=200, verbose_name="Título do Post")
+    data_publicacao = models.DateField(verbose_name="Data de Publicação")
+    rede_social = models.CharField(max_length=50, verbose_name="Rede Social")
+    legenda = models.TextField(blank=True, null=True)
+    briefing_arte = models.TextField(blank=True, null=True, verbose_name="Instruções para Arte")
+    imagem_preview = models.ImageField(upload_to='posts/previews/', blank=True, null=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='planejamento')
+    data_criacao = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.cliente.nome_fantasia} - {self.titulo} ({self.data_publicacao})"
