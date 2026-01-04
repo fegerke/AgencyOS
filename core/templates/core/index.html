@@ -1,35 +1,105 @@
 {% extends 'core/base.html' %}
+
 {% block title %}Dashboard | AgencyOS{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>Olá, {{ request.user.username|capfirst }}! 👋</h2>
-    {% if agencia.logo %}
-        <img src="{{ agencia.logo.url }}" alt="Logo" style="height: 50px;" class="rounded shadow-sm">
-    {% endif %}
-</div>
-
-<div class="row g-4">
-    <div class="col-md-4">
-        <div class="card border-0 shadow-sm p-4">
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm p-4 bg-primary text-white" style="background: linear-gradient(45deg, #6c5ce7, #a29bfe) !important;">
             <div class="d-flex align-items-center">
-                <div class="bg-primary text-white p-3 rounded-3 me-3" style="background-color: #6c5ce7 !important;">
-                    <i class="bi bi-people-fill fs-3"></i>
+                <div class="me-4">
+                    {% if request.user.minha_agencia and request.user.minha_agencia.logo %}
+                        <img src="{{ request.user.minha_agencia.logo.url }}" class="rounded-circle border border-3 border-white shadow" style="width: 80px; height: 80px; object-fit: cover;">
+                    {% else %}
+                        <i class="bi bi-rocket-takeoff fs-1"></i>
+                    {% endif %}
                 </div>
                 <div>
-                    <h6 class="text-muted mb-0">Total de Clientes</h6>
-                    <h3 class="fw-bold mb-0">{{ total_clientes }}</h3>
+                    <h2 class="fw-bold mb-1 text-white">Olá, {{ request.user.username }}!</h2>
+                    <p class="mb-0">Bem-vindo ao painel da <strong>{{ request.user.minha_agencia.nome_fantasia|default:"sua agência" }}</strong>.</p>
                 </div>
             </div>
         </div>
     </div>
+
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm p-4 h-100 text-center">
+            <div class="rounded-circle bg-light-primary p-3 d-inline-block mx-auto mb-3">
+                <i class="bi bi-people-fill fs-3 text-primary"></i>
+            </div>
+            <h3 class="fw-bold mb-1">{{ total_clientes }}</h3>
+            <p class="text-muted mb-0">Clientes Ativos</p>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm p-4 h-100 text-center">
+            <div class="rounded-circle bg-light-success p-3 d-inline-block mx-auto mb-3">
+                <i class="bi bi-share-fill fs-3 text-success"></i>
+            </div>
+            <h3 class="fw-bold mb-1">{{ total_redes }}</h3>
+            <p class="text-muted mb-0">Redes Gerenciadas</p>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm p-4 h-100 text-center">
+            <div class="rounded-circle bg-light-info p-3 d-inline-block mx-auto mb-3">
+                <i class="bi bi-calendar-check fs-3 text-info"></i>
+            </div>
+            <h3 class="fw-bold mb-1">{{ total_clientes }}</h3>
+            <p class="text-muted mb-0">Contratos Vigentes</p>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
     <div class="col-md-8">
-        <div class="card p-4 h-100 border-0 shadow-sm text-white" style="background: linear-gradient(90deg, #6c5ce7, #a29bfe);">
-            <h4>Ações Rápidas</h4>
-            <p>Gerencie sua agência com um clique.</p>
-            <div class="d-flex gap-2">
-                <a href="{% url 'cadastrar_cliente' %}" class="btn btn-light fw-bold text-primary shadow-sm">Novo Cliente</a>
-                <a href="{% url 'cadastrar_agencia' %}" class="btn btn-outline-light">Configurar Agência</a>
+        <div class="card border-0 shadow-sm p-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="fw-bold mb-0">Clientes Recentes</h5>
+                <a href="{% url 'listar_clientes' %}" class="btn btn-sm btn-outline-primary">Ver todos</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Cliente</th>
+                            <th>Contato</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cliente in clientes_recentes %}
+                        <tr>
+                            <td>
+                                <div class="fw-bold">{{ cliente.nome_fantasia }}</div>
+                                <small class="text-muted">{{ cliente.email }}</small>
+                            </td>
+                            <td>{{ cliente.nome_contato }}</td>
+                            <td><span class="badge bg-success-light text-success">Ativo</span></td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="text-center text-muted py-4">Nenhum cliente cadastrado ainda.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm p-4 mb-4">
+            <h5 class="fw-bold mb-3">Ações Rápidas</h5>
+            <div class="d-grid gap-2">
+                <a href="{% url 'cadastrar_cliente' %}" class="btn btn-primary text-start">
+                    <i class="bi bi-person-plus me-2 text-white"></i>Novo Cliente
+                </a>
+                <a href="{% url 'configurar_agencia' %}" class="btn btn-light text-start border">
+                    <i class="bi bi-gear me-2"></i>Configurar Agência
+                </a>
             </div>
         </div>
     </div>

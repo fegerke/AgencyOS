@@ -8,123 +8,105 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
     <style>
-        body { background-color: #f0f2f5; font-family: 'Segoe UI', sans-serif; overflow-x: hidden; }
+        body { font-family: 'Inter', sans-serif; background-color: #f4f7f6; color: #333; }
         
-        /* Sidebar Fixa Lateral */
-        .sidebar { 
-            background: #fff; 
-            height: 100vh; 
-            border-right: 1px solid #dee2e6; 
-            padding: 25px 20px; 
-            position: fixed; 
-            width: inherit; 
+        /* Sidebar Styles */
+        .sidebar {
+            width: 260px;
+            height: 100vh;
+            position: fixed;
+            background: #ffffff;
+            border-right: 1px solid #e9ecef;
             z-index: 1000;
         }
+
+        .sidebar-brand { border-bottom: 1px solid #f8f9fa; }
         
-        /* Ajuste do conteúdo para não ficar por baixo da sidebar */
-        .main-content { 
-            margin-left: 16.66667%; /* Isso equivale a col-md-2 */
-            padding: 40px; 
-            min-height: 100vh; 
+        /* Logo Circle/Square Container */
+        .logo-container {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background: #6c5ce7;
+            border-radius: 12px;
+        }
+        .logo-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
 
-        .nav-link { 
-            color: #636e72; 
-            font-weight: 600; 
-            border-radius: 10px; 
-            margin-bottom: 8px; 
-            padding: 12px 15px;
-            transition: all 0.3s; 
+        .nav-link {
+            color: #636e72;
+            padding: 12px 20px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s;
         }
-
-        /* Destaque para o menu ativo */
-        .nav-link.active { 
-            background: #6c5ce7; 
-            color: white !important; 
-            box-shadow: 0 4px 12px rgba(108, 92, 231, 0.3);
+        .nav-link:hover, .nav-link.active {
+            color: #6c5ce7;
+            background-color: #f8f7ff;
         }
+        .nav-link i { margin-right: 12px; font-size: 1.2rem; }
 
-        .nav-link:hover:not(.active) { 
-            background: #f8f7ff; 
-            color: #6c5ce7; 
-            transform: translateX(5px);
-        }
+        .main-content { margin-left: 260px; padding: 30px; }
 
-        .logo-box { 
-            color: #6c5ce7; 
-            font-weight: 800; 
-            font-size: 1.6rem; 
-            margin-bottom: 40px; 
-            display: block; 
-            text-decoration: none; 
-            text-align: center;
-        }
-
-        .logout-btn {
-            margin-top: 20px;
-            border-top: 1px solid #eee;
-            padding-top: 20px;
+        @media (max-width: 768px) {
+            .sidebar { width: 100%; height: auto; position: relative; }
+            .main-content { margin-left: 0; }
         }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
 <body>
 
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-md-2 p-0">
-            <div class="sidebar col-md-2">
-                <a href="{% url 'home' %}" class="logo-box">
-                    <i class="bi bi-rocket-takeoff-fill me-2"></i>AgencyOS
-                </a>
-                
-                <nav class="nav flex-column">
-                    <a class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}" href="{% url 'home' %}">
-                        <i class="bi bi-grid-1x2-fill me-2"></i>Dashboard
-                    </a>
-                    
-                    <a class="nav-link {% if request.resolver_match.url_name == 'cadastrar_cliente' %}active{% endif %}" href="{% url 'cadastrar_cliente' %}">
-                        <i class="bi bi-people-fill me-2"></i>Clientes
-                    </a>
-                    
-                    <a class="nav-link {% if request.resolver_match.url_name == 'cadastrar_agencia' %}active{% endif %}" href="{% url 'cadastrar_agencia' %}">
-                        <i class="bi bi-gear-wide-connected me-2"></i>Minha Agência
-                    </a>
-
-                    <div class="logout-btn">
-                        <form id="logout-form" action="{% url 'logout' %}" method="POST" style="display: none;">
-                            {% csrf_token %}
-                        </form>
-                        <a class="nav-link text-danger" href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                            <i class="bi bi-box-arrow-left me-2"></i>Sair
-                        </a>
-                    </div>
-                </nav>
+    <nav class="sidebar">
+        <div class="sidebar-brand p-4 text-center">
+            <div class="logo-container mb-3 shadow-sm">
+                {% if request.user.minha_agencia and request.user.minha_agencia.logo %}
+                    <img src="{{ request.user.minha_agencia.logo.url }}" alt="Logo Agência">
+                {% else %}
+                    <i class="bi bi-rocket-takeoff-fill text-white fs-3"></i>
+                {% endif %}
             </div>
+            <h6 class="fw-bold text-dark mb-0">
+                {{ request.user.minha_agencia.nome_fantasia|default:"Minha Agência" }}
+            </h6>
         </div>
 
-        <div class="col-md-10 main-content">
-            {% if messages %}
-                {% for message in messages %}
-                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm border-0" role="alert">
-                        {% if message.tags == 'success' %}<i class="bi bi-check-circle-fill me-2"></i>{% endif %}
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                {% endfor %}
-            {% endif %}
-
-            {% block content %}
-            {% endblock %}
+        <div class="nav flex-column mt-3">
+            <a href="{% url 'index' %}" class="nav-link {% if request.resolver_match.url_name == 'index' %}active{% endif %}">
+                <i class="bi bi-grid-1x2-fill"></i> Dashboard
+            </a>
+            <a href="{% url 'listar_clientes' %}" class="nav-link {% if 'cliente' in request.path %}active{% endif %}">
+                <i class="bi bi-people-fill"></i> Clientes
+            </a>
+            <a href="{% url 'configurar_agencia' %}" class="nav-link {% if 'agencia' in request.path %}active{% endif %}">
+                <i class="bi bi-gear-fill"></i> Minha Agência
+            </a>
+            <hr class="mx-3 my-2 text-muted">
+            <a href="#" class="nav-link text-danger">
+                <i class="bi bi-box-arrow-right"></i> Sair
+            </a>
         </div>
-    </div>
-</div>
+    </nav>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://unpkg.com/imask"></script>
+    <main class="main-content">
+        <div class="container-fluid">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
 
-{% block extra_js %}{% endblock %}
-
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/imask"></script>
+    {% block extra_js %}{% endblock %}
 </body>
 </html>

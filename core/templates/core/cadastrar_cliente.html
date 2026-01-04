@@ -1,81 +1,102 @@
 {% extends 'core/base.html' %}
 
-{% block title %}Novo Cliente | AgencyOS{% endblock %}
+{% block extra_css %}
+<style>
+    /* ABAS: TEXTO BRANCO NA ATIVA */
+    .nav-tabs .nav-link { color: #6c5ce7 !important; font-weight: 600; background: #f8f9fa; border: 1px solid #dee2e6; margin-right: 5px; }
+    .nav-tabs .nav-link.active { color: #ffffff !important; background-color: #6c5ce7 !important; border-color: #6c5ce7; }
+    
+    /* ESTILO DOS CAMPOS */
+    .form-label { font-weight: 700; color: #333; margin-bottom: 5px; display: block; }
+    .form-control { border-radius: 8px; border: 1px solid #ced4da; padding: 10px; width: 100% !important; }
+    .card-rede { border-left: 5px solid #6c5ce7 !important; background-color: #fff; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+</style>
+{% endblock %}
 
 {% block content %}
 <div class="card border-0 shadow-sm p-4">
-    <div class="d-flex align-items-center mb-4">
-        <div class="bg-primary text-white rounded-3 p-3 me-3" style="background-color: #6c5ce7 !important;">
-            <i class="bi bi-person-plus-fill fs-3"></i>
-        </div>
-        <div>
-            <h2 class="mb-0">Novo Cliente</h2>
-            <p class="text-muted mb-0">Cadastre os dados e redes sociais do seu cliente</p>
-        </div>
+    <div class="mb-4">
+        <h2 class="fw-bold"><i class="bi bi-person-plus-fill text-primary me-2"></i>Novo Cliente</h2>
+        <p class="text-muted small">Gestão completa de dados, contatos e acessos sociais.</p>
     </div>
 
-    <form method="post">
+    <form method="post" autocomplete="off">
         {% csrf_token %}
+        
+        <input type="text" name="prevent_autofill" style="display:none;" aria-hidden="true">
+
         <ul class="nav nav-tabs mb-4" id="clientTabs" role="tablist">
-            <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#dados"><i class="bi bi-info-circle me-2"></i>Geral</a></li>
-            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#endereco"><i class="bi bi-geo-alt me-2"></i>Endereço</a></li>
-            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#contatos"><i class="bi bi-share me-2"></i>Redes Sociais</a></li>
+            <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#geral" type="button">Geral</button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#end" type="button">Endereço</button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#redes" type="button">Redes & Acessos</button></li>
         </ul>
 
         <div class="tab-content">
-            <div class="tab-pane fade show active" id="dados">
+            <div class="tab-pane fade show active" id="geral">
                 <div class="row g-3">
-                    <div class="col-md-6"><label class="form-label fw-bold small text-muted">Nome Fantasia</label>{{ form.nome_fantasia }}</div>
-                    <div class="col-md-6"><label class="form-label fw-bold small text-muted">CPF ou CNPJ</label>{{ form.documento }}</div>
-                    <div class="col-md-12"><label class="form-label fw-bold small text-muted">Razão Social</label>{{ form.razao_social }}</div>
-                    <div class="col-md-6"><label class="form-label fw-bold small text-muted">E-mail</label>{{ form.email }}</div>
-                    <div class="col-md-6"><label class="form-label fw-bold small text-muted">Telefone Geral</label>{{ form.telefone }}</div>
-                    <div class="col-md-6"><label class="form-label fw-bold small text-muted">Pessoa de Contato</label>{{ form.nome_contato }}</div>
-                    <div class="col-md-6"><label class="form-label fw-bold small text-muted">WhatsApp do Contato</label>{{ form.whatsapp_contato }}</div>
+                    <div class="col-md-6">
+                        <label class="form-label">Nome Fantasia</label>
+                        {{ form.nome_fantasia }} </div>
+                    <div class="col-md-6">
+                        <label class="form-label">CPF ou CNPJ</label>
+                        {{ form.documento }} </div>
+                    <div class="col-md-12">
+                        <label class="form-label">Razão Social</label>
+                        {{ form.razao_social }} </div>
+                    <div class="col-md-6">
+                        <label class="form-label">E-mail</label>
+                        {{ form.email }} </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Telefone Geral</label>
+                        {{ form.telefone }} </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Pessoa de Contato</label>
+                        {{ form.nome_contato }} </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Telefone Contato</label>
+                        {{ form.whatsapp_contato }} </div>
                 </div>
             </div>
 
-            <div class="tab-pane fade" id="endereco">
+            <div class="tab-pane fade" id="end">
                 <div class="row g-3">
-                    <div class="col-md-3"><label class="form-label fw-bold small text-muted">CEP</label>{{ form.cep }}</div>
-                    <div class="col-md-9"><label class="form-label fw-bold small text-muted">Logradouro</label>{{ form.endereco }}</div>
-                    <div class="col-md-5"><label class="form-label fw-bold small text-muted">Bairro</label>{{ form.bairro }}</div>
-                    <div class="col-md-5"><label class="form-label fw-bold small text-muted">Cidade</label>{{ form.cidade }}</div>
-                    <div class="col-md-2"><label class="form-label fw-bold small text-muted">UF</label>{{ form.estado }}</div>
+                    <div class="col-md-3"><label class="form-label">CEP</label>{{ form.cep }}</div>
+                    <div class="col-md-9"><label class="form-label">Logradouro</label>{{ form.endereco }}</div>
+                    <div class="col-md-5"><label class="form-label">Bairro</label>{{ form.bairro }}</div>
+                    <div class="col-md-5"><label class="form-label">Cidade</label>{{ form.cidade }}</div>
+                    <div class="col-md-2"><label class="form-label">UF</label>{{ form.estado }}</div>
                 </div>
             </div>
 
-            <div class="tab-pane fade" id="contatos">
-                <h5 class="mb-3 text-muted">Quais redes sociais o cliente utiliza?</h5>
+            <div class="tab-pane fade" id="redes">
+                <h6 class="mb-3">Selecione as redes ativas do cliente:</h6>
                 <div class="row g-2 mb-4">
-                    {% for codigo, field in form.fields.items %}
-                        {% if "rede_" in codigo %}
-                            <div class="col-md-4 col-6">
-                                <div class="form-check p-3 border rounded bg-white h-100">
-                                    <input class="form-check-input rede-checkbox" type="checkbox" id="check_{{ codigo }}" data-rede="{{ codigo }}">
-                                    <label class="form-check-label fw-bold w-100" for="check_{{ codigo }}">
-                                        {{ codigo|cut:"rede_"|capfirst }}
-                                    </label>
-                                </div>
-                            </div>
-                        {% endif %}
+                    {% for codigo, nome in redes_opcoes %}
+                    <div class="col-md-4 col-6">
+                        <div class="form-check p-2 border rounded bg-white shadow-sm">
+                            <input class="form-check-input rede-checkbox ms-1" type="checkbox" id="chk_cl_{{ codigo }}" data-rede="{{ codigo }}">
+                            <label class="form-check-label fw-bold ms-2" for="chk_cl_{{ codigo }}">{{ nome }}</label>
+                        </div>
+                    </div>
                     {% endfor %}
                 </div>
-                <div class="row g-3">
-                    {% for codigo, field in form.fields.items %}
-                        {% if "rede_" in codigo %}
-                            <div class="col-md-6 d-none" id="div_{{ codigo }}">
-                                <label class="form-label fw-bold small text-muted">Perfil no {{ codigo|cut:"rede_"|capfirst }}</label>
-                                <input type="text" name="{{ codigo }}" class="form-control" placeholder="@usuario">
-                            </div>
-                        {% endif %}
+                <div id="campos_redes_cl">
+                    {% for codigo, nome in redes_opcoes %}
+                    <div class="card card-rede p-3 d-none" id="div_cl_{{ codigo }}">
+                        <h6 class="fw-bold text-primary mb-3"><i class="bi bi-{{ codigo }} me-2"></i>{{ nome }}</h6>
+                        <div class="row g-3">
+                            <div class="col-md-4"><label class="form-label small">@ Perfil / URL</label><input type="text" name="perfil_{{ codigo }}" class="form-control" autocomplete="off"></div>
+                            <div class="col-md-4"><label class="form-label small">Login</label><input type="text" name="login_{{ codigo }}" class="form-control" autocomplete="off"></div>
+                            <div class="col-md-4"><label class="form-label small">Senha</label><input type="password" name="senha_{{ codigo }}" class="form-control" autocomplete="new-password"></div>
+                        </div>
+                    </div>
                     {% endfor %}
                 </div>
             </div>
         </div>
 
-        <div class="mt-5 border-top pt-4 text-end">
-            <button type="submit" class="btn btn-primary px-5 shadow">Salvar Cliente</button>
+        <div class="mt-5 text-end pt-3 border-top">
+            <button type="submit" class="btn btn-primary px-5 fw-bold shadow">Salvar Cliente</button>
         </div>
     </form>
 </div>
@@ -83,28 +104,38 @@
 
 {% block extra_js %}
 <script>
-    // Máscaras
-    IMask(document.getElementById('doc_field'), {
-        mask: [{ mask: '000.000.000-00', maxLength: 11 }, { mask: '00.000.000/0000-00' }]
-    });
-    IMask(document.getElementById('phone_field'), {
-        mask: [{ mask: '(00) 0000-0000' }, { mask: '(00) 00000-0000' }]
-    });
-    IMask(document.getElementById('whatsapp_field'), {
-        mask: [{ mask: '(00) 0000-0000' }, { mask: '(00) 00000-0000' }]
-    });
+    document.addEventListener('DOMContentLoaded', function() {
+        // MÁSCARAS USANDO OS IDS QUE VOCÊ DEFINIU NO FORMS.PY
+        const phoneOptions = { mask: [{mask: '(00) 0000-0000'}, {mask: '(00) 00000-0000'}], lazy: true };
+        
+        const phoneField = document.getElementById('phone_field');
+        if(phoneField) IMask(phoneField, phoneOptions);
 
-    // Lógica Redes Sociais
-    document.querySelectorAll('.rede-checkbox').forEach(checkbox => {
-        checkbox.addEventListener('change', function() {
-            const redeID = this.getAttribute('data-rede');
-            const inputDiv = document.getElementById('div_' + redeID);
-            if (this.checked) inputDiv.classList.remove('d-none');
-            else {
-                inputDiv.classList.add('d-none');
-                inputDiv.querySelector('input').value = '';
-            }
+        const whatsappField = document.getElementById('whatsapp_field');
+        if(whatsappField) IMask(whatsappField, phoneOptions);
+
+        const docField = document.getElementById('doc_field');
+        if(docField) IMask(docField, { mask: [{mask: '000.000.000-00'}, {mask: '00.000.000/0000-00'}], lazy: true });
+
+        const cepInput = document.querySelector('input[name="cep"]');
+        if(cepInput) IMask(cepInput, { mask: '00000-000', lazy: true });
+
+        // LÓGICA DE MOSTRAR REDES
+        document.querySelectorAll('.rede-checkbox').forEach(c => {
+            c.addEventListener('change', function() {
+                const rede = this.getAttribute('data-rede');
+                const div = document.getElementById('div_cl_' + rede);
+                if (this.checked) div.classList.remove('d-none');
+                else div.classList.add('d-none');
+            });
         });
+
+        // LIMPEZA ADICIONAL CONTRA O FRANK NO WHATSAPP_FIELD
+        setTimeout(() => {
+            if(whatsappField && whatsappField.value.toLowerCase().includes('frank')) {
+                whatsappField.value = '';
+            }
+        }, 500);
     });
 </script>
 {% endblock %}

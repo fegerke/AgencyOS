@@ -8,6 +8,7 @@ REDES_OPCOES = [
     ('kwai', 'Kwai'),
     ('linkedin', 'LinkedIn'),
     ('youtube', 'YouTube'),
+    ('linktree', 'Linktree'),
 ]
 
 class AgenciaForm(forms.ModelForm):
