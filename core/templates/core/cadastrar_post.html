@@ -1,66 +1,94 @@
 {% extends 'core/base.html' %}
-
-{% block title %}Novo Post | AgencyOS{% endblock %}
+{% load crispy_forms_tags %}
 
 {% block content %}
 <div class="container-fluid p-0">
-    <div class="mb-4 px-2">
-        <h2 class="fw-bold h4"><i class="bi bi- megaphone-fill text-primary me-2"></i>Novo Post</h2>
-        <p class="text-muted small">Crie o conteúdo que será planejado para o cliente.</p>
+    <div class="mb-4">
+        <h2 class="fw-bold h4 mb-1">{% if form.instance.pk %}Editar Post{% else %}Novo Post{% endif %}</h2>
+        <p class="text-muted small">
+            Cliente: <span class="badge bg-primary">
+                {{ cronograma_obj.cliente.nome_fantasia }}
+            </span>
+        </p>
     </div>
 
-    <div class="card border-0 shadow-sm p-3" style="border-radius: 15px;">
-        <form method="post" enctype="multipart/form-data">
+    <div class="card border-0 shadow-sm p-4" style="border-radius: 15px;">
+        <form id="postForm" method="post" enctype="multipart/form-data">
             {% csrf_token %}
-            
-            <div class="row g-3">
-                <div class="col-12">
-                    <label class="form-label fw-bold small">Cliente</label>
-                    {{ form.cliente }}
+            <div class="row">
+                <div class="d-none">{{ form.cronograma|as_crispy_field }}</div>
+                <div class="col-md-12 mb-3">{{ form.status|as_crispy_field }}</div>
+            </div>
+            <div class="mb-3">{{ form.titulo|as_crispy_field }}</div>
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label fw-bold small">Data de Publicação</label>
+                    {{ form.data_publicacao }} 
                 </div>
-                
-                <div class="col-12">
-                    <label class="form-label fw-bold small">Título do Conteúdo</label>
-                    {{ form.titulo }}
-                </div>
-
-                <div class="col-6">
-                    <label class="form-label fw-bold small">Data</label>
-                    {{ form.data_publicacao }}
-                </div>
-
-                <div class="col-6">
-                    <label class="form-label fw-bold small">Rede</label>
-                    {{ form.rede_social }}
-                </div>
-
-                <div class="col-12">
-                    <label class="form-label fw-bold small">Legenda (Copy)</label>
-                    {{ form.legenda }}
-                </div>
-
-                <div class="col-12">
-                    <label class="form-label fw-bold small">Instruções de Arte</label>
-                    {{ form.briefing_arte }}
-                </div>
-
-                <div class="col-12">
-                    <label class="form-label fw-bold small">Preview da Imagem</label>
-                    {{ form.imagem_preview }}
-                </div>
-
-                <div class="col-12">
-                    <label class="form-label fw-bold small">Status Inicial</label>
-                    {{ form.status }}
-                </div>
+                <div class="col-md-4 mb-3">{{ form.rede_social|as_crispy_field }}</div>
+                <div class="col-md-4 mb-3">{{ form.formato|as_crispy_field }}</div>
             </div>
 
-            <div class="mt-4 d-grid">
-                <button type="submit" class="btn btn-primary py-3 fw-bold" style="border-radius: 12px;">
-                    Salvar no Cronograma
+            <div class="mb-3">{{ form.legenda|as_crispy_field }}</div>
+            <div class="mb-3">{{ form.briefing_arte|as_crispy_field }}</div>
+
+            <div class="mb-4">
+                <label class="form-label fw-bold text-primary"><i class="bi bi-dropbox me-2"></i>Arquivo de Preview</label>
+                {{ form.imagem_preview }}
+            </div>
+            
+            <div id="progressContainer" class="progress mb-4 d-none" style="height: 25px; border-radius: 12px;">
+                <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-success fw-bold" role="progressbar" style="width: 0%;">0%</div>
+            </div>
+
+            <div class="d-grid">
+                <button type="submit" id="btnSubmit" class="btn btn-primary py-3 fw-bold shadow-sm" style="border-radius: 12px; background: #6c5ce7; border: none;">
+                    <i class="bi bi-cloud-arrow-up-fill me-2"></i>Salvar no Cronograma
                 </button>
             </div>
         </form>
     </div>
 </div>
+
+<script>
+    const postForm = document.getElementById('postForm');
+    const progressBar = document.getElementById('progressBar');
+    const progressContainer = document.getElementById('progressContainer');
+    const btnSubmit = document.getElementById('btnSubmit');
+
+    postForm.onsubmit = function(e) {
+        e.preventDefault();
+        const formData = new FormData(postForm);
+        const xhr = new XMLHttpRequest();
+
+        progressContainer.classList.remove('d-none');
+        btnSubmit.disabled = true;
+        btnSubmit.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processando...';
+
+        xhr.upload.addEventListener('progress', function(e) {
+            if (e.lengthComputable) {
+                const percent = (e.loaded / e.total) * 100;
+                progressBar.style.width = percent.toFixed(0) + '%';
+                progressBar.innerText = percent.toFixed(0) + '%';
+            }
+        });
+
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4 && xhr.status === 200) {
+                const response = JSON.parse(xhr.responseText);
+                window.location.href = response.url;
+            }
+        };
+
+        xhr.open('POST', window.location.href, true);
+        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+        xhr.send(formData);
+    };
+</script>
+
+<style>
+    label[for="id_data_publicacao"], label[for="id_legenda"], 
+    label[for="id_briefing_arte"], label[for="id_imagem_preview"] { display: none !important; }
+    .asteriskField { display: none !important; }
+</style>
 {% endblock %}

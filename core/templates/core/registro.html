@@ -1,0 +1,37 @@
+{% extends 'core/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="container d-flex justify-content-center align-items-center" style="min-height: 80vh;">
+    <div class="card border-0 shadow-lg p-4" style="border-radius: 20px; max-width: 500px; width: 100%;">
+        <div class="text-center mb-4">
+            <h2 class="fw-bold text-primary">AgencyOS</h2>
+            <p class="text-muted">Cadastro de Nova Colaboradora</p>
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="row g-2">
+                <div class="col-md-6">{{ form.first_name|as_crispy_field }}</div>
+                <div class="col-md-6">{{ form.last_name|as_crispy_field }}</div>
+            </div>
+            {{ form.username|as_crispy_field }}
+            {{ form.email|as_crispy_field }}
+            <div class="row g-2">
+                <div class="col-md-6">{{ form.password|as_crispy_field }}</div>
+                <div class="col-md-6">{{ form.confirm_password|as_crispy_field }}</div>
+            </div>
+
+            <div class="d-grid mt-4">
+                <button type="submit" class="btn btn-primary py-2 fw-bold shadow-sm" style="border-radius: 10px;">
+                    <i class="bi bi-person-plus-fill me-2"></i>Criar Conta
+                </button>
+            </div>
+        </form>
+        
+        <div class="text-center mt-3">
+            <small class="text-muted">Já tem uma conta? <a href="{% url 'login' %}" class="text-decoration-none">Faça login</a></small>
+        </div>
+    </div>
+</div>
+{% endblock %}

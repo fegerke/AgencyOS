@@ -1,0 +1,118 @@
+{% extends 'core/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="container-fluid p-0">
+    <div class="card border-0 shadow-sm mb-4" style="border-radius: 15px;">
+        <div class="card-body p-4">
+            <form method="post" class="row align-items-end g-3">
+                {% csrf_token %}
+                <input type="hidden" name="editar_cronograma" value="1">
+                
+                <div class="col-md-3">
+                    <label class="form-label fw-bold small text-uppercase">Cliente</label>
+                    {{ form_cronograma.cliente|as_crispy_field }}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-bold small text-uppercase">Título do Cronograma</label>
+                    {{ form_cronograma.titulo|as_crispy_field }}
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-bold small text-uppercase">Mês</label>
+                    {{ form_cronograma.mes|as_crispy_field }}
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-bold small text-uppercase">Ano</label>
+                    {{ form_cronograma.ano|as_crispy_field }}
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-dark w-100 rounded-pill fw-bold">
+                        <i class="bi bi-check-lg me-1"></i> Salvar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-4 px-1">
+        <h3 class="fw-bold h5 mb-0 text-dark">Posts Planejados</h3>
+        <div class="d-flex gap-2">
+            <a href="{% url 'listar_cronogramas' %}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+                <i class="bi bi-arrow-left"></i> Voltar
+            </a>
+            <a href="{% url 'cadastrar_post' %}?cronograma={{ cronograma.id }}" class="btn btn-primary btn-sm rounded-pill px-3">
+                <i class="bi bi-plus-lg"></i> Novo Post
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        {% for post in posts %}
+        <div class="col-md-4 col-lg-3">
+            <div class="card border-0 shadow-sm h-100 position-relative" style="border-radius: 15px; overflow: hidden;">
+                <div class="position-relative bg-dark" style="height: 200px;">
+                    {% if post.imagem_preview %}
+                        {% if ".mp4" in post.imagem_preview.url|lower or ".mov" in post.imagem_preview.url|lower %}
+                            <video class="w-100 h-100" style="object-fit: cover;">
+                                <source src="{{ post.imagem_preview.url }}" type="video/mp4">
+                            </video>
+                        {% else %}
+                            <img src="{{ post.imagem_preview.url }}" class="w-100 h-100" style="object-fit: cover;">
+                        {% endif %}
+                    {% else %}
+                        <div class="d-flex align-items-center justify-content-center h-100 text-white opacity-50">
+                            <i class="bi bi-image fs-1"></i>
+                        </div>
+                    {% endif %}
+                    
+                    <span class="position-absolute top-0 end-0 m-2 badge bg-dark opacity-75">
+                        {{ post.get_rede_social_display }}
+                    </span>
+                </div>
+
+                <div class="card-body p-3">
+                    <h6 class="fw-bold small mb-1 text-truncate">{{ post.titulo }}</h6>
+                    <p class="text-muted mb-3" style="font-size: 0.75rem;">{{ post.get_status_display }}</p>
+                    
+                    <div class="d-flex justify-content-between align-items-center border-top pt-3">
+                        <div class="btn-group">
+                            <a href="{% url 'editar_post' post.pk %}" class="btn btn-sm btn-outline-primary border-0"><i class="bi bi-pencil-square"></i></a>
+                            <button onclick="confirmarExclusaoPost('{% url 'excluir_post' post.pk %}', '{{ post.titulo }}')" class="btn btn-sm btn-outline-danger border-0">
+                                <i class="bi bi-trash3"></i>
+                            </button>
+                        </div>
+                        <small class="text-muted fw-bold" style="font-size: 0.65rem;">{{ post.data_publicacao|date:"d/m" }}</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center py-5">
+            <p class="text-muted italic">Nenhum post cadastrado neste cronograma.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+function confirmarExclusaoPost(url, titulo) {
+    Swal.fire({
+        title: 'Mover para lixeira?',
+        text: `Deseja enviar o post "${titulo}" para a lixeira do Dropbox?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        confirmButtonText: 'Sim, excluir',
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed) { window.location.href = url; }
+    })
+}
+</script>
+
+<style>
+    #div_id_cliente, #div_id_titulo, #div_id_mes, #div_id_ano { margin-bottom: 0 !important; }
+    #div_id_cliente label, #div_id_titulo label, #div_id_mes label, #div_id_ano label { display: none; }
+</style>
+{% endblock %}

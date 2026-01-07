@@ -1,0 +1,31 @@
+{% extends 'core/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="container-fluid p-0">
+    <div class="mb-4 px-1">
+        <h2 class="fw-bold h4 mb-1 text-dark">Novo Cronograma</h2>
+        <p class="text-muted small">Dê um nome e defina o período do planejamento.</p>
+    </div>
+
+    <div class="card border-0 shadow-sm p-4" style="border-radius: 15px;">
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label class="form-label fw-bold small text-uppercase">Título do Cronograma</label>
+                {{ form.titulo|as_crispy_field }}
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">{{ form.mes|as_crispy_field }}</div>
+                <div class="col-md-6 mb-3">{{ form.ano|as_crispy_field }}</div>
+            </div>
+            
+            <div class="d-grid mt-4">
+                <button type="submit" class="btn btn-primary py-3 fw-bold shadow-sm" style="border-radius: 12px; background: #6c5ce7; border: none;">
+                    <i class="bi bi-calendar-plus me-2"></i>Criar Cronograma
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,85 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<div class="container-fluid p-0">
+    <div class="d-flex justify-content-between align-items-center mb-4 px-1">
+        <div>
+            <h2 class="fw-bold h4 mb-1 text-dark">Cronogramas</h2>
+            <p class="text-muted small mb-0">Gestão de planejamentos mensais.</p>
+        </div>
+        <a href="{% url 'cadastrar_cronograma' %}" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" style="background: #6c5ce7; border: none;">
+            <i class="bi bi-plus-lg me-2"></i>Novo Cronograma
+        </a>
+    </div>
+
+    <div class="row g-4">
+        {% for cronograma in cronogramas %}
+        {% if not cronograma.excluido %}
+        <div class="col-md-4 col-lg-3">
+            <div class="card border-0 shadow-sm h-100 position-relative" style="border-radius: 20px; transition: transform 0.2s;">
+                
+                <div class="position-absolute top-0 end-0 m-3" style="z-index: 10;">
+                    <button type="button" onclick="confirmarExclusao('{% url 'excluir_cronograma' cronograma.pk %}', '{{ cronograma.titulo }}')" class="btn btn-link text-danger p-0 opacity-50 hover-opacity-100">
+                        <i class="bi bi-trash3-fill fs-5"></i>
+                    </button>
+                </div>
+                
+                <div class="card-body p-4 text-center">
+                    <div class="mb-3 mx-auto bg-light d-flex align-items-center justify-content-center" style="width: 55px; height: 55px; border-radius: 15px;">
+                        <i class="bi bi-calendar2-week text-primary fs-3"></i>
+                    </div>
+
+                    <h5 class="fw-bold text-dark mb-1 text-truncate" title="{{ cronograma.cliente.nome_fantasia }}">
+                        {{ cronograma.cliente.nome_fantasia }}
+                    </h5>
+
+                    <p class="text-muted mb-1" style="font-size: 0.95rem;">
+                        {{ cronograma.mes|stringformat:"02d" }} / {{ cronograma.ano }}
+                    </p>
+
+                    <p class="text-dark fw-bold mb-4" style="font-size: 0.95rem;">
+                        {{ cronograma.titulo }}
+                    </p>
+                    
+                    <a href="{% url 'detalhes_cronograma' cronograma.pk %}" class="btn btn-outline-primary btn-sm rounded-pill w-100 fw-bold py-2">
+                        Abrir Cronograma
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        {% empty %}
+        <div class="col-12 text-center py-5">
+            <p class="text-muted italic">Nenhum cronograma ativo encontrado.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+function confirmarExclusao(url, nome) {
+    Swal.fire({
+        title: 'Mover para lixeira?',
+        text: `O cronograma "${nome}" e todos os seus posts serão enviados para a lixeira do sistema e do Dropbox.`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Sim, excluir',
+        cancelButtonText: 'Cancelar',
+        reverseButtons: true
+    }).then((result) => {
+        if (result.isConfirmed) {
+            window.location.href = url;
+        }
+    })
+}
+</script>
+
+<style>
+    .card:hover { transform: translateY(-5px); }
+    .hover-opacity-100:hover { opacity: 1 !important; }
+    .btn-outline-primary { color: #6c5ce7; border-color: #6c5ce7; }
+    .btn-outline-primary:hover { background-color: #6c5ce7; border-color: #6c5ce7; color: white; }
+</style>
+{% endblock %}

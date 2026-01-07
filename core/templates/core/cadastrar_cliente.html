@@ -2,183 +2,118 @@
 {% load crispy_forms_tags %}
 
 {% block content %}
-<div class="container-fluid p-0">
-    <div class="mb-4 px-1">
-        <h2 class="fw-bold h4 mb-1 text-dark"><i class="bi bi-person-plus-fill text-primary me-2"></i>Novo Cliente</h2>
-        <p class="text-muted small">Preencha os dados abaixo para cadastrar um novo cliente no sistema.</p>
-    </div>
+<div class="container-fluid">
+    <h2 class="fw-bold h4 mb-4">{% if form.instance.pk %}Editar{% else %}Novo{% endif %} Cliente</h2>
 
-    <form method="post" autocomplete="off">
+    <form method="post" enctype="multipart/form-data" id="form-cliente" autocomplete="off">
         {% csrf_token %}
-        <input type="text" style="display:none"><input type="password" style="display:none">
+        <input type="text" name="fake_user" style="display:none">
+        <input type="password" name="fake_pass" style="display:none">
 
-        <ul class="nav nav-pills mb-4" id="pills-tab" role="tablist">
-            <li class="nav-item">
-                <button class="nav-link active fw-bold px-4" id="tab-geral" data-bs-toggle="pill" data-bs-target="#geral" type="button">Geral</button>
-            </li>
-            <li class="nav-item">
-                <button class="nav-link fw-bold px-4" id="tab-endereco" data-bs-toggle="pill" data-bs-target="#endereco" type="button">Endereço</button>
-            </li>
-            <li class="nav-item">
-                <button class="nav-link fw-bold px-4" id="tab-redes" data-bs-toggle="pill" data-bs-target="#redes" type="button">Redes Sociais</button>
-            </li>
+        <ul class="nav nav-pills mb-4" id="pills-tab">
+            <li class="nav-item"><button class="nav-link active" data-bs-toggle="pill" data-bs-target="#geral" type="button">Geral</button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#endereco" type="button">Endereço</button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#redes" type="button">Redes Sociais</button></li>
         </ul>
 
-        <div class="tab-content">
-            <div class="tab-pane fade show active" id="geral" role="tabpanel">
-                <div class="card border-0 shadow-sm p-4" style="border-radius: 15px;">
+        <div class="tab-content mt-3">
+            <div class="tab-pane fade show active" id="geral">
+                <div class="card border-0 shadow-sm p-4">
                     <div class="row g-3">
-                        <div class="col-md-3">{{ form.tipo_pessoa|as_crispy_field }}</div>
-                        <div class="col-md-9">{{ form.nome_fantasia|as_crispy_field }}</div>
+                        <div class="col-md-4">{{ form.tipo_pessoa|as_crispy_field }}</div>
+                        <div class="col-md-8">{{ form.nome_fantasia|as_crispy_field }}</div>
+                        <div id="div_cnpj" class="col-md-6">{{ form.cnpj|as_crispy_field }}</div>
+                        <div id="div_cpf" class="col-md-6 d-none">{{ form.cpf|as_crispy_field }}</div>
                         <div class="col-md-6">{{ form.razao_social|as_crispy_field }}</div>
-                        <div class="col-md-6">{{ form.documento|as_crispy_field }}</div>
                         <div class="col-md-6">{{ form.email|as_crispy_field }}</div>
                         <div class="col-md-6">{{ form.telefone|as_crispy_field }}</div>
                         <div class="col-md-6">{{ form.nome_contato|as_crispy_field }}</div>
                         <div class="col-md-6">{{ form.whatsapp_contato|as_crispy_field }}</div>
+                        <div class="col-12">
+                            <label class="form-label fw-bold small">Logo do Cliente</label>
+                            {{ form.logo }}
+                        </div>
                     </div>
                 </div>
             </div>
-
-            <div class="tab-pane fade" id="endereco" role="tabpanel">
-                <div class="card border-0 shadow-sm p-4" style="border-radius: 15px;">
+            
+            <div class="tab-pane fade" id="endereco">
+                <div class="card border-0 shadow-sm p-4">
                     <div class="row g-3">
                         <div class="col-md-3">{{ form.cep|as_crispy_field }}</div>
-                        <div class="col-md-9">{{ form.logradouro|as_crispy_field }}</div>
+                        <div class="col-md-7">{{ form.logradouro|as_crispy_field }}</div>
                         <div class="col-md-2">{{ form.numero|as_crispy_field }}</div>
                         <div class="col-md-4">{{ form.complemento|as_crispy_field }}</div>
-                        <div class="col-md-3">{{ form.bairro|as_crispy_field }}</div>
+                        <div class="col-md-4">{{ form.bairro|as_crispy_field }}</div>
                         <div class="col-md-3">{{ form.cidade|as_crispy_field }}</div>
+                        <div class="col-md-1">{{ form.estado|as_crispy_field }}</div>
                     </div>
                 </div>
             </div>
 
-            <div class="tab-pane fade" id="redes" role="tabpanel">
-                <div class="card border-0 shadow-sm p-4" style="border-radius: 15px;">
+            <div class="tab-pane fade" id="redes">
+                 <div class="card border-0 shadow-sm p-4">
                     {% for rede_id, rede_nome in redes_disponiveis %}
-                    <div class="rede-container border rounded p-3 mb-3 bg-light shadow-sm">
+                    <div class="rede-container border rounded p-3 mb-3">
                         <div class="form-check form-switch mb-3">
-                            <input class="form-check-input switch-rede" type="checkbox" id="check_{{ rede_id }}" name="rede_ativa_{{ rede_id }}">
-                            <label class="form-check-label fw-bold" for="check_{{ rede_id }}">{{ rede_nome }}</label>
+                            <input class="form-check-input switch-rede" type="checkbox" id="check_{{ rede_id }}" name="rede_ativa_{{ rede_id }}" 
+                                   {% if rede_id in form.instance.redes_sociais %}checked{% endif %}>
+                            <label class="form-check-label fw-bold">{{ rede_nome }}</label>
                         </div>
-                        
-                        <div class="campos-rede d-none" id="campos_{{ rede_id }}">
-                            <div class="row g-2">
-                                <div class="col-12 mb-2">
-                                    <label class="small fw-bold text-muted">Link do Perfil</label>
-                                    <input type="text" name="url_{{ rede_id }}" class="form-control" autocomplete="off">
-                                </div>
-                                <div class="col-6">
-                                    <label class="small fw-bold">Login</label>
-                                    <input type="text" name="user_{{ rede_id }}" class="form-control form-control-sm" autocomplete="new-password">
-                                </div>
-                                <div class="col-6">
-                                    <label class="small fw-bold">Senha</label>
-                                    <input type="password" name="pass_{{ rede_id }}" class="form-control form-control-sm" autocomplete="new-password">
-                                </div>
+                        <div class="campos-rede {% if rede_id not in form.instance.redes_sociais %}d-none{% endif %}" id="campos_{{ rede_id }}">
+                            <input type="text" name="url_{{ rede_id }}" class="form-control mb-2" placeholder="Link do Perfil" autocomplete="off" value="{% for k, v in form.instance.redes_sociais.items %}{% if k == rede_id %}{{ v.perfil }}{% endif %}{% endfor %}">
+                            <div class="row">
+                                <div class="col-6"><input type="text" name="user_{{ rede_id }}" class="form-control form-control-sm" placeholder="Usuário" autocomplete="off" value="{% for k, v in form.instance.redes_sociais.items %}{% if k == rede_id %}{{ v.usuario }}{% endif %}{% endfor %}"></div>
+                                <div class="col-6"><input type="password" name="pass_{{ rede_id }}" class="form-control form-control-sm" placeholder="Senha" autocomplete="new-password" value="{% for k, v in form.instance.redes_sociais.items %}{% if k == rede_id %}{{ v.senha }}{% endif %}{% endfor %}"></div>
                             </div>
                         </div>
                     </div>
                     {% endfor %}
-                </div>
+                 </div>
             </div>
         </div>
-
-        <div class="mt-4 mb-5 d-grid px-1">
-            <button type="submit" class="btn btn-primary py-3 fw-bold shadow" style="border-radius: 12px; background: #6c5ce7; border: none;">
-                <i class="bi bi-check-lg me-2"></i>Salvar Cliente
-            </button>
-        </div>
+        <button type="submit" class="btn btn-primary mt-4 w-100 py-3 shadow">Salvar Cliente</button>
     </form>
 </div>
-{% endblock %}
 
-{% block extra_js %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
+
 <script>
-    // 1. PROTEÇÃO CONTRA O "FRANK" (Preenchimento Automático Indesejado)
-    window.onload = function() {
-        setTimeout(() => {
-            ['id_cidade', 'id_whatsapp_contato'].forEach(id => {
-                const el = document.getElementById(id);
-                if (el && el.value === 'frank') el.value = '';
-            });
-        }, 200);
-    };
+    $(document).ready(function(){
+        $('.mask-tel').mask('(00) 00000-0000');
+        $('.mask-cnpj').mask('00.000.000/0000-00');
+        $('.mask-cpf').mask('000.000.000-00');
+        $('.mask-cep').mask('00000-000');
 
-    // 2. MÁSCARA DE TELEFONE (FIXO/CELULAR) COM CORREÇÃO DE BACKSPACE
-    function mascaraTelefone(id) {
-        const el = document.getElementById(id);
-        if (!el) return;
-
-        el.addEventListener('input', (e) => {
-            let v = e.target.value.replace(/\D/g, ''); // Remove não-dígitos
-            if (v.length > 11) v = v.substring(0, 11);
-
-            if (v.length > 10) {
-                // Formato Celular: (00) 00000-0000
-                v = v.replace(/^(\d{2})(\d{5})(\d{4}).*/, "($1) $2-$3");
-            } else if (v.length > 6) {
-                // Formato Fixo: (00) 0000-0000
-                v = v.replace(/^(\d{2})(\d{4})(\d{0,4}).*/, "($1) $2-$3");
-            } else if (v.length > 2) {
-                // Formato Inicial: (00) 000...
-                v = v.replace(/^(\d{2})(\d{0,5})/, "($1) $2");
-            } else if (v.length > 0) {
-                // Formato DDD: (00...
-                v = v.replace(/^(\d{0,2})/, "($1");
-            }
-            e.target.value = v;
-        });
-    }
-
-    // 3. MÁSCARA DUPLA CPF/CNPJ (11 ou 14 dígitos)
-    const docField = document.getElementById('doc_field');
-    if (docField) {
-        docField.addEventListener('input', (e) => {
-            let v = e.target.value.replace(/\D/g, '');
-            if (v.length <= 11) {
-                // CPF
-                v = v.replace(/(\d{3})(\d)/, "$1.$2");
-                v = v.replace(/(\d{3})(\d)/, "$1.$2");
-                v = v.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+        function toggleDocs() {
+            if ($('#id_tipo_pessoa').val() === 'PF') {
+                $('#div_cnpj').addClass('d-none'); $('#div_cpf').removeClass('d-none');
             } else {
-                // CNPJ
-                v = v.replace(/^(\d{2})(\d)/, "$1.$2");
-                v = v.replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3");
-                v = v.replace(/\.(\d{3})(\d)/, ".$1/$2");
-                v = v.replace(/(\d{4})(\d)/, "$1-$2");
+                $('#div_cnpj').removeClass('d-none'); $('#div_cpf').addClass('d-none');
             }
-            e.target.value = v.substring(0, 18);
-        });
-    }
+        }
+        $('#id_tipo_pessoa').change(toggleDocs);
+        toggleDocs();
 
-    // 4. MÁSCARA CEP
-    const cepField = document.getElementById('id_cep');
-    if (cepField) {
-        cepField.addEventListener('input', (e) => {
-            let v = e.target.value.replace(/\D/g, '');
-            e.target.value = v.replace(/^(\d{5})(\d)/, "$1-$2").substring(0, 9);
+        $('.switch-rede').change(function() {
+            const id = $(this).attr('id').replace('check_', '');
+            if(this.checked) $('#campos_' + id).removeClass('d-none');
+            else $('#campos_' + id).addClass('d-none');
         });
-    }
 
-    // 5. INICIALIZAÇÃO DOS EVENTOS
-    document.addEventListener('DOMContentLoaded', function() {
-        mascaraTelefone('id_telefone');
-        mascaraTelefone('id_whatsapp_contato');
-        
-        // Toggle das Redes Sociais (Exibir/Esconder campos ao clicar no switch)
-        document.querySelectorAll('.switch-rede').forEach(sw => {
-            sw.addEventListener('change', function() {
-                const container = document.getElementById('campos_' + this.id.replace('check_', ''));
-                if (container) {
-                    if (this.checked) {
-                        container.classList.remove('d-none');
-                    } else {
-                        container.classList.add('d-none');
-                    }
-                }
+        // Limpeza agressiva para remover "frank" e senhas automáticas
+        setTimeout(function() {
+            $('input[autocomplete="off"]').each(function() {
+                if ($(this).val() === 'frank') $(this).val('');
             });
-        });
+            $('input[type="password"]').each(function() {
+               // Limpa apenas se o valor for preenchido automaticamente (curto e suspeito)
+               if ($(this).attr('autocomplete') === 'new-password' && $(this).val().length > 0) {
+                   // Opcional: só limpa se você tiver certeza que o campo deve começar vazio
+               }
+            });
+        }, 500);
     });
 </script>
 {% endblock %}
