@@ -45,7 +45,7 @@ class BaseEmpresa(models.Model):
     razao_social = models.CharField(max_length=255, blank=True, null=True)
     cnpj = models.CharField(max_length=18, blank=True, null=True)
     cpf = models.CharField(max_length=14, blank=True, null=True)
-    tipo_pessoa = models.CharField(max_length=2, choices=[('PF', 'PESSOA FISICA'), ('PJ', 'PESSOA JURIDICA')], default='PJ')
+    tipo_pessoa = models.CharField(max_length=2, choices=[('PF', 'PESSOA FISICA'), ('PJ', 'PESSOA JURÍDICA')], default='PJ')
     email = models.EmailField()
     telefone = models.CharField(max_length=20, blank=True, null=True)
     logo = models.ImageField(upload_to='logos/', blank=True, null=True)
@@ -65,9 +65,11 @@ class Cliente(BaseEmpresa, BaseEndereco):
 
 class Cronograma(models.Model):
     cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name='cronogramas')
-    titulo = models.CharField(max_length=100, default="Geral") # NOVO CAMPO
+    titulo = models.CharField(max_length=100, default="Geral")
     mes = models.IntegerField()
     ano = models.IntegerField()
+    data_inicio = models.DateField(null=True, blank=True)
+    data_fim = models.DateField(null=True, blank=True)
     excluido = models.BooleanField(default=False)
     data_exclusao = models.DateTimeField(null=True, blank=True)
     
@@ -94,11 +96,31 @@ class Post(models.Model):
         mes_nome = meses.get(self.cronograma.mes, str(self.cronograma.mes))
         crono_titulo = slugify(self.cronograma.titulo)
         
-        # Agora a LIXEIRA fica DENTRO da AgencyOS
         if self.excluido:
             return f"AgencyOS/LIXEIRA/{cli}/{self.cronograma.ano}/{mes_nome}/{crono_titulo}/{slugify(self.titulo)}/"
         
         return f"AgencyOS/{cli}/{self.cronograma.ano}/{mes_nome}/{crono_titulo}/{slugify(self.titulo)}/"
+    
+    def gerar_caminho_base(self, lixeira=False):
+        prefixo = "AgencyOS/LIXEIRA/CLIENTES" if lixeira else "AgencyOS/CLIENTES"
+        cli = self.cronograma.cliente.nome_fantasia
+        ano = str(self.cronograma.ano)
+        meses = {1:"01 - JANEIRO", 2:"02 - FEVEREIRO", 3:"03 - MARCO", 4:"04 - ABRIL", 5:"05 - MAIO", 6:"06 - JUNHO", 7:"07 - JULHO", 8:"08 - AGOSTO", 9:"09 - SETEMBRO", 10:"10 - OUTUBRO", 11:"11 - NOVEMBRO", 12:"12 - DEZEMBRO"}
+        mes_nome = meses.get(self.cronograma.mes)
+        # Retorna o caminho da PASTA do post
+        return f"/{prefixo}/{cli}/{ano}/{mes_nome}/{self.cronograma.titulo}/{self.titulo}/".replace("//", "/")
+
+class PostArquivo(models.Model):
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='arquivos')
+    arquivo = models.FileField(upload_to='posts/previews/')
+    dropbox_path = models.CharField(max_length=500, blank=True, null=True)
+    ordem = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ['ordem']
+
+    def __str__(self):
+        return f"Arquivo {self.ordem} de {self.post.titulo}"
 
 class DropboxConfig(models.Model):
     agencia = models.OneToOneField(Agencia, on_delete=models.CASCADE, related_name='dropbox_config')

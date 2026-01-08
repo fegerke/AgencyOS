@@ -4,16 +4,18 @@
 {% block content %}
 <div class="container-fluid p-0">
     <div class="mb-4 px-1">
-        <h2 class="fw-bold h4 mb-1 text-dark"><i class="bi bi-gear-fill text-primary me-2"></i>Configurações da Agência</h2>
-        <p class="text-muted small">Dados da agência e identidade visual.</p>
+        <h2 class="fw-bold h4 mb-1 text-dark">
+            <i class="bi bi-gear-fill text-primary me-2"></i>Configurações da Agência
+        </h2>
+        <p class="text-muted small">Gerencie os dados da sua agência e integrações.</p>
     </div>
 
-    <form method="post" enctype="multipart/form-data" autocomplete="off">
+    <form method="post" enctype="multipart/form-data" id="form-agencia" autocomplete="off">
         {% csrf_token %}
         <input type="text" name="fake_user" style="display:none">
         <input type="password" name="fake_pass" style="display:none">
-        
-        <ul class="nav nav-pills mb-4" id="pills-tab" role="tablist">
+
+        <ul class="nav nav-pills mb-4" id="pills-tab">
             <li class="nav-item"><button class="nav-link active fw-bold px-4" data-bs-toggle="pill" data-bs-target="#geral" type="button">Geral</button></li>
             <li class="nav-item"><button class="nav-link fw-bold px-4" data-bs-toggle="pill" data-bs-target="#redes" type="button">Redes Sociais</button></li>
             <li class="nav-item"><button class="nav-link fw-bold px-4" data-bs-toggle="pill" data-bs-target="#integracoes" type="button">Integrações</button></li>
@@ -25,6 +27,7 @@
                     <div class="row g-3">
                         <div class="col-md-6">{{ form.nome_fantasia|as_crispy_field }}</div>
                         <div class="col-md-6">{{ form.razao_social|as_crispy_field }}</div>
+                        
                         <div class="col-md-4">{{ form.cnpj|as_crispy_field }}</div>
                         <div class="col-md-4">{{ form.email|as_crispy_field }}</div>
                         <div class="col-md-4">{{ form.telefone|as_crispy_field }}</div>
@@ -38,14 +41,21 @@
                         <div class="col-md-3">{{ form.cidade|as_crispy_field }}</div>
                         <div class="col-md-1">{{ form.estado|as_crispy_field }}</div>
                         
-                        <div class="col-12 mt-3">
-                            <label class="form-label fw-bold small">Logo da Agência</label>
-                            {{ form.logo }}
+                        <div class="col-12 mt-2">
+                            <label class="form-label fw-bold small text-muted">Logo da Agência</label>
+                            <div class="custom-file-upload border rounded p-3 bg-light">
+                                {{ form.logo }}
+                                {% if agencia.logo %}
+                                    <div class="mt-2 small text-primary">
+                                        <i class="bi bi-image me-1"></i> Logo atual: {{ agencia.logo.name }}
+                                    </div>
+                                {% endif %}
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-
+            
             <div class="tab-pane fade" id="redes">
                 <div class="card border-0 shadow-sm p-4" style="border-radius: 15px;">
                     {% for rede_id, rede_nome in redes_disponiveis %}
@@ -64,12 +74,12 @@
                                            value="{% for k, v in agencia.redes_sociais.items %}{% if k == rede_id %}{{ v.perfil|default:'' }}{% endif %}{% endfor %}">
                                 </div>
                                 <div class="col-6">
-                                    <label class="small fw-bold">Login</label>
+                                    <label class="small fw-bold text-muted">Login</label>
                                     <input type="text" name="user_{{ rede_id }}" class="form-control form-control-sm" autocomplete="off"
                                            value="{% for k, v in agencia.redes_sociais.items %}{% if k == rede_id %}{{ v.usuario|default:'' }}{% endif %}{% endfor %}">
                                 </div>
                                 <div class="col-6">
-                                    <label class="small fw-bold">Senha</label>
+                                    <label class="small fw-bold text-muted">Senha</label>
                                     <input type="password" name="pass_{{ rede_id }}" class="form-control form-control-sm" autocomplete="new-password"
                                            value="{% for k, v in agencia.redes_sociais.items %}{% if k == rede_id %}{{ v.senha|default:'' }}{% endif %}{% endfor %}">
                                 </div>
@@ -83,9 +93,9 @@
             <div class="tab-pane fade" id="integracoes">
                 <div class="card border-0 shadow-sm p-4" style="border-radius: 15px;">
                     <div class="p-4 border rounded bg-white shadow-sm" style="border-left: 5px solid #0061ff !important;">
-                        <h6 class="fw-bold mb-3"><i class="bi bi-dropbox text-primary me-2"></i>Dropbox Business</h6>
+                        <h6 class="fw-bold mb-3"><i class="bi bi-dropbox text-primary me-2"></i>Dropbox Storage</h6>
                         {% if agencia.dropbox_config %}
-                            <div class="alert alert-success small mb-3">Conectado com sucesso!</div>
+                            <div class="alert alert-success small mb-3">Sua agência está conectada ao Dropbox.</div>
                             <a href="{% url 'desconectar_dropbox' %}" class="btn btn-outline-danger btn-sm">Desconectar</a>
                         {% else %}
                             <a href="{% url 'conectar_dropbox' %}" class="btn btn-primary px-4">Conectar Dropbox</a>
@@ -95,24 +105,49 @@
             </div>
         </div>
 
-        <div class="mt-4 mb-5 d-grid">
-            <button type="submit" class="btn btn-primary py-3 fw-bold shadow" style="background: #6c5ce7; border: none; border-radius: 12px;">
-                Salvar Configurações
+        <div class="mt-4 mb-5">
+            <button type="submit" class="btn btn-primary w-100 py-3 fw-bold shadow-lg" style="background: #6c5ce7; border: none; border-radius: 12px;">
+                <i class="bi bi-check-lg me-2"></i>Salvar Configurações
             </button>
         </div>
     </form>
 </div>
+{% endblock %}
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+{% block extra_css %}
+<style>
+    #div_id_logo a, #div_id_logo br { display: none; }
+    #id_logo { display: block; width: 100%; font-size: 0.875rem; color: #64748b; }
+    input[type=file]::file-selector-button {
+        margin-right: 20px; border: none; background: #6c5ce7; padding: 8px 16px;
+        border-radius: 8px; color: #fff; cursor: pointer; transition: background .2s;
+    }
+    input[type=file]::file-selector-button:hover { background: #5b4bc4; }
+    #div_id_logo label { display: none; }
+</style>
+{% endblock %}
+
+{% block extra_js %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
 
 <script>
     $(document).ready(function(){
-        $('.mask-tel').mask('(00) 00000-0000');
-        $('.mask-cnpj').mask('00.000.000/0000-00');
-        $('.mask-cep').mask('00000-000');
+        // Máscara adaptativa para telefone (Fixo/Celular)
+        var spOptions = {
+            onKeyPress: function(val, e, field, options) {
+                field.mask(val.replace(/\D/g, '').length === 11 ? '(00) 00000-0000' : '(00) 0000-00009', options);
+            }
+        };
 
-        $('.switch-rede').change(function() {
+        $('#id_telefone').mask(function(val) {
+            return val.replace(/\D/g, '').length === 11 ? '(00) 00000-0000' : '(00) 0000-00009';
+        }, spOptions);
+
+        // Outras Máscaras
+        $('#id_cnpj').mask('00.000.000/0000-00');
+        $('#id_cep').mask('00000-000');
+
+        $('.switch-rede').on('change', function() {
             const id = $(this).attr('id').replace('check_', '');
             if(this.checked) $('#campos_' + id).removeClass('d-none');
             else $('#campos_' + id).addClass('d-none');

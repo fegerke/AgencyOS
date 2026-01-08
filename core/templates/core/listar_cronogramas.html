@@ -1,4 +1,5 @@
 {% extends 'core/base.html' %}
+
 {% block content %}
 <div class="container-fluid p-0">
     <div class="d-flex justify-content-between align-items-center mb-4 px-1">
@@ -6,14 +7,32 @@
             <h2 class="fw-bold h4 mb-1 text-dark">Cronogramas</h2>
             <p class="text-muted small mb-0">Gestão de planejamentos mensais.</p>
         </div>
-        <a href="{% url 'cadastrar_cronograma' %}" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" style="background: #6c5ce7; border: none;">
-            <i class="bi bi-plus-lg me-2"></i>Novo Cronograma
-        </a>
+
+        <div class="d-flex gap-3 align-items-center">
+            <form method="get" class="d-flex align-items-center gap-2">
+                <select name="cliente" class="form-select rounded-pill border-0 shadow-sm" onchange="this.form.submit()" style="min-width: 220px; height: 45px;">
+                    <option value="">Todos os Clientes</option>
+                    {% for cliente in clientes %}
+                        <option value="{{ cliente.id }}" {% if cliente.id == cliente_selecionado %}selected{% endif %}>
+                            {{ cliente.nome_fantasia }}
+                        </option>
+                    {% endfor %}
+                </select>
+                {% if cliente_selecionado %}
+                    <a href="{% url 'listar_cronogramas' %}" class="btn btn-light rounded-circle shadow-sm" title="Limpar Filtro">
+                        <i class="bi bi-x-lg"></i>
+                    </a>
+                {% endif %}
+            </form>
+
+            <a href="{% url 'cadastrar_cronograma' %}" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" style="background: #6c5ce7; border: none; height: 45px; display: flex; align-items: center;">
+                <i class="bi bi-plus-lg me-2"></i>Novo Cronograma
+            </a>
+        </div>
     </div>
 
     <div class="row g-4">
         {% for cronograma in cronogramas %}
-        {% if not cronograma.excluido %}
         <div class="col-md-4 col-lg-3">
             <div class="card border-0 shadow-sm h-100 position-relative" style="border-radius: 20px; transition: transform 0.2s;">
                 
@@ -28,7 +47,7 @@
                         <i class="bi bi-calendar2-week text-primary fs-3"></i>
                     </div>
 
-                    <h5 class="fw-bold text-dark mb-1 text-truncate" title="{{ cronograma.cliente.nome_fantasia }}">
+                    <h5 class="fw-bold text-dark mb-1 text-truncate px-2" title="{{ cronograma.cliente.nome_fantasia }}">
                         {{ cronograma.cliente.nome_fantasia }}
                     </h5>
 
@@ -36,20 +55,29 @@
                         {{ cronograma.mes|stringformat:"02d" }} / {{ cronograma.ano }}
                     </p>
 
-                    <p class="text-dark fw-bold mb-4" style="font-size: 0.95rem;">
+                    <p class="text-dark fw-bold mb-3" style="font-size: 0.95rem;">
                         {{ cronograma.titulo }}
                     </p>
+
+                    {% if cronograma.data_inicio %}
+                    <div class="bg-light rounded-pill py-1 px-2 mb-3 small text-muted">
+                        <i class="bi bi-calendar-range me-1"></i>
+                        {{ cronograma.data_inicio|date:"d/m" }} - {{ cronograma.data_fim|date:"d/m" }}
+                    </div>
+                    {% endif %}
                     
-                    <a href="{% url 'detalhes_cronograma' cronograma.pk %}" class="btn btn-outline-primary btn-sm rounded-pill w-100 fw-bold py-2">
+                    <a href="{% url 'detalhes_cronograma' cronograma.pk %}" class="btn btn-outline-primary btn-sm rounded-pill w-100 fw-bold py-2 mt-auto">
                         Abrir Cronograma
                     </a>
                 </div>
             </div>
         </div>
-        {% endif %}
         {% empty %}
         <div class="col-12 text-center py-5">
-            <p class="text-muted italic">Nenhum cronograma ativo encontrado.</p>
+            <div class="opacity-25 mb-3">
+                <i class="bi bi-folder-x" style="font-size: 3rem;"></i>
+            </div>
+            <p class="text-muted italic">Nenhum cronograma ativo encontrado para esta seleção.</p>
         </div>
         {% endfor %}
     </div>
@@ -60,7 +88,7 @@
 function confirmarExclusao(url, nome) {
     Swal.fire({
         title: 'Mover para lixeira?',
-        text: `O cronograma "${nome}" e todos os seus posts serão enviados para a lixeira do sistema e do Dropbox.`,
+        text: `O cronograma "${nome}" e todos os seus posts serão enviados para a lixeira.`,
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#d33',
@@ -81,5 +109,6 @@ function confirmarExclusao(url, nome) {
     .hover-opacity-100:hover { opacity: 1 !important; }
     .btn-outline-primary { color: #6c5ce7; border-color: #6c5ce7; }
     .btn-outline-primary:hover { background-color: #6c5ce7; border-color: #6c5ce7; color: white; }
+    .bg-soft-primary { background-color: #f0eeff; }
 </style>
 {% endblock %}

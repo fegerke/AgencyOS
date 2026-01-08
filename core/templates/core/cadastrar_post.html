@@ -3,23 +3,30 @@
 
 {% block content %}
 <div class="container-fluid p-0">
-    <div class="mb-4">
-        <h2 class="fw-bold h4 mb-1">{% if form.instance.pk %}Editar Post{% else %}Novo Post{% endif %}</h2>
-        <p class="text-muted small">
-            Cliente: <span class="badge bg-primary">
-                {{ cronograma_obj.cliente.nome_fantasia }}
-            </span>
-        </p>
+    <div class="mb-4 d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="fw-bold h4 mb-1">{% if form.instance.pk %}Editar Post{% else %}Novo Post{% endif %}</h2>
+            <p class="text-muted small mb-0">
+                Cliente: <span class="badge bg-primary">{{ cronograma_obj.cliente.nome_fantasia }}</span>
+            </p>
+        </div>
+        <a href="{% url 'detalhes_cronograma' cronograma_obj.id %}" class="btn btn-outline-secondary btn-sm rounded-pill px-3 fw-bold">
+            <i class="bi bi-arrow-left me-1"></i> Voltar
+        </a>
     </div>
 
     <div class="card border-0 shadow-sm p-4" style="border-radius: 15px;">
         <form id="postForm" method="post" enctype="multipart/form-data">
             {% csrf_token %}
+            
+            <div class="d-none">{{ form.cronograma|as_crispy_field }}</div>
+
             <div class="row">
-                <div class="d-none">{{ form.cronograma|as_crispy_field }}</div>
                 <div class="col-md-12 mb-3">{{ form.status|as_crispy_field }}</div>
             </div>
+
             <div class="mb-3">{{ form.titulo|as_crispy_field }}</div>
+
             <div class="row">
                 <div class="col-md-4 mb-3">
                     <label class="form-label fw-bold small">Data de Publicação</label>
@@ -33,8 +40,11 @@
             <div class="mb-3">{{ form.briefing_arte|as_crispy_field }}</div>
 
             <div class="mb-4">
-                <label class="form-label fw-bold text-primary"><i class="bi bi-dropbox me-2"></i>Arquivo de Preview</label>
-                {{ form.imagem_preview }}
+                <label class="form-label fw-bold text-primary">
+                    <i class="bi bi-images me-2"></i>Arquivos do Post (Carrossel ou Único)
+                </label>
+                {{ form.arquivos_multiplos }}
+                <small class="text-muted d-block mt-1">Você pode selecionar vários arquivos de uma vez.</small>
             </div>
             
             <div id="progressContainer" class="progress mb-4 d-none" style="height: 25px; border-radius: 12px;">
@@ -63,7 +73,7 @@
 
         progressContainer.classList.remove('d-none');
         btnSubmit.disabled = true;
-        btnSubmit.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processando...';
+        btnSubmit.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Enviando para o Dropbox...';
 
         xhr.upload.addEventListener('progress', function(e) {
             if (e.lengthComputable) {
@@ -77,6 +87,10 @@
             if (xhr.readyState === 4 && xhr.status === 200) {
                 const response = JSON.parse(xhr.responseText);
                 window.location.href = response.url;
+            } else if (xhr.readyState === 4) {
+                alert('Erro ao salvar o post. Verifique a conexão com o Dropbox.');
+                btnSubmit.disabled = false;
+                btnSubmit.innerHTML = '<i class="bi bi-cloud-arrow-up-fill me-2"></i>Tentar Novamente';
             }
         };
 
@@ -87,8 +101,10 @@
 </script>
 
 <style>
+    /* Estética e remoção de labels duplicados pelo Crispy */
     label[for="id_data_publicacao"], label[for="id_legenda"], 
-    label[for="id_briefing_arte"], label[for="id_imagem_preview"] { display: none !important; }
+    label[for="id_briefing_arte"] { display: none !important; }
     .asteriskField { display: none !important; }
+    .form-control:focus { border-color: #6c5ce7; box-shadow: 0 0 0 0.2rem rgba(108, 92, 231, 0.25); }
 </style>
 {% endblock %}

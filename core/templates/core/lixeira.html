@@ -1,0 +1,104 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="container-fluid p-0">
+    <div class="d-flex justify-content-between align-items-center mb-4 px-1">
+        <div>
+            <h2 class="fw-bold h4 mb-1 text-dark"><i class="bi bi-trash3-fill text-danger me-2"></i>Lixeira</h2>
+            <p class="text-muted small mb-0">Itens removidos que podem ser recuperados ou apagados permanentemente.</p>
+        </div>
+        <button onclick="confirmarLimpezaTotal()" class="btn btn-danger btn-sm rounded-pill px-4 fw-bold shadow-sm">
+            Esvaziar Lixeira
+        </button>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4" style="border-radius: 15px;">
+        <div class="card-header bg-white border-0 pt-4 px-4">
+            <h5 class="fw-bold mb-0 text-primary">Cronogramas Excluídos</h5>
+        </div>
+        <div class="table-responsive p-4">
+            <table class="table align-middle">
+                <thead>
+                    <tr class="text-muted small">
+                        <th>Cronograma / Cliente</th>
+                        <th>Data Exclusão</th>
+                        <th class="text-end">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for crono in cronogramas %}
+                    <tr>
+                        <td>
+                            <div class="fw-bold">{{ crono.titulo }}</div>
+                            <small class="text-muted">{{ crono.cliente.nome_fantasia }} ({{ crono.mes }}/{{ crono.ano }})</small>
+                        </td>
+                        <td>{{ crono.data_exclusao|date:"d/m/Y H:i" }}</td>
+                        <td class="text-end">
+                            <a href="{% url 'recuperar_cronograma' crono.pk %}" class="btn btn-sm btn-outline-success border-0 me-2" title="Recuperar Cronograma">
+                                <i class="bi bi-arrow-counterclockwise fs-5"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="3" class="text-center py-4 text-muted small">Nenhum cronograma na lixeira.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4" style="border-radius: 15px;">
+        <div class="card-header bg-white border-0 pt-4 px-4">
+            <h5 class="fw-bold mb-0 text-primary">Posts Excluídos Individualmente</h5>
+        </div>
+        <div class="table-responsive p-4">
+            <table class="table align-middle">
+                <thead>
+                    <tr class="text-muted small">
+                        <th>Post / Cliente</th>
+                        <th>Data Exclusão</th>
+                        <th class="text-end">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for post in posts %}
+                    <tr>
+                        <td>
+                            <div class="fw-bold">{{ post.titulo }}</div>
+                            <small class="text-muted">{{ post.cronograma.cliente.nome_fantasia }}</small>
+                        </td>
+                        <td>{{ post.data_exclusao|date:"d/m/Y H:i" }}</td>
+                        <td class="text-end">
+                            <a href="{% url 'recuperar_post' post.pk %}" class="btn btn-sm btn-outline-success border-0 me-2" title="Recuperar Post">
+                                <i class="bi bi-arrow-counterclockwise fs-5"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="3" class="text-center py-4 text-muted small">Nenhum post individual na lixeira.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+function confirmarLimpezaTotal() {
+    Swal.fire({
+        title: 'Esvaziar Lixeira?',
+        text: "Isto removerá permanentemente os registos do sistema. Os ficheiros no Dropbox seguirão a regra de limpeza automática (30 dias).",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        confirmButtonText: 'Sim, esvaziar',
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            window.location.href = "{% url 'limpar_lixeira_total' %}";
+        }
+    })
+}
+</script>
+{% endblock %}

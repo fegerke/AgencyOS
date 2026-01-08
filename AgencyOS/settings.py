@@ -7,7 +7,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY
 SECRET_KEY = 'django-insecure-!fnw*5jz$u9ynw+qh-j3!b*x@5%*6x*^7m#vh71l4%va$5*ssy'
-DEBUG = True
+DEBUG = os.getenv('DEBUG', 'True') == 'True'
 ALLOWED_HOSTS = ['agencyos-xq33.onrender.com', 'localhost', '127.0.0.1']
 
 # Application definition
@@ -93,7 +93,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # --- CONFIGURAÇÕES DE LOGIN ---
-LOGIN_REDIRECT_URL = 'index'
+LOGIN_REDIRECT_URL = 'home'
 LOGOUT_REDIRECT_URL = 'login'
 LOGIN_URL = 'login'
 

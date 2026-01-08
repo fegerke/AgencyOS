@@ -1,7 +1,23 @@
 from django import forms
-from .models import Agencia, Cliente, Post, Cronograma, REDES_OPCOES, FORMATO_CHOICES
+from .models import Agencia, Cliente, Post, Cronograma, PostArquivo, REDES_OPCOES, FORMATO_CHOICES
 from django.contrib.auth.models import User
 from datetime import datetime
+
+class MultipleFileInput(forms.ClearableFileInput):
+    allow_multiple_selected = True
+
+class MultipleFileField(forms.FileField):
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault("widget", MultipleFileInput(attrs={'class': 'form-control'}))
+        super().__init__(*args, **kwargs)
+
+    def clean(self, data, initial=None):
+        single_file_clean = super().clean
+        if isinstance(data, (list, tuple)):
+            result = [single_file_clean(d, initial) for d in data]
+        else:
+            result = single_file_clean(data, initial)
+        return result
 
 class AgenciaForm(forms.ModelForm):
     class Meta:
@@ -29,50 +45,63 @@ class ClienteForm(forms.ModelForm):
             'whatsapp_contato': forms.TextInput(attrs={'class': 'form-control mask-tel', 'id': 'id_whatsapp_contato', 'autocomplete': 'off'}),
             'cep': forms.TextInput(attrs={'class': 'form-control mask-cep', 'id': 'id_cep', 'autocomplete': 'off'}),
             'logo': forms.ClearableFileInput(attrs={'class': 'form-control'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control'}),
         }
 
-class CronogramaForm(forms.ModelForm): # CORRIGIDO AQUI
-    MESES_CHOICES = [(i, name) for i, name in enumerate(['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'], 1)]
-    current_year = datetime.now().year
-    ANOS_CHOICES = [(y, y) for y in range(current_year - 1, current_year + 5)]
-
-    mes = forms.ChoiceField(choices=MESES_CHOICES, widget=forms.Select(attrs={'class': 'form-select'}))
-    ano = forms.ChoiceField(choices=ANOS_CHOICES, widget=forms.Select(attrs={'class': 'form-select'}))
-
+class CronogramaForm(forms.ModelForm):
     class Meta:
         model = Cronograma
-        fields = ['cliente', 'titulo', 'mes', 'ano']
+        fields = ['cliente', 'titulo', 'mes', 'ano', 'data_inicio', 'data_fim']
         widgets = {
-            'cliente': forms.Select(attrs={'class': 'form-select'}),
-            'titulo': forms.TextInput(attrs={'class': 'form-control'}),
+            # O format='%Y-%m-%d' é essencial para o <input type="date"> do navegador
+            'data_inicio': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}, format='%Y-%m-%d'),
+            'data_fim': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}, format='%Y-%m-%d'),
         }
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['ano'].initial = datetime.now().year
+        user = kwargs.pop('user', None)
+        super(CronogramaForm, self).__init__(*args, **kwargs)
+        
+        # Preenchimento automático de Mês e Ano atuais
+        hoje = datetime.now()
+        if not self.instance.pk:  # Só preenche se for um novo registro
+            self.fields['mes'].initial = hoje.month
+            self.fields['ano'].initial = hoje.year
+
+        if user and hasattr(user, 'minha_agencia'):
+            self.fields['cliente'].queryset = Cliente.objects.filter(agencia=user.minha_agencia)
 
 class PostForm(forms.ModelForm):
+    arquivos_multiplos = MultipleFileField(label="Arquivos do Post", required=False)
+
     class Meta:
         model = Post
-        fields = ['cronograma', 'titulo', 'data_publicacao', 'rede_social', 'formato', 'legenda', 'briefing_arte', 'status', 'imagem_preview']
+        fields = ['cronograma', 'rede_social', 'formato', 'titulo', 'data_publicacao', 'legenda', 'briefing_arte', 'status']
         widgets = {
-            'data_publicacao': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date', 'class': 'form-control'}),
-            'status': forms.Select(attrs={'class': 'form-select'}),
-            'imagem_preview': forms.ClearableFileInput(attrs={'class': 'form-control'}),
+            # Use 'date' e não 'datetime-local' se o modelo for DateField
+            'data_publicacao': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}, format='%Y-%m-%d'),
+            'legenda': forms.Textarea(attrs={'rows': 4, 'class': 'form-control'}),
+            'briefing_arte': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if self.initial.get('cronograma') or self.instance.pk:
-            crono = self.initial.get('cronograma') or self.instance.cronograma
-            # Filtro de redes sociais ativas do cliente
+        
+        # 1. Recupera o cronograma (Edição ou Criação)
+        crono = None
+        if self.instance and hasattr(self.instance, 'cronograma') and self.instance.cronograma:
+            crono = self.instance.cronograma
+        elif 'initial' in kwargs and 'cronograma' in kwargs['initial']:
+            crono = kwargs['initial']['cronograma']
+
+        # 2. Força a data inicial se for edição
+        if self.instance and self.instance.data_publicacao:
+            self.fields['data_publicacao'].initial = self.instance.data_publicacao
+
+        # 3. Filtra as redes sociais ativas do cliente
+        if crono:
             redes_ativas = crono.cliente.redes_sociais.keys()
             self.fields['rede_social'].choices = [(id, nome) for id, nome in REDES_OPCOES if id in redes_ativas]
-            if 'instagram' in redes_ativas:
-                self.fields['rede_social'].initial = 'instagram'
-        
-        if self.instance and self.instance.data_publicacao:
-            self.fields['data_publicacao'].initial = self.instance.data_publicacao.strftime('%Y-%m-%d')
 
 class UserRegistrationForm(forms.ModelForm):
     password = forms.CharField(label="Senha", widget=forms.PasswordInput(attrs={'class': 'form-control'}))
@@ -81,16 +110,9 @@ class UserRegistrationForm(forms.ModelForm):
     class Meta:
         model = User
         fields = ['username', 'first_name', 'last_name', 'email']
-        widgets = {
-            'username': forms.TextInput(attrs={'class': 'form-control'}),
-            'first_name': forms.TextInput(attrs={'class': 'form-control'}),
-            'last_name': forms.TextInput(attrs={'class': 'form-control'}),
-            'email': forms.EmailInput(attrs={'class': 'form-control'}),
-        }
 
     def clean(self):
         cleaned_data = super().clean()
-        password = cleaned_data.get("password")
-        confirm_password = cleaned_data.get("confirm_password")
-        if password != confirm_password:
-            raise forms.ValidationError("As senhas não conferem!")
+        if cleaned_data.get("password") != cleaned_data.get("confirm_password"):
+            raise forms.ValidationError("As senhas não conferem.")
+        return cleaned_data
