@@ -15,15 +15,15 @@
         <input type="text" name="fake_user" style="display:none">
         <input type="password" name="fake_pass" style="display:none">
 
-        <ul class="nav nav-pills mb-4" id="pills-tab">
+        <ul class="nav nav-pills nav-justified mb-4" id="pills-tab">
             <li class="nav-item">
-                <button class="nav-link active fw-bold px-4" data-bs-toggle="pill" data-bs-target="#geral" type="button">Geral</button>
+                <button class="nav-link active fw-bold px-1 px-md-4 small" data-bs-toggle="pill" data-bs-target="#geral" type="button">Geral</button>
             </li>
             <li class="nav-item">
-                <button class="nav-link fw-bold px-4" data-bs-toggle="pill" data-bs-target="#redes" type="button">Redes Sociais</button>
+                <button class="nav-link fw-bold px-1 px-md-4 small" data-bs-toggle="pill" data-bs-target="#redes" type="button">Redes Sociais</button>
             </li>
             <li class="nav-item">
-                <button class="nav-link fw-bold px-4" data-bs-toggle="pill" data-bs-target="#integracoes" type="button">Integrações</button>
+                <button class="nav-link fw-bold px-1 px-md-4 small" data-bs-toggle="pill" data-bs-target="#integracoes" type="button">Integrações</button>
             </li>
         </ul>
 
@@ -31,15 +31,26 @@
             <div class="tab-pane fade show active" id="geral">
                 <div class="card border-0 shadow-sm p-4" style="border-radius: 15px;">
                     <div class="row">
-                        <div class="col-md-3 text-center border-end">
+                        <div class="col-md-3 text-center border-end mb-4 mb-md-0">
                             <label class="fw-bold small text-muted text-uppercase d-block mb-3">Logo da Agência</label>
-                            {% if agencia.logo %}
-                                <img src="{{ agencia.logo.url }}" class="img-fluid rounded shadow-sm mb-3" style="max-height: 120px; width: auto;">
-                            {% else %}
-                                <div class="bg-light rounded d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 120px; height: 120px;">
-                                    <i class="bi bi-building fs-1 text-muted"></i>
-                                </div>
-                            {% endif %}
+                            
+                            <div class="position-relative d-inline-block">
+                                {% if agencia.logo %}
+                                    <img src="{{ agencia.logo.url }}" class="img-fluid rounded shadow-sm mb-3" style="max-height: 120px; width: auto;">
+                                    
+                                    <div class="form-check mt-2 text-start">
+                                        <input class="form-check-input" type="checkbox" name="limpar_logo" id="limpar_logo">
+                                        <label class="form-check-label small text-danger fw-bold" for="limpar_logo">
+                                            Remover logo atual
+                                        </label>
+                                    </div>
+                                {% else %}
+                                    <div class="bg-light rounded d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 120px; height: 120px;">
+                                        <i class="bi bi-building fs-1 text-muted opacity-25"></i>
+                                    </div>
+                                {% endif %}
+                            </div>
+
                             {{ form.logo|as_crispy_field }}
                         </div>
                         
@@ -69,7 +80,6 @@
             <div class="tab-pane fade" id="redes">
                 <div class="card border-0 shadow-sm p-4" style="border-radius: 15px;">
                     <h6 class="fw-bold mb-4 text-primary">Canais Ativos da Agência</h6>
-                    
                     {% for rede_id, rede_nome in redes_disponiveis %}
                     <div class="rede-container border rounded p-3 mb-3 bg-light shadow-sm">
                         <div class="form-check form-switch mb-2">
@@ -78,7 +88,6 @@
                                    {% if rede_id in agencia.redes_sociais %}checked{% endif %}>
                             <label class="form-check-label fw-bold" for="check_{{ rede_id }}">{{ rede_nome }}</label>
                         </div>
-                        
                         <div class="campos-rede {% if rede_id not in agencia.redes_sociais %}d-none{% endif %}" id="campos_{{ rede_id }}">
                             <div class="mb-2">
                                 <label class="small fw-bold text-muted">URL do Perfil</label>
@@ -138,7 +147,7 @@
 </div>
 
 <style>
-    .nav-pills .nav-link { color: #6c757d; border-radius: 10px; transition: all 0.3s; }
+    .nav-pills .nav-link { color: #6c757d; border-radius: 10px; transition: all 0.3s; font-size: 0.95rem; }
     .nav-pills .nav-link.active { background-color: #6c5ce7 !important; color: white !important; box-shadow: 0 4px 12px rgba(108, 92, 231, 0.3); }
     .rede-container:hover { border-color: #6c5ce7 !important; }
     #div_id_logo label { display: none; }
@@ -150,10 +159,9 @@
 
 {% block extra_js %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
-
 <script>
     $(document).ready(function(){
-        // 1. MÁSCARAS
+        // MÁSCARAS
         var behavior = function (val) {
             return val.replace(/\D/g, '').length === 11 ? '(00) 00000-0000' : '(00) 0000-00009';
         };
@@ -162,27 +170,19 @@
                 field.mask(behavior.apply({}, arguments), options);
             }
         };
-
-        // Aplica usando os IDs que o Django gera (id_nome_do_campo)
         $('#id_telefone').mask(behavior, options);
         $('#id_cnpj').mask('00.000.000/0000-00');
         $('#id_cep').mask('00000-000');
 
-        // 2. LÓGICA DAS REDES SOCIAIS
-        
-        // Garante estado inicial correto ao carregar a página
+        // REDES SOCIAIS
         $('.switch-rede').each(function() {
             const id = $(this).attr('id').replace('check_', '');
-            if(this.checked) {
-                $('#campos_' + id).removeClass('d-none');
-            }
+            if(this.checked) { $('#campos_' + id).removeClass('d-none'); }
         });
 
-        // Evento de clique para abrir/fechar
         $(document).on('change', '.switch-rede', function() {
             const id = $(this).attr('id').replace('check_', '');
             const target = $('#campos_' + id);
-            
             if(this.checked) {
                 target.removeClass('d-none').hide().fadeIn(200);
             } else {

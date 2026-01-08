@@ -15,10 +15,10 @@
         <input type="text" name="fake_user" style="display:none">
         <input type="password" name="fake_pass" style="display:none">
 
-        <ul class="nav nav-pills mb-4" id="pills-tab">
-            <li class="nav-item"><button class="nav-link active fw-bold px-4" data-bs-toggle="pill" data-bs-target="#geral" type="button">Geral</button></li>
-            <li class="nav-item"><button class="nav-link fw-bold px-4" data-bs-toggle="pill" data-bs-target="#endereco" type="button">Endereço</button></li>
-            <li class="nav-item"><button class="nav-link fw-bold px-4" data-bs-toggle="pill" data-bs-target="#redes" type="button">Redes Sociais</button></li>
+        <ul class="nav nav-pills nav-justified mb-4" id="pills-tab">
+            <li class="nav-item"><button class="nav-link active fw-bold px-1 px-md-4 small" data-bs-toggle="pill" data-bs-target="#geral" type="button">Geral</button></li>
+            <li class="nav-item"><button class="nav-link fw-bold px-1 px-md-4 small" data-bs-toggle="pill" data-bs-target="#endereco" type="button">Endereço</button></li>
+            <li class="nav-item"><button class="nav-link fw-bold px-1 px-md-4 small" data-bs-toggle="pill" data-bs-target="#redes" type="button">Redes Sociais</button></li>
         </ul>
 
         <div class="tab-content mt-3">
@@ -27,17 +27,13 @@
                     <div class="row g-3">
                         <div class="col-md-4">{{ form.tipo_pessoa|as_crispy_field }}</div>
                         <div class="col-md-8">{{ form.nome_fantasia|as_crispy_field }}</div>
-                        
                         <div id="div_id_cnpj" class="col-md-6">{{ form.cnpj|as_crispy_field }}</div>
                         <div id="div_id_cpf" class="col-md-6 d-none">{{ form.cpf|as_crispy_field }}</div>
-                        
                         <div class="col-md-6">{{ form.razao_social|as_crispy_field }}</div>
                         <div class="col-md-6">{{ form.email|as_crispy_field }}</div>
-                        
                         <div class="col-md-4">{{ form.telefone|as_crispy_field }}</div>
                         <div class="col-md-4">{{ form.nome_contato|as_crispy_field }}</div>
                         <div class="col-md-4">{{ form.whatsapp_contato|as_crispy_field }}</div>
-                        
                         <div class="col-12 mt-2">
                             <label class="form-label fw-bold small text-muted">Logo do Cliente</label>
                             <div class="custom-file-upload border rounded p-3 bg-light">
@@ -109,36 +105,19 @@
 
 {% block extra_css %}
 <style>
-    /* Limpeza do campo de Logo (esconde textos do Django) */
     .custom-file-upload { position: relative; }
     #div_id_logo a, #div_id_logo br { display: none; }
-    #id_logo { 
-        display: block; 
-        width: 100%; 
-        font-size: 0.875rem;
-        color: #64748b;
-    }
-    /* Estiliza o input file padrão para ficar mais moderno */
+    #id_logo { display: block; width: 100%; font-size: 0.875rem; color: #64748b; }
     input[type=file]::file-selector-button {
-        margin-right: 20px;
-        border: none;
-        background: #6c5ce7;
-        padding: 8px 16px;
-        border-radius: 8px;
-        color: #fff;
-        cursor: pointer;
-        transition: background .2s ease-in-out;
+        margin-right: 20px; border: none; background: #6c5ce7; padding: 8px 16px; border-radius: 8px; color: #fff; cursor: pointer; transition: background .2s ease-in-out;
     }
     input[type=file]::file-selector-button:hover { background: #5b4bc4; }
-    
-    /* Ajuste de labels do Django que aparecem sozinhas no upload */
     #div_id_logo label { display: none; }
 </style>
 {% endblock %}
 
 {% block extra_js %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
-
 <script>
     $(document).ready(function(){
         // Configuração de Máscaras Adaptáveis
@@ -150,17 +129,14 @@
                 field.mask(behavior.apply({}, arguments), options);
             }
         };
-
         $('#id_telefone').mask(behavior, options);
         $('#id_whatsapp_contato').mask(behavior, options);
         $('#id_cep').mask('00000-000');
         $('#id_cnpj').mask('00.000.000/0000-00');
         $('#id_cpf').mask('000.000.000-00');
 
-        // Label Renomeado
         $('label[for="id_whatsapp_contato"]').text('Telefone Contato');
 
-        // Troca PF/PJ
         function toggleDocs() {
             const tipo = $('#id_tipo_pessoa').val();
             if (tipo === 'PF') {
@@ -173,18 +149,15 @@
                 $('label[for="id_razao_social"]').text('Razão Social');
             }
         }
-        
         $('#id_tipo_pessoa').on('change', toggleDocs);
         toggleDocs();
 
-        // Switches de Redes
         $('.switch-rede').on('change', function() {
             const id = $(this).attr('id').replace('check_', '');
             if(this.checked) $('#campos_' + id).removeClass('d-none');
             else $('#campos_' + id).addClass('d-none');
         });
 
-        // Limpeza Auto-fill
         setTimeout(function() {
             $('input[autocomplete="off"]').each(function() {
                 if ($(this).val() === 'frank') $(this).val('');

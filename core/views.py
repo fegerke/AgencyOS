@@ -115,16 +115,22 @@ def mover_pasta_dropbox(request, post, para_lixeira=True):
 
 @login_required
 def configurar_agencia(request):
-    # O seu models.py define related_name='minha_agencia' no campo dono
     agencia = request.user.minha_agencia 
     dbx_config = DropboxConfig.objects.filter(agencia=agencia).first()
 
     if request.method == 'POST':
         form = AgenciaForm(request.POST, request.FILES, instance=agencia)
+        
+        # --- LÓGICA PARA APAGAR LOGO ---
+        # Se o checkbox "limpar_logo" vier marcado, deletamos o arquivo
+        if request.POST.get('limpar_logo') == 'on':
+            agencia.logo.delete(save=False) # Deleta arquivo físico
+            agencia.logo = None # Limpa referência no banco
+            
         if form.is_valid():
             agencia_inst = form.save(commit=False)
             
-            # LÓGICA DAS REDES SOCIAIS
+            # Lógica das redes sociais (Mantida)
             novas_redes = {}
             for rede_id, rede_nome in REDES_OPCOES:
                 if request.POST.get(f'rede_ativa_{rede_id}'):
@@ -136,7 +142,7 @@ def configurar_agencia(request):
             agencia_inst.redes_sociais = novas_redes
             agencia_inst.save()
             
-            messages.success(request, "Configurações atualizadas com sucesso!")
+            messages.success(request, "Configurações atualizadas!")
             return redirect('configurar_agencia')
     else:
         form = AgenciaForm(instance=agencia)

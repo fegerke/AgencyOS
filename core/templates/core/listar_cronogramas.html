@@ -2,113 +2,81 @@
 
 {% block content %}
 <div class="container-fluid p-0">
-    <div class="d-flex justify-content-between align-items-center mb-4 px-1">
-        <div>
-            <h2 class="fw-bold h4 mb-1 text-dark">Cronogramas</h2>
-            <p class="text-muted small mb-0">Gestão de planejamentos mensais.</p>
+    <div class="row mb-4 align-items-center">
+        <div class="col-md-6 col-8">
+            <h2 class="fw-bold h4 mb-0 text-dark">Cronogramas</h2>
+            <p class="text-muted small mb-0">Gerencie o planejamento de posts.</p>
         </div>
-
-        <div class="d-flex gap-3 align-items-center">
-            <form method="get" class="d-flex align-items-center gap-2">
-                <select name="cliente" class="form-select rounded-pill border-0 shadow-sm" onchange="this.form.submit()" style="min-width: 220px; height: 45px;">
-                    <option value="">Todos os Clientes</option>
-                    {% for cliente in clientes %}
-                        <option value="{{ cliente.id }}" {% if cliente.id == cliente_selecionado %}selected{% endif %}>
-                            {{ cliente.nome_fantasia }}
-                        </option>
-                    {% endfor %}
-                </select>
-                {% if cliente_selecionado %}
-                    <a href="{% url 'listar_cronogramas' %}" class="btn btn-light rounded-circle shadow-sm" title="Limpar Filtro">
-                        <i class="bi bi-x-lg"></i>
-                    </a>
-                {% endif %}
-            </form>
-
-            <a href="{% url 'cadastrar_cronograma' %}" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" style="background: #6c5ce7; border: none; height: 45px; display: flex; align-items: center;">
-                <i class="bi bi-plus-lg me-2"></i>Novo Cronograma
+        <div class="col-md-6 col-4 text-end">
+            <a href="{% url 'cadastrar_cronograma' %}" class="btn btn-primary rounded-pill shadow-sm px-3 fw-bold" style="background: #6c5ce7; border: none;">
+                <i class="bi bi-plus-lg me-1"></i><span class="d-none d-md-inline">Novo Cronograma</span><span class="d-inline d-md-none">Novo</span>
             </a>
         </div>
     </div>
 
-    <div class="row g-4">
-        {% for cronograma in cronogramas %}
-        <div class="col-md-4 col-lg-3">
-            <div class="card border-0 shadow-sm h-100 position-relative" style="border-radius: 20px; transition: transform 0.2s;">
-                
-                <div class="position-absolute top-0 end-0 m-3" style="z-index: 10;">
-                    <button type="button" onclick="confirmarExclusao('{% url 'excluir_cronograma' cronograma.pk %}', '{{ cronograma.titulo }}')" class="btn btn-link text-danger p-0 opacity-50 hover-opacity-100">
-                        <i class="bi bi-trash3-fill fs-5"></i>
-                    </button>
-                </div>
-                
-                <div class="card-body p-4 text-center">
-                    <div class="mb-3 mx-auto bg-light d-flex align-items-center justify-content-center" style="width: 55px; height: 55px; border-radius: 15px;">
-                        <i class="bi bi-calendar2-week text-primary fs-3"></i>
-                    </div>
-
-                    <h5 class="fw-bold text-dark mb-1 text-truncate px-2" title="{{ cronograma.cliente.nome_fantasia }}">
-                        {{ cronograma.cliente.nome_fantasia }}
-                    </h5>
-
-                    <p class="text-muted mb-1" style="font-size: 0.95rem;">
-                        {{ cronograma.mes|stringformat:"02d" }} / {{ cronograma.ano }}
-                    </p>
-
-                    <p class="text-dark fw-bold mb-3" style="font-size: 0.95rem;">
-                        {{ cronograma.titulo }}
-                    </p>
-
-                    {% if cronograma.data_inicio %}
-                    <div class="bg-light rounded-pill py-1 px-2 mb-3 small text-muted">
-                        <i class="bi bi-calendar-range me-1"></i>
-                        {{ cronograma.data_inicio|date:"d/m" }} - {{ cronograma.data_fim|date:"d/m" }}
-                    </div>
-                    {% endif %}
-                    
-                    <a href="{% url 'detalhes_cronograma' cronograma.pk %}" class="btn btn-outline-primary btn-sm rounded-pill w-100 fw-bold py-2 mt-auto">
-                        Abrir Cronograma
-                    </a>
-                </div>
+    <div class="card border-0 shadow-sm mb-4 p-3" style="border-radius: 12px;">
+        <form method="get" class="row g-2 align-items-center">
+            <div class="col-auto">
+                <label class="fw-bold small text-muted me-2">Filtrar por Cliente:</label>
             </div>
-        </div>
-        {% empty %}
-        <div class="col-12 text-center py-5">
-            <div class="opacity-25 mb-3">
-                <i class="bi bi-folder-x" style="font-size: 3rem;"></i>
+            <div class="col-auto flex-grow-1">
+                <select name="cliente" class="form-select form-select-sm" onchange="this.form.submit()">
+                    <option value="">Todos os Clientes</option>
+                    {% for cli in clientes %}
+                        <option value="{{ cli.id }}" {% if cli.id == cliente_selecionado %}selected{% endif %}>{{ cli.nome_fantasia }}</option>
+                    {% endfor %}
+                </select>
             </div>
-            <p class="text-muted italic">Nenhum cronograma ativo encontrado para esta seleção.</p>
+        </form>
+    </div>
+
+    <div class="card border-0 shadow-sm" style="border-radius: 15px; overflow: hidden;">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="ps-4 py-3 small text-muted text-uppercase">Cliente</th>
+                        <th class="py-3 small text-muted text-uppercase">Cronograma</th>
+                        <th class="py-3 small text-muted text-uppercase">Período</th>
+                        <th class="py-3 small text-muted text-uppercase text-center">Posts</th>
+                        <th class="pe-4 py-3 text-end small text-muted text-uppercase">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for crono in cronogramas %}
+                    <tr>
+                        <td class="ps-4 fw-bold text-dark">{{ crono.cliente.nome_fantasia }}</td>
+                        <td>
+                            <a href="{% url 'detalhes_cronograma' crono.pk %}" class="text-decoration-none fw-bold" style="color: #6c5ce7;">
+                                {{ crono.titulo }}
+                            </a>
+                        </td>
+                        <td class="small text-muted">
+                            {{ crono.mes }}/{{ crono.ano }}
+                        </td>
+                        <td class="text-center">
+                            <span class="badge bg-light text-dark border">{{ crono.posts.count }}</span>
+                        </td>
+                        <td class="pe-4 text-end">
+                            <a href="{% url 'detalhes_cronograma' crono.pk %}" class="btn btn-sm btn-light rounded-circle shadow-sm me-1" title="Abrir">
+                                <i class="bi bi-arrow-right"></i>
+                            </a>
+                            <a href="{% url 'excluir_cronograma' crono.pk %}" class="btn btn-sm btn-light rounded-circle shadow-sm text-danger" title="Excluir" onclick="return confirm('Tem certeza que deseja excluir este cronograma?')">
+                                <i class="bi bi-trash"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center py-5 text-muted">
+                            <i class="bi bi-calendar-x fs-1 d-block mb-2 opacity-25"></i>
+                            Nenhum cronograma encontrado.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
-        {% endfor %}
     </div>
 </div>
-
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script>
-function confirmarExclusao(url, nome) {
-    Swal.fire({
-        title: 'Mover para lixeira?',
-        text: `O cronograma "${nome}" e todos os seus posts serão enviados para a lixeira.`,
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#6c757d',
-        confirmButtonText: 'Sim, excluir',
-        cancelButtonText: 'Cancelar',
-        reverseButtons: true
-    }).then((result) => {
-        if (result.isConfirmed) {
-            window.location.href = url;
-        }
-    })
-}
-</script>
-
-<style>
-    .card:hover { transform: translateY(-5px); }
-    .hover-opacity-100:hover { opacity: 1 !important; }
-    .btn-outline-primary { color: #6c5ce7; border-color: #6c5ce7; }
-    .btn-outline-primary:hover { background-color: #6c5ce7; border-color: #6c5ce7; color: white; }
-    .bg-soft-primary { background-color: #f0eeff; }
-</style>
 {% endblock %}
