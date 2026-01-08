@@ -24,4 +24,5 @@ urlpatterns = [
     path('conectar-dropbox/', views.conectar_dropbox, name='conectar_dropbox'),
     path('dropbox-callback/', views.dropbox_callback, name='dropbox_callback'),
     path('desconectar-dropbox/', views.desconectar_dropbox, name='desconectar_dropbox'),
+    path('cronograma/<int:pk>/pdf/', views.gerar_pdf_cronograma, name='gerar_pdf_cronograma'),
 ]

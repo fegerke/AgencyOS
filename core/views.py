@@ -1,13 +1,16 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.conf import settings
 from django.utils import timezone
 from datetime import timedelta
 import dropbox
 import requests
-
+from django.template.loader import render_to_string
+import weasyprint
+import base64
+from dropbox.files import ThumbnailSize, ThumbnailFormat, PathOrLink
 # Importação de todos os modelos e formulários necessários
 from .models import Agencia, Cliente, Post, DropboxConfig, Cronograma, PostArquivo, REDES_OPCOES
 from .forms import AgenciaForm, ClienteForm, PostForm, CronogramaForm, UserRegistrationForm
@@ -111,7 +114,98 @@ def mover_pasta_dropbox(request, post, para_lixeira=True):
     except Exception as e:
         print(f"Erro ao mover no Dropbox: {e}")
 
-# --- CLIENTES / AGENCIA ---
+# --- CLIENTES / AGENCIA / PDF ---
+
+@login_required
+def gerar_pdf_cronograma(request, pk):
+    cronograma = get_object_or_404(Cronograma, pk=pk, cliente__agencia=request.user.minha_agencia)
+    
+    # 1. PEGA TUDO EM ORDEM CRONOLÓGICA
+    todos_posts = cronograma.posts.filter(excluido=False).order_by('data_publicacao')
+
+    # --- DADOS AUXILIARES ---
+    instagram_handle = cronograma.cliente.redes_sociais.get('instagram', {}).get('usuario', '')
+    if instagram_handle and not instagram_handle.startswith('@'):
+        instagram_handle = f'@{instagram_handle}'
+
+    # --- PROCESSAMENTO DE IMAGENS (URL MAP) ---
+    url_map = {} 
+    dbx_config = DropboxConfig.objects.filter(agencia=request.user.minha_agencia).first()
+    
+    if dbx_config:
+        try:
+            dbx = dropbox.Dropbox(oauth2_access_token=dbx_config.access_token, oauth2_refresh_token=dbx_config.refresh_token, app_key=settings.DROPBOX_APP_KEY, app_secret=settings.DROPBOX_APP_SECRET)
+            for post in todos_posts:
+                url_data = {'url': None, 'is_video': False}
+                arquivo = post.arquivos.first()
+                if arquivo and arquivo.dropbox_path:
+                    try:
+                        ext = arquivo.dropbox_path.lower()
+                        is_video = ext.endswith(('.mp4', '.mov', '.avi', '.m4v'))
+                        url_data['is_video'] = is_video
+                        if is_video:
+                            _, res = dbx.files_get_thumbnail_v2(resource=PathOrLink.path(arquivo.dropbox_path), format=ThumbnailFormat.png, size=ThumbnailSize.w640h480)
+                            b64 = base64.b64encode(res.content).decode('utf-8')
+                            url_data['url'] = f"data:image/png;base64,{b64}"
+                        else:
+                            url_data['url'] = dbx.files_get_temporary_link(arquivo.dropbox_path).link
+                    except: pass
+                url_map[post.id] = url_data
+        except: pass
+
+    def injetar_url(post):
+        d = url_map.get(post.id, {'url': None, 'is_video': False})
+        post.pdf_img_url = d['url']
+        post.is_video = d['is_video']
+
+    # --- PAGINAÇÃO EM LOTES DE 9 ---
+    lotes_renderizacao = []
+    lista_completa = list(todos_posts)
+    
+    for i in range(0, len(lista_completa), 9):
+        lote_atual = lista_completa[i:i+9]
+        
+        for p in lote_atual:
+            injetar_url(p)
+            
+        # 1. Grade Visual (Invertida para Feed)
+        grade_visual = lote_atual[::-1]
+        
+        # 2. Trincas (Cronológico agrupado)
+        trincas_do_lote = []
+        for j in range(0, len(lote_atual), 3):
+            sub_trinca = lote_atual[j:j+3]
+            # Inverte ordem visual dentro da trinca (03-02-01)
+            trincas_do_lote.append(sub_trinca[::-1])
+            
+        # --- LÓGICA DO TÍTULO DA GRADE ---
+        numero_pagina = (i // 9) + 1
+        if numero_pagina == 1:
+            titulo_grade = cronograma.titulo
+        else:
+            # Formata com zero à esquerda: "Feed 04 - 02"
+            titulo_grade = f"{cronograma.titulo} - {numero_pagina:02d}"
+
+        lotes_renderizacao.append({
+            'posts_grade': grade_visual,
+            'trincas': trincas_do_lote,
+            'titulo_grade': titulo_grade # <--- Passamos o título já pronto
+        })
+
+    # --- RENDER ---
+    html_string = render_to_string('core/pdf_cronograma.html', {
+        'cronograma': cronograma,
+        'lotes': lotes_renderizacao,
+        'agencia': request.user.minha_agencia,
+        'instagram_handle': instagram_handle,
+    })
+
+    pdf_file = weasyprint.HTML(string=html_string).write_pdf()
+    response = HttpResponse(pdf_file, content_type='application/pdf')
+    safe_cli = "".join([c for c in cronograma.cliente.nome_fantasia if c.isalnum() or c==' ']).strip()
+    filename = f"Cronograma_{safe_cli.replace(' ', '_')}_{cronograma.mes}.pdf"
+    response['Content-Disposition'] = f'inline; filename="{filename}"'
+    return response
 
 @login_required
 def configurar_agencia(request):
@@ -279,7 +373,7 @@ def detalhes_cronograma(request, pk):
     else:
         form_cronograma = CronogramaForm(instance=cronograma, user=request.user)
 
-    posts = cronograma.posts.filter(excluido=False).order_by('data_publicacao')
+    posts = cronograma.posts.filter(excluido=False).order_by('-data_publicacao')
 
     # LÓGICA DROPBOX COM DETECÇÃO DE VÍDEO
     dbx_config = DropboxConfig.objects.filter(agencia=request.user.minha_agencia).first()

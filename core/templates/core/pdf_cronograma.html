@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Cronograma {{ cronograma.cliente.nome_fantasia }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        @page { size: 50.80cm 28.58cm; margin: 0; padding: 0; }
+        
+        html, body {
+            height: 100%; width: 100%; margin: 0; padding: 0;
+            font-family: 'Montserrat', sans-serif;
+            background: #fff; color: #000;
+            -webkit-print-color-adjust: exact;
+        }
+        
+        .page-break { page-break-after: always; }
+
+        /* === CAPA === */
+        .cover-page { width: 50.80cm; height: 28.58cm; position: relative; background: #fcfcfc; }
+        .cover-header { position: absolute; top: 2cm; left: 3cm; right: 3cm; border-bottom: 3px solid #000; height: 1cm; }
+        .cover-center { position: absolute; top: 50%; left: 3cm; transform: translateY(-50%); }
+        .main-title { font-size: 140px; font-weight: 700; line-height: 0.9; letter-spacing: -4px; color: #000; margin: 0; }
+        .main-title span { font-weight: 300; } 
+        .cover-footer { position: absolute; bottom: 2cm; left: 3cm; right: 3cm; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #000; padding-top: 1cm; }
+        .pill { display: inline-block; padding: 15px 50px; border-radius: 100px; font-size: 24px; color: #000; font-weight: 600; border: 2px solid transparent; }
+        .pill-gray { background: #e0e0e0; }
+        .pill-clean { background: transparent; border: 2px solid #ccc; }
+        .footer-group { display: flex; gap: 30px; }
+
+        /* === GRADE (AJUSTE DE TAMANHO DA PÍLULA AQUI) === */
+        .grid-page-container { width: 50.80cm; height: 28.58cm; display: flex; align-items: center; justify-content: flex-end; background: #f9f9f9; padding-right: 10cm; box-sizing: border-box; }
+        .layout-wrapper-flex { display: flex; align-items: center; justify-content: flex-end; gap: 0; }
+        
+        /* Pílula Menor e Mais Leve */
+        .feed-label-pill { 
+            background: #e0e0e0; 
+            padding: 20px 50px; /* Reduzido de 30px 80px */
+            border-radius: 100px; 
+            font-size: 35px; /* Reduzido de 50px */
+            font-weight: 700; 
+            color: #000; 
+            white-space: nowrap; 
+            z-index: 2; 
+        }
+        
+        /* Conector Mais Curto (Puxa a pílula pra perto da grade) */
+        .connector-line { 
+            height: 4px; 
+            background: #bbb; 
+            width: 150px; /* Reduzido de 300px */
+            margin: 0 -5px; 
+        }
+        
+        .instagram-grid { width: 600px; background: #fff; box-shadow: 0 40px 80px rgba(0,0,0,0.15); display: flex; flex-wrap: wrap; flex-shrink: 0; }
+        .grid-item { width: 200px; height: 266px; position: relative; overflow: hidden; background: #eee; border: 2px solid #fff; box-sizing: border-box; }
+        .grid-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .play-icon-small { position: absolute; top: 10px; right: 10px; color: white; font-size: 24px; text-shadow: 0 2px 5px rgba(0,0,0,0.5); z-index: 10; }
+
+        /* === TRINCAS === */
+        .trinca-page { width: 50.80cm; height: 28.58cm; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #fff; position: relative; }
+        .trinca-header-container { margin-bottom: 60px; position: relative; text-align: center; }
+        .trinca-header-pill { background: #e0e0e0; padding: 20px 80px; border-radius: 100px; font-size: 45px; font-weight: 300; color: #000; position: relative; z-index: 2; }
+        .line-up { position: absolute; bottom: 50%; left: 50%; width: 2px; height: 50vh; background: #ddd; z-index: 1; }
+        .line-down { position: absolute; top: 100%; left: 50%; width: 2px; height: 60px; background: #ddd; z-index: 1; }
+        .trinca-table { border-collapse: collapse; margin: 0 auto; }
+        .trinca-col { width: 400px; vertical-align: top; text-align: center; }
+        .trinca-spacer { width: 20px; }
+        .trinca-img-box-fixed { width: 400px; height: 533px !important; background: #eee; margin-bottom: 25px; position: relative; overflow: hidden; box-shadow: 0 15px 30px rgba(0,0,0,0.1); }
+        .trinca-img-real { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; }
+        .date-pill-small { display: inline-block; background: #e0e0e0; padding: 10px 50px; border-radius: 40px; font-size: 24px; color: #333; font-weight: 500; margin-bottom: 10px; }
+        .format-text { font-size: 28px; font-weight: 400; color: #000; }
+        .play-icon-large { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: rgba(255,255,255,0.9); font-size: 80px; text-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+
+        /* === POSTS INDIVIDUAIS === */
+        .individual-page { 
+            padding: 0; width: 50.80cm; height: 28.58cm; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background: #fcfcfc;
+        }
+        
+        .post-header-pill {
+            background: #e0e0e0; padding: 15px 60px; border-radius: 50px;
+            font-size: 35px; font-weight: 300; color: #000; margin-bottom: 60px; text-align: center;
+        }
+
+        .post-layout-table { width: 80%; border-collapse: collapse; }
+        .col-img { width: 45%; vertical-align: top; padding-right: 60px; }
+        .col-text { width: 55%; vertical-align: top; padding-top: 10px; }
+
+        .individual-img-box {
+            width: 100%; height: 750px; position: relative;
+            border-radius: 20px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+            background: #eee;
+        }
+
+        .post-main-image { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; }
+        .post-body-title { font-size: 32px; font-weight: 600; margin-bottom: 30px; line-height: 1.3; color: #000; }
+        .post-body-text { font-size: 26px; font-weight: 300; line-height: 1.6; color: #333; white-space: pre-wrap; }
+        
+        .briefing-box {
+            margin-top: 40px; padding: 20px; border-left: 5px solid #ccc;
+            background: #f5f5f5; color: #666; font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="cover-page page-break">
+        <div class="cover-header"></div> 
+        <div class="cover-center"><h1 class="main-title">Cronograma<br><span>de postagens</span></h1></div>
+        <div class="cover-footer">
+            <div class="footer-group">
+                {% if instagram_handle %}<div class="pill pill-gray">{{ instagram_handle }}</div>{% endif %}
+                <div class="pill pill-clean">{{ cronograma.cliente.nome_fantasia }}</div>
+            </div>
+            <div class="footer-group">
+                <div class="pill pill-clean">{{ cronograma.data_inicio|date:"d/m" }} - {{ cronograma.data_fim|date:"d/m" }}</div>
+            </div>
+        </div>
+    </div>
+
+    {% for lote in lotes %}
+
+    <div class="grid-page-container page-break">
+        <div class="layout-wrapper-flex">
+            <div class="feed-label-pill">{{ lote.titulo_grade }}</div>
+            
+            <div class="connector-line"></div>
+            <div class="instagram-grid">
+                {% for post in lote.posts_grade %}
+                    <div class="grid-item">
+                        {% if post.pdf_img_url %}
+                            <img src="{{ post.pdf_img_url }}" class="grid-img">
+                            {% if post.is_video %}<div class="play-icon-small">▶</div>{% endif %}
+                        {% endif %}
+                    </div>
+                {% endfor %}
+                {% if lote.posts_grade|length < 9 %}<div class="grid-item" style="background: #f4f4f4;"></div>{% endif %}
+            </div>
+        </div>
+    </div>
+
+    {% for trinca in lote.trincas %}
+    
+    <div class="trinca-page page-break">
+        <div class="trinca-header-container">
+            <div class="line-up"></div>
+            <div class="trinca-header-pill">Trinca #{{ forloop.counter }}</div>
+            <div class="line-down"></div>
+        </div>
+
+        <table class="trinca-table">
+            <tr>
+                {% for post in trinca %}
+                <td class="trinca-col">
+                    <div class="trinca-img-box-fixed">
+                        {% if post.pdf_img_url %}
+                            <img src="{{ post.pdf_img_url }}" class="trinca-img-real">
+                            {% if post.is_video %}<div class="play-icon-large">▶</div>{% endif %}
+                        {% endif %}
+                    </div>
+                    <div class="date-pill-small">{{ post.data_publicacao|date:"d/m" }}</div>
+                    <div class="format-text">{% if post.is_video %}Reel{% else %}Foto{% endif %}</div>
+                </td>
+                {% if not forloop.last %}<td class="trinca-spacer"></td>{% endif %}
+                {% endfor %}
+            </tr>
+        </table>
+    </div>
+
+    {% for post in trinca reversed %}
+    <div class="individual-page page-break">
+        <div class="post-header-pill">
+            Post {{ post.data_publicacao|date:"d/m" }} - {% if post.is_video %}Reel{% else %}Foto{% endif %}
+        </div>
+        <table class="post-layout-table">
+            <tr>
+                <td class="col-img">
+                    <div class="individual-img-box">
+                        {% if post.pdf_img_url %}
+                            <img src="{{ post.pdf_img_url }}" class="post-main-image">
+                            {% if post.is_video %}<div class="play-icon-large">▶</div>{% endif %}
+                        {% else %}
+                            <div class="post-main-image" style="background: #eee; display:flex; align-items:center; justify-content:center; color:#999;">Sem Mídia</div>
+                        {% endif %}
+                    </div>
+                </td>
+                <td class="col-text">
+                    {% if post.titulo %}<div class="post-body-title">{{ post.titulo }}</div>{% endif %}
+                    {% if post.legenda %}<div class="post-body-text">{{ post.legenda|linebreaksbr }}</div>{% endif %}
+                    {% if post.briefing_arte %}
+                        <div class="briefing-box"><strong>Briefing:</strong><br>{{ post.briefing_arte|linebreaksbr }}</div>
+                    {% endif %}
+                </td>
+            </tr>
+        </table>
+    </div>
+    {% endfor %}
+    {% endfor %}
+    
+    {% endfor %}
+
+</body>
+</html>
