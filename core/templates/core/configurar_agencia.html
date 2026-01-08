@@ -15,17 +15,13 @@
         <input type="text" name="fake_user" style="display:none">
         <input type="password" name="fake_pass" style="display:none">
 
-        <ul class="nav nav-pills nav-justified mb-4" id="pills-tab">
-            <li class="nav-item">
-                <button class="nav-link active fw-bold px-1 px-md-4 small" data-bs-toggle="pill" data-bs-target="#geral" type="button">Geral</button>
-            </li>
-            <li class="nav-item">
-                <button class="nav-link fw-bold px-1 px-md-4 small" data-bs-toggle="pill" data-bs-target="#redes" type="button">Redes Sociais</button>
-            </li>
-            <li class="nav-item">
-                <button class="nav-link fw-bold px-1 px-md-4 small" data-bs-toggle="pill" data-bs-target="#integracoes" type="button">Integrações</button>
-            </li>
-        </ul>
+        <div class="nav-segment-container mb-4 p-1 rounded-pill bg-light border d-flex">
+            <ul class="nav nav-pills nav-fill w-100" id="pills-tab">
+                <li class="nav-item"><button class="nav-link active rounded-pill small fw-bold" data-bs-toggle="pill" data-bs-target="#geral" type="button">Geral</button></li>
+                <li class="nav-item"><button class="nav-link rounded-pill small fw-bold" data-bs-toggle="pill" data-bs-target="#redes" type="button">Redes Sociais</button></li>
+                <li class="nav-item"><button class="nav-link rounded-pill small fw-bold" data-bs-toggle="pill" data-bs-target="#integracoes" type="button">Integrações</button></li>
+            </ul>
+        </div>
 
         <div class="tab-content" id="pills-tabContent">
             <div class="tab-pane fade show active" id="geral">
@@ -33,16 +29,12 @@
                     <div class="row">
                         <div class="col-md-3 text-center border-end mb-4 mb-md-0">
                             <label class="fw-bold small text-muted text-uppercase d-block mb-3">Logo da Agência</label>
-                            
                             <div class="position-relative d-inline-block">
                                 {% if agencia.logo %}
                                     <img src="{{ agencia.logo.url }}" class="img-fluid rounded shadow-sm mb-3" style="max-height: 120px; width: auto;">
-                                    
                                     <div class="form-check mt-2 text-start">
                                         <input class="form-check-input" type="checkbox" name="limpar_logo" id="limpar_logo">
-                                        <label class="form-check-label small text-danger fw-bold" for="limpar_logo">
-                                            Remover logo atual
-                                        </label>
+                                        <label class="form-check-label small text-danger fw-bold" for="limpar_logo">Remover logo</label>
                                     </div>
                                 {% else %}
                                     <div class="bg-light rounded d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 120px; height: 120px;">
@@ -50,10 +42,8 @@
                                     </div>
                                 {% endif %}
                             </div>
-
                             {{ form.logo|as_crispy_field }}
                         </div>
-                        
                         <div class="col-md-9 ps-md-4">
                             <div class="row">
                                 <div class="col-md-6">{{ form.nome_fantasia|as_crispy_field }}</div>
@@ -79,7 +69,7 @@
 
             <div class="tab-pane fade" id="redes">
                 <div class="card border-0 shadow-sm p-4" style="border-radius: 15px;">
-                    <h6 class="fw-bold mb-4 text-primary">Canais Ativos da Agência</h6>
+                    <h6 class="fw-bold mb-4 text-primary">Canais Ativos</h6>
                     {% for rede_id, rede_nome in redes_disponiveis %}
                     <div class="rede-container border rounded p-3 mb-3 bg-light shadow-sm">
                         <div class="form-check form-switch mb-2">
@@ -102,8 +92,13 @@
                                 </div>
                                 <div class="col-6">
                                     <label class="small fw-bold text-muted">Senha</label>
-                                    <input type="text" name="pass_{{ rede_id }}" class="form-control form-control-sm"
-                                           value="{% for k, v in agencia.redes_sociais.items %}{% if k == rede_id %}{{ v.senha|default:'' }}{% endif %}{% endfor %}">
+                                    <div class="input-group input-group-sm">
+                                        <input type="password" name="pass_{{ rede_id }}" class="form-control"
+                                               value="{% for k, v in agencia.redes_sociais.items %}{% if k == rede_id %}{{ v.senha|default:'' }}{% endif %}{% endfor %}">
+                                        <button class="btn btn-outline-secondary toggle-pass" type="button">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -114,21 +109,24 @@
 
             <div class="tab-pane fade" id="integracoes">
                 <div class="card border-0 shadow-sm p-4" style="border-radius: 15px;">
-                    <div class="p-4 border rounded bg-white shadow-sm" style="border-left: 5px solid #0061ff !important;">
-                        <div class="d-flex align-items-center justify-content-between">
-                            <div>
-                                <h6 class="fw-bold mb-1"><i class="bi bi-dropbox text-primary me-2"></i>Dropbox Storage</h6>
-                                <p class="text-muted small mb-0">Armazenamento de ativos e arquivos de posts.</p>
+                    <div class="p-4 border rounded bg-white shadow-sm h-100" style="border-left: 5px solid #0061ff !important;">
+                        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-dropbox text-primary fs-1 me-3"></i>
+                                <div>
+                                    <h6 class="fw-bold mb-1">Dropbox</h6>
+                                    <p class="text-muted small mb-0">Armazenamento de ativos.</p>
+                                </div>
                             </div>
-                            <div>
+                            <div class="w-100 w-md-auto text-end">
                                 {% if dbx_config %}
-                                    <div class="d-flex align-items-center">
+                                    <div class="d-flex align-items-center justify-content-md-end mt-2 mt-md-0">
                                         <span class="badge bg-success p-2 me-2"><i class="bi bi-check-circle-fill me-1"></i>Conectado</span>
-                                        <a href="{% url 'desconectar_dropbox' %}" class="btn btn-sm btn-outline-primary">Reconectar</a>
+                                        <a href="{% url 'desconectar_dropbox' %}" class="btn btn-sm btn-outline-danger">Sair</a>
                                     </div>
                                 {% else %}
-                                    <a href="{% url 'conectar_dropbox' %}" class="btn btn-primary rounded-pill px-4">
-                                        <i class="bi bi-cloud-plus me-2"></i>Conectar Dropbox
+                                    <a href="{% url 'conectar_dropbox' %}" class="btn btn-primary rounded-pill w-100 w-md-auto">
+                                        <i class="bi bi-cloud-plus me-2"></i>Conectar
                                     </a>
                                 {% endif %}
                             </div>
@@ -138,22 +136,26 @@
             </div>
         </div>
 
-        <div class="mt-4 text-end px-1">
+        <div class="mt-4 text-end px-1 mb-5">
             <button type="submit" class="btn btn-primary btn-lg rounded-pill px-5 fw-bold shadow" style="background: #6c5ce7; border: none;">
-                <i class="bi bi-save me-2"></i>Salvar Alterações
+                <i class="bi bi-save me-2"></i>Salvar
             </button>
         </div>
     </form>
 </div>
 
 <style>
-    .nav-pills .nav-link { color: #6c757d; border-radius: 10px; transition: all 0.3s; font-size: 0.95rem; }
-    .nav-pills .nav-link.active { background-color: #6c5ce7 !important; color: white !important; box-shadow: 0 4px 12px rgba(108, 92, 231, 0.3); }
-    .rede-container:hover { border-color: #6c5ce7 !important; }
-    #div_id_logo label { display: none; }
+    .nav-segment-container { background-color: #f1f3f5; padding: 4px; }
+    .nav-pills .nav-link { 
+        color: #6c757d; transition: all 0.2s; border-radius: 50rem !important; padding: 8px 12px;
+    }
+    .nav-pills .nav-link.active { 
+        background-color: #ffffff !important; color: #6c5ce7 !important; box-shadow: 0 2px 5px rgba(0,0,0,0.05); 
+    }
     input[type=file]::file-selector-button {
         background: #6c5ce7; border: none; padding: 8px 16px; border-radius: 8px; color: #fff; cursor: pointer;
     }
+    #div_id_logo label { display: none; }
 </style>
 {% endblock %}
 
@@ -161,32 +163,36 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
 <script>
     $(document).ready(function(){
-        // MÁSCARAS
-        var behavior = function (val) {
-            return val.replace(/\D/g, '').length === 11 ? '(00) 00000-0000' : '(00) 0000-00009';
-        };
-        var options = {
-            onKeyPress: function (val, e, field, options) {
-                field.mask(behavior.apply({}, arguments), options);
-            }
-        };
+        // Máscaras
+        var behavior = function (val) { return val.replace(/\D/g, '').length === 11 ? '(00) 00000-0000' : '(00) 0000-00009'; };
+        var options = { onKeyPress: function (val, e, field, options) { field.mask(behavior.apply({}, arguments), options); } };
         $('#id_telefone').mask(behavior, options);
         $('#id_cnpj').mask('00.000.000/0000-00');
         $('#id_cep').mask('00000-000');
 
-        // REDES SOCIAIS
         $('.switch-rede').each(function() {
             const id = $(this).attr('id').replace('check_', '');
-            if(this.checked) { $('#campos_' + id).removeClass('d-none'); }
+            if(this.checked) $('#campos_' + id).removeClass('d-none');
         });
 
         $(document).on('change', '.switch-rede', function() {
             const id = $(this).attr('id').replace('check_', '');
             const target = $('#campos_' + id);
-            if(this.checked) {
-                target.removeClass('d-none').hide().fadeIn(200);
+            if(this.checked) target.removeClass('d-none').hide().fadeIn(200);
+            else target.fadeOut(200, function() { $(this).addClass('d-none'); });
+        });
+
+        // SCRIPT DO OLHINHO (TOGGLE PASSWORD)
+        $(document).on('click', '.toggle-pass', function() {
+            const input = $(this).siblings('input');
+            const icon = $(this).find('i');
+            
+            if (input.attr('type') === 'password') {
+                input.attr('type', 'text');
+                icon.removeClass('bi-eye').addClass('bi-eye-slash');
             } else {
-                target.fadeOut(200, function() { $(this).addClass('d-none'); });
+                input.attr('type', 'password');
+                icon.removeClass('bi-eye-slash').addClass('bi-eye');
             }
         });
     });

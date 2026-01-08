@@ -3,11 +3,11 @@
 {% block content %}
 <div class="container-fluid p-0">
     <div class="row mb-4 align-items-center">
-        <div class="col-md-6 col-8">
+        <div class="col-8">
             <h2 class="fw-bold h4 mb-0 text-dark">Cronogramas</h2>
             <p class="text-muted small mb-0">Gerencie o planejamento de posts.</p>
         </div>
-        <div class="col-md-6 col-4 text-end">
+        <div class="col-4 text-end">
             <a href="{% url 'cadastrar_cronograma' %}" class="btn btn-primary rounded-pill shadow-sm px-3 fw-bold" style="background: #6c5ce7; border: none;">
                 <i class="bi bi-plus-lg me-1"></i><span class="d-none d-md-inline">Novo Cronograma</span><span class="d-inline d-md-none">Novo</span>
             </a>
@@ -16,9 +16,7 @@
 
     <div class="card border-0 shadow-sm mb-4 p-3" style="border-radius: 12px;">
         <form method="get" class="row g-2 align-items-center">
-            <div class="col-auto">
-                <label class="fw-bold small text-muted me-2">Filtrar por Cliente:</label>
-            </div>
+            <div class="col-auto"><label class="fw-bold small text-muted me-2">Filtrar por Cliente:</label></div>
             <div class="col-auto flex-grow-1">
                 <select name="cliente" class="form-select form-select-sm" onchange="this.form.submit()">
                     <option value="">Todos os Clientes</option>
@@ -30,53 +28,54 @@
         </form>
     </div>
 
-    <div class="card border-0 shadow-sm" style="border-radius: 15px; overflow: hidden;">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="bg-light">
-                    <tr>
-                        <th class="ps-4 py-3 small text-muted text-uppercase">Cliente</th>
-                        <th class="py-3 small text-muted text-uppercase">Cronograma</th>
-                        <th class="py-3 small text-muted text-uppercase">Período</th>
-                        <th class="py-3 small text-muted text-uppercase text-center">Posts</th>
-                        <th class="pe-4 py-3 text-end small text-muted text-uppercase">Ações</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for crono in cronogramas %}
-                    <tr>
-                        <td class="ps-4 fw-bold text-dark">{{ crono.cliente.nome_fantasia }}</td>
-                        <td>
-                            <a href="{% url 'detalhes_cronograma' crono.pk %}" class="text-decoration-none fw-bold" style="color: #6c5ce7;">
-                                {{ crono.titulo }}
-                            </a>
-                        </td>
-                        <td class="small text-muted">
+    <div class="row g-2 row-cols-1 row-cols-md-3 row-cols-lg-5 row-cols-xl-6">
+        {% for crono in cronogramas %}
+        <div class="col">
+            <div class="card border-0 shadow-sm h-100 card-hover" style="border-radius: 12px; transition: transform 0.2s;">
+                <div class="card-body p-3 d-flex flex-column"> <div class="mb-2">
+                        <div class="d-flex justify-content-between align-items-start mb-1">
+                            <span class="badge bg-light text-primary border text-truncate" style="max-width: 70%;">{{ crono.cliente.nome_fantasia }}</span>
+                            <span class="badge bg-primary rounded-pill" style="font-size: 0.7rem;">{{ crono.posts.count }}</span>
+                        </div>
+                        <h6 class="fw-bold text-dark mb-0 text-truncate" title="{{ crono.titulo }}">
+                            {{ crono.titulo }}
+                        </h6>
+                    </div>
+                    
+                    <hr class="my-2 opacity-25">
+
+                    <div class="mt-auto">
+                        <div class="d-flex align-items-center text-muted small mb-1" style="font-size: 0.8rem;">
+                            <i class="bi bi-calendar-month me-2 text-primary"></i> 
                             {{ crono.mes }}/{{ crono.ano }}
-                        </td>
-                        <td class="text-center">
-                            <span class="badge bg-light text-dark border">{{ crono.posts.count }}</span>
-                        </td>
-                        <td class="pe-4 text-end">
-                            <a href="{% url 'detalhes_cronograma' crono.pk %}" class="btn btn-sm btn-light rounded-circle shadow-sm me-1" title="Abrir">
-                                <i class="bi bi-arrow-right"></i>
-                            </a>
-                            <a href="{% url 'excluir_cronograma' crono.pk %}" class="btn btn-sm btn-light rounded-circle shadow-sm text-danger" title="Excluir" onclick="return confirm('Tem certeza que deseja excluir este cronograma?')">
-                                <i class="bi bi-trash"></i>
-                            </a>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="5" class="text-center py-5 text-muted">
-                            <i class="bi bi-calendar-x fs-1 d-block mb-2 opacity-25"></i>
-                            Nenhum cronograma encontrado.
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                        </div>
+                        <div class="d-flex align-items-center text-muted small" style="font-size: 0.75rem;">
+                            <i class="bi bi-calendar-range me-2 text-primary"></i>
+                            {{ crono.data_inicio|date:"d/m" }} a {{ crono.data_fim|date:"d/m" }}
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 d-flex mt-3">
+                        <a href="{% url 'detalhes_cronograma' crono.pk %}" class="btn btn-primary btn-sm rounded-pill flex-grow-1 fw-bold shadow-sm" style="background: #6c5ce7; border: none; font-size: 0.8rem;">
+                            Abrir
+                        </a>
+                        <a href="{% url 'excluir_cronograma' crono.pk %}" class="btn btn-outline-danger btn-sm rounded-circle shadow-sm" style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;" onclick="return confirm('Tem certeza que deseja excluir este cronograma?')">
+                            <i class="bi bi-trash" style="font-size: 0.8rem;"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
         </div>
+        {% empty %}
+        <div class="col-12 text-center py-5">
+            <div class="text-muted opacity-50 mb-3"><i class="bi bi-calendar-x fs-1"></i></div>
+            <p class="text-muted">Nenhum cronograma encontrado.</p>
+        </div>
+        {% endfor %}
     </div>
 </div>
+
+<style>
+    .card-hover:hover { transform: translateY(-3px); }
+</style>
 {% endblock %}

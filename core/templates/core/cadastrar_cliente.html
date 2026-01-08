@@ -7,7 +7,6 @@
         <h2 class="fw-bold h4 mb-1 text-dark">
             {% if form.instance.pk %}<i class="bi bi-pencil-square text-primary me-2"></i>Editar{% else %}<i class="bi bi-person-plus-fill text-primary me-2"></i>Novo{% endif %} Cliente
         </h2>
-        <p class="text-muted small">Preencha os dados cadastrais e redes sociais do cliente.</p>
     </div>
 
     <form method="post" enctype="multipart/form-data" id="form-cliente" autocomplete="off">
@@ -15,11 +14,13 @@
         <input type="text" name="fake_user" style="display:none">
         <input type="password" name="fake_pass" style="display:none">
 
-        <ul class="nav nav-pills nav-justified mb-4" id="pills-tab">
-            <li class="nav-item"><button class="nav-link active fw-bold px-1 px-md-4 small" data-bs-toggle="pill" data-bs-target="#geral" type="button">Geral</button></li>
-            <li class="nav-item"><button class="nav-link fw-bold px-1 px-md-4 small" data-bs-toggle="pill" data-bs-target="#endereco" type="button">Endereço</button></li>
-            <li class="nav-item"><button class="nav-link fw-bold px-1 px-md-4 small" data-bs-toggle="pill" data-bs-target="#redes" type="button">Redes Sociais</button></li>
-        </ul>
+        <div class="nav-segment-container mb-4 p-1 rounded-pill bg-light border d-flex">
+            <ul class="nav nav-pills nav-fill w-100" id="pills-tab">
+                <li class="nav-item"><button class="nav-link active rounded-pill small fw-bold" data-bs-toggle="pill" data-bs-target="#geral" type="button">Geral</button></li>
+                <li class="nav-item"><button class="nav-link rounded-pill small fw-bold" data-bs-toggle="pill" data-bs-target="#endereco" type="button">Endereço</button></li>
+                <li class="nav-item"><button class="nav-link rounded-pill small fw-bold" data-bs-toggle="pill" data-bs-target="#redes" type="button">Redes Sociais</button></li>
+            </ul>
+        </div>
 
         <div class="tab-content mt-3">
             <div class="tab-pane fade show active" id="geral">
@@ -38,11 +39,6 @@
                             <label class="form-label fw-bold small text-muted">Logo do Cliente</label>
                             <div class="custom-file-upload border rounded p-3 bg-light">
                                 {{ form.logo }}
-                                {% if form.instance.logo %}
-                                    <div class="mt-2 small text-primary">
-                                        <i class="bi bi-image me-1"></i> Logo atual: {{ form.instance.logo.name }}
-                                    </div>
-                                {% endif %}
                             </div>
                         </div>
                     </div>
@@ -84,7 +80,13 @@
                                 </div>
                                 <div class="col-6">
                                     <label class="small fw-bold text-muted">Senha</label>
-                                    <input type="password" name="pass_{{ rede_id }}" class="form-control form-control-sm" autocomplete="new-password" value="{% for k, v in form.instance.redes_sociais.items %}{% if k == rede_id %}{{ v.senha|default:'' }}{% endif %}{% endfor %}">
+                                    <div class="input-group input-group-sm">
+                                        <input type="password" name="pass_{{ rede_id }}" class="form-control"
+                                               value="{% for k, v in form.instance.redes_sociais.items %}{% if k == rede_id %}{{ v.senha|default:'' }}{% endif %}{% endfor %}">
+                                        <button class="btn btn-outline-secondary toggle-pass" type="button">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -101,17 +103,19 @@
         </div>
     </form>
 </div>
-{% endblock %}
 
-{% block extra_css %}
 <style>
-    .custom-file-upload { position: relative; }
-    #div_id_logo a, #div_id_logo br { display: none; }
-    #id_logo { display: block; width: 100%; font-size: 0.875rem; color: #64748b; }
-    input[type=file]::file-selector-button {
-        margin-right: 20px; border: none; background: #6c5ce7; padding: 8px 16px; border-radius: 8px; color: #fff; cursor: pointer; transition: background .2s ease-in-out;
+    .nav-segment-container { background-color: #f1f3f5; padding: 4px; }
+    .nav-pills .nav-link { 
+        color: #6c757d; transition: all 0.2s; border-radius: 50rem !important; padding: 8px 12px;
     }
-    input[type=file]::file-selector-button:hover { background: #5b4bc4; }
+    .nav-pills .nav-link.active { 
+        background-color: #ffffff !important; color: #6c5ce7 !important; box-shadow: 0 2px 5px rgba(0,0,0,0.05); 
+    }
+    .custom-file-upload { position: relative; }
+    input[type=file]::file-selector-button {
+        margin-right: 20px; border: none; background: #6c5ce7; padding: 8px 16px; border-radius: 8px; color: #fff; cursor: pointer;
+    }
     #div_id_logo label { display: none; }
 </style>
 {% endblock %}
@@ -120,37 +124,25 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
 <script>
     $(document).ready(function(){
-        // Configuração de Máscaras Adaptáveis
-        var behavior = function (val) {
-            return val.replace(/\D/g, '').length === 11 ? '(00) 00000-0000' : '(00) 0000-00009';
-        };
-        var options = {
-            onKeyPress: function (val, e, field, options) {
-                field.mask(behavior.apply({}, arguments), options);
-            }
-        };
+        // ... (Mantendo a lógica de máscaras e toggleDocs existente) ...
+        var behavior = function (val) { return val.replace(/\D/g, '').length === 11 ? '(00) 00000-0000' : '(00) 0000-00009'; };
+        var options = { onKeyPress: function (val, e, field, options) { field.mask(behavior.apply({}, arguments), options); } };
         $('#id_telefone').mask(behavior, options);
         $('#id_whatsapp_contato').mask(behavior, options);
         $('#id_cep').mask('00000-000');
         $('#id_cnpj').mask('00.000.000/0000-00');
         $('#id_cpf').mask('000.000.000-00');
-
         $('label[for="id_whatsapp_contato"]').text('Telefone Contato');
-
+        
         function toggleDocs() {
             const tipo = $('#id_tipo_pessoa').val();
             if (tipo === 'PF') {
-                $('#div_id_cnpj').addClass('d-none');
-                $('#div_id_cpf').removeClass('d-none');
-                $('label[for="id_razao_social"]').text('Nome Completo');
+                $('#div_id_cnpj').addClass('d-none'); $('#div_id_cpf').removeClass('d-none'); $('label[for="id_razao_social"]').text('Nome Completo');
             } else {
-                $('#div_id_cnpj').removeClass('d-none');
-                $('#div_id_cpf').addClass('d-none');
-                $('label[for="id_razao_social"]').text('Razão Social');
+                $('#div_id_cnpj').removeClass('d-none'); $('#div_id_cpf').addClass('d-none'); $('label[for="id_razao_social"]').text('Razão Social');
             }
         }
-        $('#id_tipo_pessoa').on('change', toggleDocs);
-        toggleDocs();
+        $('#id_tipo_pessoa').on('change', toggleDocs); toggleDocs();
 
         $('.switch-rede').on('change', function() {
             const id = $(this).attr('id').replace('check_', '');
@@ -158,11 +150,18 @@
             else $('#campos_' + id).addClass('d-none');
         });
 
-        setTimeout(function() {
-            $('input[autocomplete="off"]').each(function() {
-                if ($(this).val() === 'frank') $(this).val('');
-            });
-        }, 500);
+        // OLHINHO
+        $(document).on('click', '.toggle-pass', function() {
+            const input = $(this).siblings('input');
+            const icon = $(this).find('i');
+            if (input.attr('type') === 'password') {
+                input.attr('type', 'text');
+                icon.removeClass('bi-eye').addClass('bi-eye-slash');
+            } else {
+                input.attr('type', 'password');
+                icon.removeClass('bi-eye-slash').addClass('bi-eye');
+            }
+        });
     });
 </script>
 {% endblock %}
