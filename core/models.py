@@ -59,6 +59,7 @@ class Agencia(BaseEmpresa, BaseEndereco):
 
 class Cliente(BaseEmpresa, BaseEndereco):
     agencia = models.ForeignKey(Agencia, on_delete=models.CASCADE, related_name='clientes')
+    usuario_acesso = models.OneToOneField(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='cliente_vinculado')
     nome_contato = models.CharField(max_length=100, blank=True, null=True)
     whatsapp_contato = models.CharField(max_length=20, blank=True, null=True)
     def __str__(self): return self.nome_fantasia
