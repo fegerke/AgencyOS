@@ -264,7 +264,6 @@ def cadastrar_cronograma(request):
 def detalhes_cronograma(request, pk):
     cronograma = get_object_or_404(Cronograma, pk=pk, cliente__agencia=request.user.minha_agencia)
     
-    # IMPORTANTE: Use 'form_cronograma' para bater com o que o template espera
     if request.method == 'POST' and 'editar_cronograma' in request.POST:
         form_cronograma = CronogramaForm(request.POST, instance=cronograma, user=request.user)
         if form_cronograma.is_valid():
@@ -275,6 +274,37 @@ def detalhes_cronograma(request, pk):
         form_cronograma = CronogramaForm(instance=cronograma, user=request.user)
 
     posts = cronograma.posts.filter(excluido=False).order_by('data_publicacao')
+
+    # LÓGICA DROPBOX COM DETECÇÃO DE VÍDEO
+    dbx_config = DropboxConfig.objects.filter(agencia=request.user.minha_agencia).first()
+    
+    if dbx_config:
+        try:
+            dbx = dropbox.Dropbox(
+                oauth2_access_token=dbx_config.access_token,
+                oauth2_refresh_token=dbx_config.refresh_token,
+                app_key=settings.DROPBOX_APP_KEY,
+                app_secret=settings.DROPBOX_APP_SECRET
+            )
+            
+            for post in posts:
+                arquivo_principal = post.arquivos.first()
+                post.temp_img_url = None
+                post.is_video = False # Flag para o HTML saber o que renderizar
+
+                if arquivo_principal and arquivo_principal.dropbox_path:
+                    try:
+                        # Verifica extensão para decidir se é video
+                        ext = arquivo_principal.dropbox_path.lower()
+                        if ext.endswith(('.mp4', '.mov', '.avi', '.m4v')):
+                            post.is_video = True
+                        
+                        post.temp_img_url = dbx.files_get_temporary_link(arquivo_principal.dropbox_path).link
+                    except Exception as e:
+                        print(f"Erro link temp: {e}")
+        except Exception as e:
+            print(f"Erro conexão Dropbox: {e}")
+
     return render(request, 'core/detalhes_cronograma.html', {
         'cronograma': cronograma,
         'posts': posts,
@@ -318,37 +348,29 @@ def recuperar_cronograma(request, pk):
 # --- POSTS ---
 
 @login_required
-def cadastrar_post(request): # Removido o cronograma_id daqui
-    # Pegamos o ID da URL (?cronograma=25)
+def cadastrar_post(request):
     cronograma_id = request.GET.get('cronograma')
-    
-    # Buscamos o objeto ou retornamos 404
-    cronograma_obj = get_object_or_404(
-        Cronograma, 
-        pk=cronograma_id, 
-        cliente__agencia=request.user.minha_agencia
-    )
+    cronograma_obj = get_object_or_404(Cronograma, pk=cronograma_id, cliente__agencia=request.user.minha_agencia)
     
     if request.method == 'POST':
         form = PostForm(request.POST, request.FILES)
         if form.is_valid():
             post = form.save()
             arquivos = request.FILES.getlist('arquivos_multiplos')
-            
             if arquivos:
                 for f in arquivos:
                     fazer_upload_dropbox_unico(request, post, f)
             
-            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-                return JsonResponse({'status': 'success', 'url': f'/cronograma/{cronograma_obj.id}/'})
+            # SUCESSO! Redireciona de volta para o CRONOGRAMA
+            messages.success(request, "Post criado com sucesso!")
             return redirect('detalhes_cronograma', pk=cronograma_obj.id)
     else:
-        # Preenchemos o formulário com o cronograma correto
         form = PostForm(initial={'cronograma': cronograma_obj})
         
     return render(request, 'core/cadastrar_post.html', {
         'form': form, 
-        'cronograma_obj': cronograma_obj
+        'cronograma_obj': cronograma_obj,
+        'arquivos_existentes': [] 
     })
 
 @login_required
@@ -365,13 +387,43 @@ def editar_post(request, pk):
                 for f in arquivos:
                     fazer_upload_dropbox_unico(request, post, f)
             
-            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-                return JsonResponse({'status': 'success', 'url': f'/cronograma/{cronograma_obj.id}/'})
+            # SUCESSO! Redireciona de volta para o CRONOGRAMA
+            messages.success(request, "Post atualizado com sucesso!")
             return redirect('detalhes_cronograma', pk=cronograma_obj.id)
     else:
         form = PostForm(instance=post)
+
+    # --- LÓGICA DE PREVIEW ---
+    arquivos_existentes = post.arquivos.all()
+    dbx_config = DropboxConfig.objects.filter(agencia=request.user.minha_agencia).first()
+    
+    if dbx_config:
+        try:
+            dbx = dropbox.Dropbox(
+                oauth2_access_token=dbx_config.access_token,
+                oauth2_refresh_token=dbx_config.refresh_token,
+                app_key=settings.DROPBOX_APP_KEY,
+                app_secret=settings.DROPBOX_APP_SECRET
+            )
+            for arq in arquivos_existentes:
+                arq.temp_url = None
+                arq.is_video = False
+                if arq.dropbox_path:
+                    try:
+                        ext = arq.dropbox_path.lower()
+                        if ext.endswith(('.mp4', '.mov', '.avi', '.m4v')):
+                            arq.is_video = True
+                        arq.temp_url = dbx.files_get_temporary_link(arq.dropbox_path).link
+                    except Exception:
+                        pass
+        except Exception:
+            pass
         
-    return render(request, 'core/cadastrar_post.html', {'form': form, 'cronograma_obj': cronograma_obj})
+    return render(request, 'core/cadastrar_post.html', {
+        'form': form, 
+        'cronograma_obj': cronograma_obj,
+        'arquivos_existentes': arquivos_existentes 
+    })
 
 @login_required
 def excluir_post(request, pk):
@@ -401,6 +453,20 @@ def recuperar_post(request, pk):
     
     messages.success(request, f"Post '{post.titulo}' recuperado!")
     return redirect('lixeira')
+
+@login_required
+def excluir_arquivo_post(request, pk):
+    arquivo = get_object_or_404(PostArquivo, pk=pk, post__cronograma__cliente__agencia=request.user.minha_agencia)
+    post_id = arquivo.post.id
+    
+    # Opcional: Deletar do Dropbox também se quiser
+    # Por segurança, vou apenas deletar do banco por enquanto para não perder originais sem querer
+    # Se quiser deletar do Dropbox, precisaria instanciar o cliente dbx aqui e chamar files_delete_v2
+    
+    nome = arquivo.arquivo.name
+    arquivo.delete()
+    messages.success(request, f"Arquivo removido.")
+    return redirect('editar_post', pk=post_id)
 
 # --- LIXEIRA ---
 

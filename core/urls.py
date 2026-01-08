@@ -15,6 +15,7 @@ urlpatterns = [
     path('post/novo/', views.cadastrar_post, name='cadastrar_post'),
     path('post/editar/<int:pk>/', views.editar_post, name='editar_post'),
     path('post/excluir/<int:pk>/', views.excluir_post, name='excluir_post'),
+    path('arquivo/excluir/<int:pk>/', views.excluir_arquivo_post, name='excluir_arquivo_post'),
     path('lixeira/', views.lixeira, name='lixeira'),
     path('lixeira/recuperar-post/<int:pk>/', views.recuperar_post, name='recuperar_post'),
     path('lixeira/recuperar-cronograma/<int:pk>/', views.recuperar_cronograma, name='recuperar_cronograma'),

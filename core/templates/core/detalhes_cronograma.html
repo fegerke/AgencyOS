@@ -3,20 +3,23 @@
 
 {% block content %}
 <div class="container-fluid p-0">
-    <div class="card border-0 shadow-sm mb-4" style="border-radius: 15px;">
+    
+    <div class="card border-0 shadow-sm mb-5" style="border-radius: 15px;">
         <div class="card-body p-4">
-            <form method="post" class="row align-items-end g-2">
+            <form method="post" class="row g-3 align-items-end">
                 {% csrf_token %}
                 <input type="hidden" name="editar_cronograma" value="1">
-                <div class="col-md-3">{{ form_cronograma.cliente|as_crispy_field }}</div>
-                <div class="col-md-3">{{ form_cronograma.titulo|as_crispy_field }}</div>
-                <div class="col-md-1">{{ form_cronograma.mes|as_crispy_field }}</div>
-                <div class="col-md-1">{{ form_cronograma.ano|as_crispy_field }}</div>
-                <div class="col-md-1">{{ form_cronograma.data_inicio|as_crispy_field }}</div>
-                <div class="col-md-1">{{ form_cronograma.data_fim|as_crispy_field }}</div>
-                <div class="col-md-2">
-                    <button type="submit" class="btn btn-primary w-100 rounded-pill shadow-sm">
-                        <i class="bi bi-save me-1"></i> Salvar
+                
+                <div class="col-md-3 col-12">{{ form_cronograma.cliente|as_crispy_field }}</div>
+                <div class="col-md-3 col-12">{{ form_cronograma.titulo|as_crispy_field }}</div>
+                <div class="col-md-1 col-6">{{ form_cronograma.mes|as_crispy_field }}</div>
+                <div class="col-md-1 col-6">{{ form_cronograma.ano|as_crispy_field }}</div>
+                <div class="col-md-2 col-6">{{ form_cronograma.data_inicio|as_crispy_field }}</div>
+                <div class="col-md-2 col-6">{{ form_cronograma.data_fim|as_crispy_field }}</div>
+                
+                <div class="col-12 text-end mt-3">
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm">
+                        <i class="bi bi-check-lg me-1"></i> Salvar Alterações
                     </button>
                 </div>
             </form>
@@ -24,72 +27,113 @@
     </div>
 
     <div class="d-flex justify-content-between align-items-center mb-4 px-1">
-        <div>
-            <h3 class="fw-bold h5 mb-0">Feed Preview (3x4)</h3>
-            <p class="text-muted small mb-0">{{ posts.count }} posts planejados</p>
+        <div class="d-flex align-items-center">
+            <a href="{% url 'listar_cronogramas' %}" class="btn btn-light rounded-circle shadow-sm me-3" title="Voltar para Lista">
+                <i class="bi bi-arrow-left"></i>
+            </a>
+            <div>
+                <h3 class="fw-bold h5 mb-0">Preview do Feed</h3>
+                <p class="text-muted small mb-0">Visualização Mobile (3x3)</p>
+            </div>
         </div>
         <a href="{% url 'cadastrar_post' %}?cronograma={{ cronograma.id }}" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" style="background: #6c5ce7; border: none;">
-            <i class="bi bi-plus-lg me-1"></i> Novo Post
+            <i class="bi bi-plus-lg me-1"></i> Post
         </a>
     </div>
 
-    <div class="row g-2 g-md-3">
+    <div class="d-flex flex-wrap align-items-start gap-4">
+    
+    {% if posts %}
         {% for post in posts %}
-        <div class="col-4"> 
-            <div class="card border-0 shadow-sm h-100 position-relative overflow-hidden" style="border-radius: 10px;">
-                <a href="{% url 'editar_post' post.pk %}" class="text-decoration-none">
-                    <div style="aspect-ratio: 3 / 4; background: #e9ecef; overflow: hidden; position: relative;">
-                        <div class="d-flex flex-column align-items-center justify-content-center h-100 text-muted bg-light">
-                            <i class="bi bi-image fs-1 opacity-25"></i>
-                            <span class="small fw-bold mt-2 text-center px-1" style="font-size: 0.6rem; color: #999;">
-                                {{ post.titulo|upper|truncatechars:12 }}
-                            </span>
-                        </div>
+            
+            {% if forloop.counter0|divisibleby:9 %}
+            <div class="mobile-frame bg-white shadow-lg p-3 flex-shrink-0">
+                <div class="d-flex justify-content-between align-items-center mb-3 px-1 text-muted">
+                    <small class="fw-bold">{{ cronograma.cliente.nome_fantasia|lower }}</small>
+                    <i class="bi bi-three-dots"></i>
+                </div>
+                <div class="row g-1"> 
+            {% endif %}
 
-                        <div class="position-absolute top-0 start-0 m-1">
-                            <span class="badge rounded-pill {% if post.status == 'aprovado' %}bg-success{% elif post.status == 'revisao' %}bg-warning{% else %}bg-primary{% endif %}" style="font-size: 0.5rem;">
-                                {{ post.get_status_display|upper }}
-                            </span>
-                        </div>
-                    </div>
-                </a>
+            <div class="col-4">
+                <div class="position-relative overflow-hidden" style="aspect-ratio: 3/4; background: #f0f0f0; border-radius: 4px;">
+                    <a href="{% url 'editar_post' post.pk %}" class="d-block w-100 h-100 text-decoration-none">
+                        
+                        {% if post.temp_img_url %}
+                            {% if post.is_video %}
+                                <video src="{{ post.temp_img_url }}" class="w-100 h-100" style="object-fit: cover;" autoplay muted loop playsinline></video>
+                                <div class="position-absolute top-0 end-0 m-1 text-white">
+                                    <i class="bi bi-camera-video-fill"></i>
+                                </div>
+                            {% else %}
+                                <img src="{{ post.temp_img_url }}" class="w-100 h-100" style="object-fit: cover; transition: transform 0.3s;">
+                            {% endif %}
+                        {% else %}
+                            <div class="w-100 h-100 d-flex flex-column align-items-center justify-content-center text-muted">
+                                <i class="bi bi-image fs-4 opacity-50"></i>
+                                <span class="small mt-1 text-truncate px-1" style="font-size: 0.6rem;">{{ post.titulo }}</span>
+                            </div>
+                        {% endif %}
 
-                <div class="p-1 bg-white d-flex justify-content-between align-items-center">
-                    <button onclick="confirmarExclusaoPost('{% url 'excluir_post' post.pk %}', '{{ post.titulo }}')" class="btn btn-sm text-danger p-1">
-                        <i class="bi bi-trash3" style="font-size: 0.8rem;"></i>
-                    </button>
-                    <span class="text-muted fw-bold" style="font-size: 0.65rem;">
-                        {{ post.data_publicacao|date:"d/m" }}
-                    </span>
+                        <div class="post-overlay position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-between p-2">
+                            <div class="d-flex justify-content-end">
+                                {% if post.status == 'aprovado' %}
+                                    <span class="status-dot bg-success" title="Aprovado"></span>
+                                {% elif post.status == 'revisao' %}
+                                    <span class="status-dot bg-warning" title="Em Revisão"></span>
+                                {% elif post.status == 'postado' %}
+                                    <span class="status-dot bg-primary" title="Postado"></span>
+                                {% else %}
+                                    <span class="status-dot bg-secondary" title="Planejamento"></span>
+                                {% endif %}
+                            </div>
+                            <div class="text-white text-shadow small fw-bold text-center">
+                                {{ post.data_publicacao|date:"d/m" }}
+                            </div>
+                        </div>
+                    </a>
                 </div>
             </div>
-        </div>
-        {% empty %}
-        <div class="col-12 text-center py-5">
-            <p class="text-muted">Nenhum post para exibir.</p>
-        </div>
-        {% endfor %}
-    </div>
-</div>
 
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script>
-function confirmarExclusaoPost(url, titulo) {
-    Swal.fire({
-        title: 'Excluir Post?',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#d33',
-        confirmButtonText: 'Sim, excluir'
-    }).then((result) => {
-        if (result.isConfirmed) { window.location.href = url; }
-    })
-}
-</script>
+            {% if forloop.counter|divisibleby:9 or forloop.last %}
+                </div> <div class="d-flex justify-content-around mt-3 text-muted fs-5">
+                    <i class="bi bi-house-door-fill text-dark"></i>
+                    <i class="bi bi-search"></i>
+                    <i class="bi bi-plus-square"></i>
+                    <i class="bi bi-heart"></i>
+                    <i class="bi bi-person-circle"></i>
+                </div>
+            </div>
+            {% endif %}
+
+        {% endfor %}
+
+    {% else %}
+        <div class="col-12 text-center py-5">
+            <p class="text-muted">Comece adicionando posts ao cronograma.</p>
+        </div>
+    {% endif %}
+
+    </div> </div>
 
 <style>
-    /* Remove labels do topo */
-    #div_id_cliente label, #div_id_titulo label, #div_id_mes label, #div_id_ano label, 
-    #div_id_data_inicio label, #div_id_data_fim label { display: none !important; }
+    .mobile-frame {
+        width: 100%;
+        max-width: 380px; /* Largura fixa para caber lado a lado */
+        border-radius: 35px;
+        border: 1px solid #e0e0e0;
+    }
+    
+    .post-overlay {
+        background: linear-gradient(to bottom, rgba(0,0,0,0) 60%, rgba(0,0,0,0.6) 100%);
+        opacity: 0.8;
+        transition: 0.2s;
+    }
+    .col-4:hover .post-overlay { opacity: 1; }
+
+    .status-dot {
+        width: 8px; height: 8px; border-radius: 50%; display: block; box-shadow: 0 0 0 1px white;
+    }
+    .text-shadow { text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
 </style>
 {% endblock %}

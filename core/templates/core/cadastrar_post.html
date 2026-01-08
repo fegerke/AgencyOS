@@ -3,108 +3,208 @@
 
 {% block content %}
 <div class="container-fluid p-0">
-    <div class="mb-4 d-flex justify-content-between align-items-center">
-        <div>
-            <h2 class="fw-bold h4 mb-1">{% if form.instance.pk %}Editar Post{% else %}Novo Post{% endif %}</h2>
-            <p class="text-muted small mb-0">
-                Cliente: <span class="badge bg-primary">{{ cronograma_obj.cliente.nome_fantasia }}</span>
-            </p>
-        </div>
-        <a href="{% url 'detalhes_cronograma' cronograma_obj.id %}" class="btn btn-outline-secondary btn-sm rounded-pill px-3 fw-bold">
-            <i class="bi bi-arrow-left me-1"></i> Voltar
-        </a>
-    </div>
-
-    <div class="card border-0 shadow-sm p-4" style="border-radius: 15px;">
-        <form id="postForm" method="post" enctype="multipart/form-data">
-            {% csrf_token %}
-            
-            <div class="d-none">{{ form.cronograma|as_crispy_field }}</div>
-
-            <div class="row">
-                <div class="col-md-12 mb-3">{{ form.status|as_crispy_field }}</div>
-            </div>
-
-            <div class="mb-3">{{ form.titulo|as_crispy_field }}</div>
-
-            <div class="row">
-                <div class="col-md-4 mb-3">
-                    <label class="form-label fw-bold small">Data de Publicação</label>
-                    {{ form.data_publicacao }} 
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="d-flex align-items-center mb-4">
+                <a href="{% url 'detalhes_cronograma' pk=cronograma_obj.id %}" class="btn btn-light rounded-circle shadow-sm me-3">
+                    <i class="bi bi-arrow-left"></i>
+                </a>
+                <div>
+                    <h2 class="fw-bold h4 mb-0">{% if form.instance.pk %}Editar{% else %}Novo{% endif %} Post</h2>
+                    <p class="text-muted small mb-0">{{ cronograma_obj.cliente.nome_fantasia }} - {{ cronograma_obj.titulo }}</p>
                 </div>
-                <div class="col-md-4 mb-3">{{ form.rede_social|as_crispy_field }}</div>
-                <div class="col-md-4 mb-3">{{ form.formato|as_crispy_field }}</div>
             </div>
 
-            <div class="mb-3">{{ form.legenda|as_crispy_field }}</div>
-            <div class="mb-3">{{ form.briefing_arte|as_crispy_field }}</div>
+            {% if form.errors %}
+            <div class="alert alert-danger shadow-sm mb-4">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>Verifique os campos abaixo.
+            </div>
+            {% endif %}
 
-            <div class="mb-4">
-                <label class="form-label fw-bold text-primary">
-                    <i class="bi bi-images me-2"></i>Arquivos do Post (Carrossel ou Único)
-                </label>
-                {{ form.arquivos_multiplos }}
-                <small class="text-muted d-block mt-1">Você pode selecionar vários arquivos de uma vez.</small>
+            <div class="card border-0 shadow-sm" style="border-radius: 15px;">
+                <div class="card-body p-4">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <input type="hidden" name="cronograma" value="{{ cronograma_obj.id }}">
+
+                        <div class="row g-3">
+                            <div class="col-md-4">{{ form.data_publicacao|as_crispy_field }}</div>
+                            <div class="col-md-4">{{ form.rede_social|as_crispy_field }}</div>
+                            <div class="col-md-4">{{ form.formato|as_crispy_field }}</div>
+                            
+                            <div class="col-12">{{ form.titulo|as_crispy_field }}</div>
+                            <div class="col-12">{{ form.legenda|as_crispy_field }}</div>
+                            <div class="col-12">{{ form.briefing_arte|as_crispy_field }}</div>
+                            <div class="col-md-4 mb-4">{{ form.status|as_crispy_field }}</div>
+
+                            <div class="col-12 mt-4 border-top pt-4">
+                                <h6 class="fw-bold text-primary mb-3">
+                                    <i class="bi bi-paperclip me-2"></i>Mídia e Arquivos
+                                </h6>
+                                
+                                {% if arquivos_existentes %}
+                                <div class="mb-4">
+                                    <label class="form-label small fw-bold text-muted">Salvos no Dropbox</label>
+                                    <div class="d-flex flex-wrap gap-3 p-3 bg-light rounded border">
+                                        {% for arq in arquivos_existentes %}
+                                        <div class="position-relative border bg-white rounded shadow-sm overflow-hidden" style="width: 140px; height: 140px;">
+                                            {% if arq.temp_url %}
+                                                {% if arq.is_video %}
+                                                    <video src="{{ arq.temp_url }}#t=0.5" class="w-100 h-100" style="object-fit: cover;" controls playsinline preload="metadata"></video>
+                                                    <div class="position-absolute top-0 start-0 m-1 text-white shadow-sm pointer-events-none"><i class="bi bi-camera-video-fill"></i></div>
+                                                {% else %}
+                                                    <img src="{{ arq.temp_url }}" class="w-100 h-100" style="object-fit: cover;">
+                                                {% endif %}
+                                            {% else %}
+                                                <div class="w-100 h-100 d-flex align-items-center justify-content-center bg-light"><i class="bi bi-image fs-2 text-muted opacity-50"></i></div>
+                                            {% endif %}
+                                            
+                                            <div class="position-absolute bottom-0 start-0 w-100 bg-dark bg-opacity-75 text-white text-center small p-1 text-truncate" style="font-size: 0.65rem;">
+                                                {{ arq.arquivo.name }}
+                                            </div>
+                                            <button type="button" onclick="confirmarExclusaoArquivo('{% url 'excluir_arquivo_post' arq.pk %}')" class="position-absolute top-0 end-0 btn btn-danger btn-sm p-0 d-flex align-items-center justify-content-center rounded-circle shadow-sm m-1" style="width: 24px; height: 24px; z-index: 10;" title="Remover do Dropbox">
+                                                <i class="bi bi-trash3-fill" style="font-size: 0.9rem;"></i>
+                                            </button>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <div class="bg-white">
+                                    {{ form.arquivos_multiplos|as_crispy_field }}
+                                    
+                                    <div id="local-previews-container" class="d-none mt-3">
+                                        <label class="form-label small fw-bold text-success"><i class="bi bi-check-circle me-1"></i>Prontos para subir:</label>
+                                        <div class="d-flex flex-wrap gap-3 p-3 bg-white border border-success border-opacity-25 rounded" id="local-previews-list">
+                                            </div>
+                                    </div>
+
+                                    <div class="form-text small text-muted mt-2">
+                                        <i class="bi bi-cloud-upload me-1"></i> Selecione imagens ou vídeos. Use o "X" nas miniaturas acima se selecionar algo errado.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-5 d-flex justify-content-end gap-2 border-top pt-4">
+                            <a href="{% url 'detalhes_cronograma' pk=cronograma_obj.id %}" class="btn btn-light rounded-pill px-4">Cancelar</a>
+                            <button type="submit" class="btn btn-primary rounded-pill px-5 fw-bold shadow-sm">
+                                <i class="bi bi-check-lg me-2"></i>Salvar Post
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
             
-            <div id="progressContainer" class="progress mb-4 d-none" style="height: 25px; border-radius: 12px;">
-                <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-success fw-bold" role="progressbar" style="width: 0%;">0%</div>
-            </div>
-
-            <div class="d-grid">
-                <button type="submit" id="btnSubmit" class="btn btn-primary py-3 fw-bold shadow-sm" style="border-radius: 12px; background: #6c5ce7; border: none;">
-                    <i class="bi bi-cloud-arrow-up-fill me-2"></i>Salvar no Cronograma
+            {% if form.instance.pk %}
+            <div class="text-center mt-4 mb-5">
+                <button onclick="confirmarExclusaoPost('{% url 'excluir_post' form.instance.pk %}')" class="btn btn-outline-danger btn-sm border-0 opacity-75">
+                    <i class="bi bi-trash3 me-1"></i> Excluir este post permanentemente
                 </button>
             </div>
-        </form>
+            {% endif %}
+        </div>
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-    const postForm = document.getElementById('postForm');
-    const progressBar = document.getElementById('progressBar');
-    const progressContainer = document.getElementById('progressContainer');
-    const btnSubmit = document.getElementById('btnSubmit');
+    // 1. Script de Exclusão (Servidor)
+    function confirmarExclusaoPost(url) {
+        Swal.fire({
+            title: 'Excluir Post?', text: "Não será possível reverter.", icon: 'warning',
+            showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: 'Sim, excluir'
+        }).then((result) => { if (result.isConfirmed) window.location.href = url; })
+    }
 
-    postForm.onsubmit = function(e) {
-        e.preventDefault();
-        const formData = new FormData(postForm);
-        const xhr = new XMLHttpRequest();
+    function confirmarExclusaoArquivo(url) {
+        Swal.fire({
+            title: 'Remover arquivo?', text: "Isso apagará o arquivo do Dropbox.", icon: 'warning',
+            showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: 'Sim, remover', cancelButtonText: 'Cancelar'
+        }).then((result) => { if (result.isConfirmed) window.location.href = url; })
+    }
 
-        progressContainer.classList.remove('d-none');
-        btnSubmit.disabled = true;
-        btnSubmit.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Enviando para o Dropbox...';
+    // 2. SCRIPT DE PREVIEW LOCAL AVANÇADO (Com Botão Remover)
+    document.addEventListener('DOMContentLoaded', function() {
+        const input = document.querySelector('input[type="file"][multiple]');
+        const container = document.getElementById('local-previews-container');
+        const list = document.getElementById('local-previews-list');
+        // Objeto DataTransfer para gerenciar a lista de arquivos "na unha"
+        const dt = new DataTransfer(); 
 
-        xhr.upload.addEventListener('progress', function(e) {
-            if (e.lengthComputable) {
-                const percent = (e.loaded / e.total) * 100;
-                progressBar.style.width = percent.toFixed(0) + '%';
-                progressBar.innerText = percent.toFixed(0) + '%';
+        if (input) {
+            input.addEventListener('change', function(event) {
+                // Se o usuário selecionou algo novo
+                if (this.files && this.files.length > 0) {
+                    dt.items.clear(); // Limpa o anterior (comportamento padrão de input file)
+                    Array.from(this.files).forEach(file => dt.items.add(file));
+                    renderPreviews();
+                }
+            });
+        }
+
+        // Função global para remover um arquivo específico da lista de upload
+        window.removeLocalFile = function(index) {
+            dt.items.remove(index); // Remove do DataTransfer
+            input.files = dt.files; // Atualiza o Input real com a nova lista
+            renderPreviews(); // Redesenha a tela
+        }
+
+        function renderPreviews() {
+            list.innerHTML = ''; // Limpa visual
+            
+            if (dt.files.length > 0) {
+                container.classList.remove('d-none');
+                
+                // Percorre os arquivos e cria os cards
+                Array.from(dt.files).forEach((file, index) => {
+                    // Cria estrutura do card
+                    const card = document.createElement('div');
+                    card.className = "position-relative border bg-white rounded shadow-sm overflow-hidden";
+                    card.style.width = "120px";
+                    card.style.height = "120px";
+                    
+                    // Adiciona container de mídia e botão X imediatamente (para manter ordem)
+                    card.innerHTML = `
+                        <div id="media-content-${index}" class="w-100 h-100 d-flex align-items-center justify-content-center bg-light">
+                            <div class="spinner-border spinner-border-sm text-secondary" role="status"></div>
+                        </div>
+                        <div class="position-absolute bottom-0 start-0 w-100 bg-dark bg-opacity-75 text-white text-center small p-1 text-truncate" style="font-size: 0.65rem;">
+                            ${file.name}
+                        </div>
+                        <button type="button" onclick="removeLocalFile(${index})" 
+                                class="position-absolute top-0 end-0 btn btn-danger btn-sm p-0 d-flex align-items-center justify-content-center rounded-circle shadow-sm m-1" 
+                                style="width: 24px; height: 24px; z-index: 10;" title="Não enviar este">
+                            <i class="bi bi-x" style="font-size: 1.2rem;"></i>
+                        </button>
+                    `;
+                    list.appendChild(card);
+
+                    // Carrega a imagem/vídeo assincronamente
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const isVideo = file.type.startsWith('video/');
+                        const url = e.target.result;
+                        const mediaDiv = document.getElementById(`media-content-${index}`);
+                        
+                        if (isVideo) {
+                            mediaDiv.innerHTML = `<video src="${url}" class="w-100 h-100 bg-black" style="object-fit: cover;" muted></video>
+                                                  <div class="position-absolute top-0 start-0 m-1 text-white shadow-sm pointer-events-none"><i class="bi bi-camera-video-fill"></i></div>`;
+                        } else {
+                            mediaDiv.innerHTML = `<img src="${url}" class="w-100 h-100" style="object-fit: cover;">`;
+                        }
+                    }
+                    reader.readAsDataURL(file);
+                });
+            } else {
+                container.classList.add('d-none');
             }
-        });
-
-        xhr.onreadystatechange = function() {
-            if (xhr.readyState === 4 && xhr.status === 200) {
-                const response = JSON.parse(xhr.responseText);
-                window.location.href = response.url;
-            } else if (xhr.readyState === 4) {
-                alert('Erro ao salvar o post. Verifique a conexão com o Dropbox.');
-                btnSubmit.disabled = false;
-                btnSubmit.innerHTML = '<i class="bi bi-cloud-arrow-up-fill me-2"></i>Tentar Novamente';
-            }
-        };
-
-        xhr.open('POST', window.location.href, true);
-        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-        xhr.send(formData);
-    };
+        }
+    });
 </script>
 
 <style>
-    /* Estética e remoção de labels duplicados pelo Crispy */
-    label[for="id_data_publicacao"], label[for="id_legenda"], 
-    label[for="id_briefing_arte"] { display: none !important; }
-    .asteriskField { display: none !important; }
-    .form-control:focus { border-color: #6c5ce7; box-shadow: 0 0 0 0.2rem rgba(108, 92, 231, 0.25); }
+    .pointer-events-none { pointer-events: none; }
 </style>
 {% endblock %}
