@@ -5,116 +5,68 @@
 <div class="container-fluid p-0">
     <div class="card border-0 shadow-sm mb-4" style="border-radius: 15px;">
         <div class="card-body p-4">
-            <form method="post" class="row align-items-end g-3">
+            <form method="post" class="row align-items-end g-2">
                 {% csrf_token %}
                 <input type="hidden" name="editar_cronograma" value="1">
-                
+                <div class="col-md-3">{{ form_cronograma.cliente|as_crispy_field }}</div>
+                <div class="col-md-3">{{ form_cronograma.titulo|as_crispy_field }}</div>
+                <div class="col-md-1">{{ form_cronograma.mes|as_crispy_field }}</div>
+                <div class="col-md-1">{{ form_cronograma.ano|as_crispy_field }}</div>
+                <div class="col-md-1">{{ form_cronograma.data_inicio|as_crispy_field }}</div>
+                <div class="col-md-1">{{ form_cronograma.data_fim|as_crispy_field }}</div>
                 <div class="col-md-2">
-                    <label class="form-label fw-bold small text-uppercase text-muted">Cliente</label>
-                    {{ form_cronograma.cliente|as_crispy_field }}
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label fw-bold small text-uppercase text-muted">Título</label>
-                    {{ form_cronograma.titulo|as_crispy_field }}
-                </div>
-                <div class="col-md-1">
-                    <label class="form-label fw-bold small text-uppercase text-muted">Mês</label>
-                    {{ form_cronograma.mes|as_crispy_field }}
-                </div>
-                <div class="col-md-1">
-                    <label class="form-label fw-bold small text-uppercase text-muted">Ano</label>
-                    {{ form_cronograma.ano|as_crispy_field }}
-                </div>
-                
-                <div class="col-md-2">
-                    <label class="form-label fw-bold small text-uppercase text-muted">Início</label>
-                    {{ form_cronograma.data_inicio|as_crispy_field }}
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label fw-bold small text-uppercase text-muted">Fim</label>
-                    {{ form_cronograma.data_fim|as_crispy_field }}
-                </div>
-
-                <div class="col-md-1">
                     <button type="submit" class="btn btn-primary w-100 rounded-pill shadow-sm">
-                        <i class="bi bi-save"></i>
+                        <i class="bi bi-save me-1"></i> Salvar
                     </button>
                 </div>
             </form>
         </div>
     </div>
 
-    {% if cronograma.data_inicio %}
-    <div class="alert alert-info border-0 shadow-sm mb-4 d-inline-block rounded-pill px-4 py-2 small">
-        <i class="bi bi-calendar-range me-2"></i>
-        Período: <strong>{{ cronograma.data_inicio|date:"d/m/Y" }}</strong> até <strong>{{ cronograma.data_fim|date:"d/m/Y" }}</strong>
-    </div>
-    {% endif %}
-
     <div class="d-flex justify-content-between align-items-center mb-4 px-1">
         <div>
-            <h3 class="fw-bold h5 mb-0">Conteúdo do Planejamento</h3>
-            <p class="text-muted small mb-0">{{ posts.count }} posts programados</p>
+            <h3 class="fw-bold h5 mb-0">Feed Preview (3x4)</h3>
+            <p class="text-muted small mb-0">{{ posts.count }} posts planejados</p>
         </div>
-        <div class="d-flex gap-2">
-            <a href="{% url 'listar_cronogramas' %}" class="btn btn-light rounded-pill px-3 fw-bold border shadow-sm">
-                <i class="bi bi-arrow-left me-2"></i>Voltar
-            </a>
-            <a href="{% url 'cadastrar_post' %}?cronograma={{ cronograma.id }}" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" style="background: #6c5ce7; border: none;">
-                <i class="bi bi-plus-lg me-2"></i>Novo Post
-            </a>
-        </div>
+        <a href="{% url 'cadastrar_post' %}?cronograma={{ cronograma.id }}" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" style="background: #6c5ce7; border: none;">
+            <i class="bi bi-plus-lg me-1"></i> Novo Post
+        </a>
     </div>
 
-    <div class="row g-4">
+    <div class="row g-2 g-md-3">
         {% for post in posts %}
-        <div class="col-md-6 col-xl-4">
-            <div class="card border-0 shadow-sm h-100" style="border-radius: 20px;">
-                <div class="card-body p-4">
-                    <div class="d-flex justify-content-between align-items-start mb-3">
-                        <span class="badge rounded-pill px-3 py-2 {% if post.status == 'aprovado' %}bg-soft-success text-success{% elif post.status == 'revisao' %}bg-soft-warning text-warning{% else %}bg-soft-primary text-primary{% endif %}">
-                            {{ post.get_status_display }}
-                        </span>
-                        <div class="dropdown">
-                            <button class="btn btn-link text-muted p-0" data-bs-toggle="dropdown">
-                                <i class="bi bi-three-dots-vertical"></i>
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end border-0 shadow">
-                                <li><a class="dropdown-item" href="{% url 'editar_post' post.pk %}"><i class="bi bi-pencil me-2"></i>Editar</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li>
-                                    <button onclick="confirmarExclusaoPost('{% url 'excluir_post' post.pk %}', '{{ post.titulo }}')" class="dropdown-item text-danger">
-                                        <i class="bi bi-trash me-2"></i>Excluir
-                                    </button>
-                                </li>
-                            </ul>
+        <div class="col-4"> 
+            <div class="card border-0 shadow-sm h-100 position-relative overflow-hidden" style="border-radius: 10px;">
+                <a href="{% url 'editar_post' post.pk %}" class="text-decoration-none">
+                    <div style="aspect-ratio: 3 / 4; background: #e9ecef; overflow: hidden; position: relative;">
+                        <div class="d-flex flex-column align-items-center justify-content-center h-100 text-muted bg-light">
+                            <i class="bi bi-image fs-1 opacity-25"></i>
+                            <span class="small fw-bold mt-2 text-center px-1" style="font-size: 0.6rem; color: #999;">
+                                {{ post.titulo|upper|truncatechars:12 }}
+                            </span>
+                        </div>
+
+                        <div class="position-absolute top-0 start-0 m-1">
+                            <span class="badge rounded-pill {% if post.status == 'aprovado' %}bg-success{% elif post.status == 'revisao' %}bg-warning{% else %}bg-primary{% endif %}" style="font-size: 0.5rem;">
+                                {{ post.get_status_display|upper }}
+                            </span>
                         </div>
                     </div>
+                </a>
 
-                    <h6 class="fw-bold mb-1">{{ post.titulo }}</h6>
-                    <div class="text-muted small mb-3">
-                        <i class="bi bi-calendar3 me-1"></i> {{ post.data_publicacao|date:"d/m/Y" }}
-                    </div>
-
-                    <div class="d-flex gap-2 mb-3">
-                        <span class="badge bg-light text-dark border">{{ post.get_rede_social_display }}</span>
-                        <span class="badge bg-light text-dark border">{{ post.get_formato_display }}</span>
-                    </div>
-
-                    <p class="text-muted small mb-4" style="height: 3em; overflow: hidden;">
-                        {{ post.legenda|default:"Sem legenda." }}
-                    </p>
-
-                    <div class="d-flex justify-content-between align-items-center mt-auto">
-                        <span class="text-muted small"><i class="bi bi-files me-1"></i>{{ post.arquivos.count }}</span>
-                        <a href="{% url 'editar_post' post.pk %}" class="btn btn-outline-primary btn-sm rounded-pill px-3">Ver detalhes</a>
-                    </div>
+                <div class="p-1 bg-white d-flex justify-content-between align-items-center">
+                    <button onclick="confirmarExclusaoPost('{% url 'excluir_post' post.pk %}', '{{ post.titulo }}')" class="btn btn-sm text-danger p-1">
+                        <i class="bi bi-trash3" style="font-size: 0.8rem;"></i>
+                    </button>
+                    <span class="text-muted fw-bold" style="font-size: 0.65rem;">
+                        {{ post.data_publicacao|date:"d/m" }}
+                    </span>
                 </div>
             </div>
         </div>
         {% empty %}
         <div class="col-12 text-center py-5">
-            <p class="text-muted mt-2 italic">Nenhum post cadastrado.</p>
+            <p class="text-muted">Nenhum post para exibir.</p>
         </div>
         {% endfor %}
     </div>
@@ -124,13 +76,11 @@
 <script>
 function confirmarExclusaoPost(url, titulo) {
     Swal.fire({
-        title: 'Mover para lixeira?',
-        text: `Deseja enviar o post "${titulo}" para a lixeira?`,
+        title: 'Excluir Post?',
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#d33',
-        confirmButtonText: 'Sim, excluir',
-        cancelButtonText: 'Cancelar'
+        confirmButtonText: 'Sim, excluir'
     }).then((result) => {
         if (result.isConfirmed) { window.location.href = url; }
     })
@@ -138,10 +88,8 @@ function confirmarExclusaoPost(url, titulo) {
 </script>
 
 <style>
+    /* Remove labels do topo */
     #div_id_cliente label, #div_id_titulo label, #div_id_mes label, #div_id_ano label, 
     #div_id_data_inicio label, #div_id_data_fim label { display: none !important; }
-    .bg-soft-primary { background-color: #eef2ff; }
-    .bg-soft-success { background-color: #ecfdf5; }
-    .bg-soft-warning { background-color: #fffbeb; }
 </style>
 {% endblock %}

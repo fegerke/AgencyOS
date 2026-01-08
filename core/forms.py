@@ -77,28 +77,27 @@ class PostForm(forms.ModelForm):
     class Meta:
         model = Post
         fields = ['cronograma', 'rede_social', 'formato', 'titulo', 'data_publicacao', 'legenda', 'briefing_arte', 'status']
+        labels = {
+            'legenda': 'Legenda (Texto da publicação)',
+            'briefing_arte': 'Instruções / Observações (Briefing para arte)',
+        }
         widgets = {
-            # Use 'date' e não 'datetime-local' se o modelo for DateField
             'data_publicacao': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}, format='%Y-%m-%d'),
-            'legenda': forms.Textarea(attrs={'rows': 4, 'class': 'form-control'}),
-            'briefing_arte': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
+            'legenda': forms.Textarea(attrs={'rows': 4, 'class': 'form-control', 'placeholder': 'Digite aqui o texto que será postado...'}),
+            'briefing_arte': forms.Textarea(attrs={'rows': 3, 'class': 'form-control', 'placeholder': 'Instruções para o designer ou editor...'}),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        
-        # 1. Recupera o cronograma (Edição ou Criação)
         crono = None
         if self.instance and hasattr(self.instance, 'cronograma') and self.instance.cronograma:
             crono = self.instance.cronograma
         elif 'initial' in kwargs and 'cronograma' in kwargs['initial']:
             crono = kwargs['initial']['cronograma']
 
-        # 2. Força a data inicial se for edição
         if self.instance and self.instance.data_publicacao:
             self.fields['data_publicacao'].initial = self.instance.data_publicacao
 
-        # 3. Filtra as redes sociais ativas do cliente
         if crono:
             redes_ativas = crono.cliente.redes_sociais.keys()
             self.fields['rede_social'].choices = [(id, nome) for id, nome in REDES_OPCOES if id in redes_ativas]

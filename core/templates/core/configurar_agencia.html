@@ -16,71 +16,84 @@
         <input type="password" name="fake_pass" style="display:none">
 
         <ul class="nav nav-pills mb-4" id="pills-tab">
-            <li class="nav-item"><button class="nav-link active fw-bold px-4" data-bs-toggle="pill" data-bs-target="#geral" type="button">Geral</button></li>
-            <li class="nav-item"><button class="nav-link fw-bold px-4" data-bs-toggle="pill" data-bs-target="#redes" type="button">Redes Sociais</button></li>
-            <li class="nav-item"><button class="nav-link fw-bold px-4" data-bs-toggle="pill" data-bs-target="#integracoes" type="button">Integrações</button></li>
+            <li class="nav-item">
+                <button class="nav-link active fw-bold px-4" data-bs-toggle="pill" data-bs-target="#geral" type="button">Geral</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link fw-bold px-4" data-bs-toggle="pill" data-bs-target="#redes" type="button">Redes Sociais</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link fw-bold px-4" data-bs-toggle="pill" data-bs-target="#integracoes" type="button">Integrações</button>
+            </li>
         </ul>
 
-        <div class="tab-content">
+        <div class="tab-content" id="pills-tabContent">
             <div class="tab-pane fade show active" id="geral">
                 <div class="card border-0 shadow-sm p-4" style="border-radius: 15px;">
-                    <div class="row g-3">
-                        <div class="col-md-6">{{ form.nome_fantasia|as_crispy_field }}</div>
-                        <div class="col-md-6">{{ form.razao_social|as_crispy_field }}</div>
+                    <div class="row">
+                        <div class="col-md-3 text-center border-end">
+                            <label class="fw-bold small text-muted text-uppercase d-block mb-3">Logo da Agência</label>
+                            {% if agencia.logo %}
+                                <img src="{{ agencia.logo.url }}" class="img-fluid rounded shadow-sm mb-3" style="max-height: 120px; width: auto;">
+                            {% else %}
+                                <div class="bg-light rounded d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 120px; height: 120px;">
+                                    <i class="bi bi-building fs-1 text-muted"></i>
+                                </div>
+                            {% endif %}
+                            {{ form.logo|as_crispy_field }}
+                        </div>
                         
-                        <div class="col-md-4">{{ form.cnpj|as_crispy_field }}</div>
-                        <div class="col-md-4">{{ form.email|as_crispy_field }}</div>
-                        <div class="col-md-4">{{ form.telefone|as_crispy_field }}</div>
-                        
-                        <div class="col-md-3">{{ form.cep|as_crispy_field }}</div>
-                        <div class="col-md-7">{{ form.logradouro|as_crispy_field }}</div>
-                        <div class="col-md-2">{{ form.numero|as_crispy_field }}</div>
-                        
-                        <div class="col-md-4">{{ form.complemento|as_crispy_field }}</div>
-                        <div class="col-md-4">{{ form.bairro|as_crispy_field }}</div>
-                        <div class="col-md-3">{{ form.cidade|as_crispy_field }}</div>
-                        <div class="col-md-1">{{ form.estado|as_crispy_field }}</div>
-                        
-                        <div class="col-12 mt-2">
-                            <label class="form-label fw-bold small text-muted">Logo da Agência</label>
-                            <div class="custom-file-upload border rounded p-3 bg-light">
-                                {{ form.logo }}
-                                {% if agencia.logo %}
-                                    <div class="mt-2 small text-primary">
-                                        <i class="bi bi-image me-1"></i> Logo atual: {{ agencia.logo.name }}
-                                    </div>
-                                {% endif %}
+                        <div class="col-md-9 ps-md-4">
+                            <div class="row">
+                                <div class="col-md-6">{{ form.nome_fantasia|as_crispy_field }}</div>
+                                <div class="col-md-6">{{ form.razao_social|as_crispy_field }}</div>
+                                <div class="col-md-6">{{ form.cnpj|as_crispy_field }}</div>
+                                <div class="col-md-3">{{ form.email|as_crispy_field }}</div>
+                                <div class="col-md-3">{{ form.telefone|as_crispy_field }}</div>
+                            </div>
+                            <hr class="my-4">
+                            <h6 class="fw-bold mb-3 text-primary">Localização</h6>
+                            <div class="row">
+                                <div class="col-md-3">{{ form.cep|as_crispy_field }}</div>
+                                <div class="col-md-6">{{ form.logradouro|as_crispy_field }}</div>
+                                <div class="col-md-3">{{ form.numero|as_crispy_field }}</div>
+                                <div class="col-md-4">{{ form.bairro|as_crispy_field }}</div>
+                                <div class="col-md-4">{{ form.cidade|as_crispy_field }}</div>
+                                <div class="col-md-4">{{ form.estado|as_crispy_field }}</div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-            
+
             <div class="tab-pane fade" id="redes">
                 <div class="card border-0 shadow-sm p-4" style="border-radius: 15px;">
+                    <h6 class="fw-bold mb-4 text-primary">Canais Ativos da Agência</h6>
+                    
                     {% for rede_id, rede_nome in redes_disponiveis %}
                     <div class="rede-container border rounded p-3 mb-3 bg-light shadow-sm">
-                        <div class="form-check form-switch mb-3">
-                            <input class="form-check-input switch-rede" type="checkbox" id="check_{{ rede_id }}" name="rede_ativa_{{ rede_id }}" 
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input switch-rede" type="checkbox" 
+                                   id="check_{{ rede_id }}" name="rede_ativa_{{ rede_id }}"
                                    {% if rede_id in agencia.redes_sociais %}checked{% endif %}>
-                            <label class="form-check-label fw-bold">{{ rede_nome }}</label>
+                            <label class="form-check-label fw-bold" for="check_{{ rede_id }}">{{ rede_nome }}</label>
                         </div>
                         
                         <div class="campos-rede {% if rede_id not in agencia.redes_sociais %}d-none{% endif %}" id="campos_{{ rede_id }}">
+                            <div class="mb-2">
+                                <label class="small fw-bold text-muted">URL do Perfil</label>
+                                <input type="text" name="url_{{ rede_id }}" class="form-control" 
+                                       value="{% for k, v in agencia.redes_sociais.items %}{% if k == rede_id %}{{ v.perfil|default:'' }}{% endif %}{% endfor %}">
+                            </div>
                             <div class="row g-2">
-                                <div class="col-12 mb-2">
-                                    <label class="small fw-bold text-muted">Link do Perfil</label>
-                                    <input type="text" name="url_{{ rede_id }}" class="form-control" autocomplete="off"
-                                           value="{% for k, v in agencia.redes_sociais.items %}{% if k == rede_id %}{{ v.perfil|default:'' }}{% endif %}{% endfor %}">
-                                </div>
                                 <div class="col-6">
-                                    <label class="small fw-bold text-muted">Login</label>
-                                    <input type="text" name="user_{{ rede_id }}" class="form-control form-control-sm" autocomplete="off"
+                                    <label class="small fw-bold text-muted">Usuário</label>
+                                    <input type="text" name="user_{{ rede_id }}" class="form-control form-control-sm"
                                            value="{% for k, v in agencia.redes_sociais.items %}{% if k == rede_id %}{{ v.usuario|default:'' }}{% endif %}{% endfor %}">
                                 </div>
                                 <div class="col-6">
                                     <label class="small fw-bold text-muted">Senha</label>
-                                    <input type="password" name="pass_{{ rede_id }}" class="form-control form-control-sm" autocomplete="new-password"
+                                    <input type="text" name="pass_{{ rede_id }}" class="form-control form-control-sm"
                                            value="{% for k, v in agencia.redes_sociais.items %}{% if k == rede_id %}{{ v.senha|default:'' }}{% endif %}{% endfor %}">
                                 </div>
                             </div>
@@ -93,37 +106,45 @@
             <div class="tab-pane fade" id="integracoes">
                 <div class="card border-0 shadow-sm p-4" style="border-radius: 15px;">
                     <div class="p-4 border rounded bg-white shadow-sm" style="border-left: 5px solid #0061ff !important;">
-                        <h6 class="fw-bold mb-3"><i class="bi bi-dropbox text-primary me-2"></i>Dropbox Storage</h6>
-                        {% if agencia.dropbox_config %}
-                            <div class="alert alert-success small mb-3">Sua agência está conectada ao Dropbox.</div>
-                            <a href="{% url 'desconectar_dropbox' %}" class="btn btn-outline-danger btn-sm">Desconectar</a>
-                        {% else %}
-                            <a href="{% url 'conectar_dropbox' %}" class="btn btn-primary px-4">Conectar Dropbox</a>
-                        {% endif %}
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <h6 class="fw-bold mb-1"><i class="bi bi-dropbox text-primary me-2"></i>Dropbox Storage</h6>
+                                <p class="text-muted small mb-0">Armazenamento de ativos e arquivos de posts.</p>
+                            </div>
+                            <div>
+                                {% if dbx_config %}
+                                    <div class="d-flex align-items-center">
+                                        <span class="badge bg-success p-2 me-2"><i class="bi bi-check-circle-fill me-1"></i>Conectado</span>
+                                        <a href="{% url 'desconectar_dropbox' %}" class="btn btn-sm btn-outline-primary">Reconectar</a>
+                                    </div>
+                                {% else %}
+                                    <a href="{% url 'conectar_dropbox' %}" class="btn btn-primary rounded-pill px-4">
+                                        <i class="bi bi-cloud-plus me-2"></i>Conectar Dropbox
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="mt-4 mb-5">
-            <button type="submit" class="btn btn-primary w-100 py-3 fw-bold shadow-lg" style="background: #6c5ce7; border: none; border-radius: 12px;">
-                <i class="bi bi-check-lg me-2"></i>Salvar Configurações
+        <div class="mt-4 text-end px-1">
+            <button type="submit" class="btn btn-primary btn-lg rounded-pill px-5 fw-bold shadow" style="background: #6c5ce7; border: none;">
+                <i class="bi bi-save me-2"></i>Salvar Alterações
             </button>
         </div>
     </form>
 </div>
-{% endblock %}
 
-{% block extra_css %}
 <style>
-    #div_id_logo a, #div_id_logo br { display: none; }
-    #id_logo { display: block; width: 100%; font-size: 0.875rem; color: #64748b; }
-    input[type=file]::file-selector-button {
-        margin-right: 20px; border: none; background: #6c5ce7; padding: 8px 16px;
-        border-radius: 8px; color: #fff; cursor: pointer; transition: background .2s;
-    }
-    input[type=file]::file-selector-button:hover { background: #5b4bc4; }
+    .nav-pills .nav-link { color: #6c757d; border-radius: 10px; transition: all 0.3s; }
+    .nav-pills .nav-link.active { background-color: #6c5ce7 !important; color: white !important; box-shadow: 0 4px 12px rgba(108, 92, 231, 0.3); }
+    .rede-container:hover { border-color: #6c5ce7 !important; }
     #div_id_logo label { display: none; }
+    input[type=file]::file-selector-button {
+        background: #6c5ce7; border: none; padding: 8px 16px; border-radius: 8px; color: #fff; cursor: pointer;
+    }
 </style>
 {% endblock %}
 
@@ -132,32 +153,42 @@
 
 <script>
     $(document).ready(function(){
-        // Máscara adaptativa para telefone (Fixo/Celular)
-        var spOptions = {
-            onKeyPress: function(val, e, field, options) {
-                field.mask(val.replace(/\D/g, '').length === 11 ? '(00) 00000-0000' : '(00) 0000-00009', options);
+        // 1. MÁSCARAS
+        var behavior = function (val) {
+            return val.replace(/\D/g, '').length === 11 ? '(00) 00000-0000' : '(00) 0000-00009';
+        };
+        var options = {
+            onKeyPress: function (val, e, field, options) {
+                field.mask(behavior.apply({}, arguments), options);
             }
         };
 
-        $('#id_telefone').mask(function(val) {
-            return val.replace(/\D/g, '').length === 11 ? '(00) 00000-0000' : '(00) 0000-00009';
-        }, spOptions);
-
-        // Outras Máscaras
+        // Aplica usando os IDs que o Django gera (id_nome_do_campo)
+        $('#id_telefone').mask(behavior, options);
         $('#id_cnpj').mask('00.000.000/0000-00');
         $('#id_cep').mask('00000-000');
 
-        $('.switch-rede').on('change', function() {
+        // 2. LÓGICA DAS REDES SOCIAIS
+        
+        // Garante estado inicial correto ao carregar a página
+        $('.switch-rede').each(function() {
             const id = $(this).attr('id').replace('check_', '');
-            if(this.checked) $('#campos_' + id).removeClass('d-none');
-            else $('#campos_' + id).addClass('d-none');
+            if(this.checked) {
+                $('#campos_' + id).removeClass('d-none');
+            }
         });
 
-        setTimeout(function() {
-            $('input[autocomplete="off"]').each(function() {
-                if ($(this).val() === 'frank') $(this).val('');
-            });
-        }, 500);
+        // Evento de clique para abrir/fechar
+        $(document).on('change', '.switch-rede', function() {
+            const id = $(this).attr('id').replace('check_', '');
+            const target = $('#campos_' + id);
+            
+            if(this.checked) {
+                target.removeClass('d-none').hide().fadeIn(200);
+            } else {
+                target.fadeOut(200, function() { $(this).addClass('d-none'); });
+            }
+        });
     });
 </script>
 {% endblock %}

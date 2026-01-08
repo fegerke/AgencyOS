@@ -111,7 +111,42 @@ def mover_pasta_dropbox(request, post, para_lixeira=True):
     except Exception as e:
         print(f"Erro ao mover no Dropbox: {e}")
 
-# --- CLIENTES ---
+# --- CLIENTES / AGENCIA ---
+
+@login_required
+def configurar_agencia(request):
+    # O seu models.py define related_name='minha_agencia' no campo dono
+    agencia = request.user.minha_agencia 
+    dbx_config = DropboxConfig.objects.filter(agencia=agencia).first()
+
+    if request.method == 'POST':
+        form = AgenciaForm(request.POST, request.FILES, instance=agencia)
+        if form.is_valid():
+            agencia_inst = form.save(commit=False)
+            
+            # LÓGICA DAS REDES SOCIAIS
+            novas_redes = {}
+            for rede_id, rede_nome in REDES_OPCOES:
+                if request.POST.get(f'rede_ativa_{rede_id}'):
+                    novas_redes[rede_id] = {
+                        'perfil': request.POST.get(f'url_{rede_id}', ''),
+                        'usuario': request.POST.get(f'user_{rede_id}', ''),
+                        'senha': request.POST.get(f'pass_{rede_id}', ''),
+                    }
+            agencia_inst.redes_sociais = novas_redes
+            agencia_inst.save()
+            
+            messages.success(request, "Configurações atualizadas com sucesso!")
+            return redirect('configurar_agencia')
+    else:
+        form = AgenciaForm(instance=agencia)
+
+    return render(request, 'core/configurar_agencia.html', {
+        'form': form,
+        'agencia': agencia,
+        'dbx_config': dbx_config,
+        'redes_disponiveis': REDES_OPCOES 
+    })
 
 @login_required
 def listar_clientes(request):
@@ -125,12 +160,27 @@ def cadastrar_cliente(request):
         if form.is_valid():
             cliente = form.save(commit=False)
             cliente.agencia = request.user.minha_agencia
+            # Lógica para salvar o JSON de redes_sociais (conforme discutido anteriormente)
+            redes_data = {}
+            for rede_id, _ in REDES_OPCOES:
+                if request.POST.get(f'rede_ativa_{rede_id}'):
+                    redes_data[rede_id] = {
+                        'perfil': request.POST.get(f'url_{rede_id}'),
+                        'usuario': request.POST.get(f'user_{rede_id}'),
+                        'senha': request.POST.get(f'pass_{rede_id}')
+                    }
+            cliente.redes_sociais = redes_data
             cliente.save()
             messages.success(request, "Cliente cadastrado com sucesso!")
             return redirect('listar_clientes')
     else:
         form = ClienteForm()
-    return render(request, 'core/cadastrar_cliente.html', {'form': form})
+    
+    # IMPORTANTE: Passar 'redes_disponiveis' para o loop no HTML
+    return render(request, 'core/cadastrar_cliente.html', {
+        'form': form, 
+        'redes_disponiveis': REDES_OPCOES
+    })
 
 @login_required
 def editar_cliente(request, pk):
@@ -138,12 +188,26 @@ def editar_cliente(request, pk):
     if request.method == 'POST':
         form = ClienteForm(request.POST, request.FILES, instance=cliente)
         if form.is_valid():
-            form.save()
-            messages.success(request, "Cliente atualizado com sucesso!")
+            cliente_inst = form.save(commit=False)
+            redes_data = {}
+            for rede_id, _ in REDES_OPCOES:
+                if request.POST.get(f'rede_ativa_{rede_id}'):
+                    redes_data[rede_id] = {
+                        'perfil': request.POST.get(f'url_{rede_id}'),
+                        'usuario': request.POST.get(f'user_{rede_id}'),
+                        'senha': request.POST.get(f'pass_{rede_id}')
+                    }
+            cliente_inst.redes_sociais = redes_data
+            cliente_inst.save()
+            messages.success(request, "Cliente atualizado!")
             return redirect('listar_clientes')
     else:
         form = ClienteForm(instance=cliente)
-    return render(request, 'core/cadastrar_cliente.html', {'form': form})
+    
+    return render(request, 'core/cadastrar_cliente.html', {
+        'form': form, 
+        'redes_disponiveis': REDES_OPCOES
+    })
 
 @login_required
 def excluir_cliente(request, pk):
@@ -379,22 +443,6 @@ def fazer_upload_dropbox_unico(request, post, arquivo):
         PostArquivo.objects.create(post=post, dropbox_path=caminho_dropbox)
     except Exception as e:
         print(f"Erro upload: {e}")
-
-@login_required
-def configurar_agencia(request):
-    agencia, created = Agencia.objects.get_or_create(id=request.user.minha_agencia.id if request.user.minha_agencia else None)
-    dbx_config = DropboxConfig.objects.filter(agencia=agencia).first()
-    
-    if request.method == 'POST':
-        form = AgenciaForm(request.POST, request.FILES, instance=agencia)
-        if form.is_valid():
-            form.save()
-            messages.success(request, "Configurações salvas!")
-            return redirect('configurar_agencia')
-    else:
-        form = AgenciaForm(instance=agencia)
-    
-    return render(request, 'core/configurar_agencia.html', {'form': form, 'dbx_config': dbx_config})
 
 @login_required
 def conectar_dropbox(request):
