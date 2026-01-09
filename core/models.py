@@ -128,3 +128,24 @@ class DropboxConfig(models.Model):
     access_token = models.TextField()
     refresh_token = models.TextField()
     expires_at = models.DateTimeField()
+
+# --- COLOCAR NO FINAL DO ARQUIVO core/models.py ---
+
+from django.contrib.auth.models import User
+
+@property
+def minha_agencia_inteligente(self):
+    # 1. Tenta ver se é Dono de Agência
+    # (Supondo que no model Agencia o related_name seja 'agencia' ou padrão)
+    if hasattr(self, 'agencia'):
+        return self.agencia
+    
+    # 2. Tenta ver se é Sócia/Cliente
+    # (O related_name que criamos no passo anterior foi 'cliente_vinculado')
+    if hasattr(self, 'cliente_vinculado'):
+        return self.cliente_vinculado.agencia
+        
+    return None
+
+# Injeta essa propriedade dentro do User padrão do Django
+User.add_to_class('minha_agencia', minha_agencia_inteligente)
