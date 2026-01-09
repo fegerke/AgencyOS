@@ -2,8 +2,9 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.utils.text import slugify
 from django.utils import timezone
+import uuid
 
-# --- MANTENHA AS LISTAS DE OPÇÕES IGUAIS (REDES_OPCOES, ETC...) ---
+# --- MANTENHA AS LISTAS DE OPÇÕES IGUAIS ---
 REDES_OPCOES = [
     ('linktree', 'Linktree'),
     ('instagram', 'Instagram'),
@@ -50,25 +51,23 @@ class BaseEmpresa(models.Model):
     email = models.EmailField()
     telefone = models.CharField(max_length=20, blank=True, null=True)
     logo = models.ImageField(upload_to='logos/', blank=True, null=True)
+    # NOVO CAMPO PARA O LINK DO DROPBOX
+    logo_dropbox_link = models.URLField(max_length=500, blank=True, null=True)
+    
     redes_sociais = models.JSONField(default=dict, blank=True)
     data_cadastro = models.DateTimeField(default=timezone.now)
     class Meta: abstract = True
 
 class Agencia(BaseEmpresa, BaseEndereco):
-    # AGORA PERMITE VÁRIOS SÓCIOS (Luisa, Beatriz, etc.)
     socios = models.ManyToManyField(User, related_name='agencias_socio', blank=True)
-    
     def __str__(self): return self.nome_fantasia
 
 class Cliente(BaseEmpresa, BaseEndereco):
     agencia = models.ForeignKey(Agencia, on_delete=models.CASCADE, related_name='clientes')
-    
-    # AGORA PERMITE VÁRIOS USUÁRIOS DO CLIENTE (Dono, Gerente, Estagiário)
-    # Mudei o nome de 'usuario_acesso' para 'usuarios' (plural)
     usuarios = models.ManyToManyField(User, related_name='clientes_acesso', blank=True)
-    
     nome_contato = models.CharField(max_length=100, blank=True, null=True)
     whatsapp_contato = models.CharField(max_length=20, blank=True, null=True)
+    token_convite = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     def __str__(self): return self.nome_fantasia
 
 class Cronograma(models.Model):
@@ -80,6 +79,8 @@ class Cronograma(models.Model):
     data_fim = models.DateField(null=True, blank=True)
     excluido = models.BooleanField(default=False)
     data_exclusao = models.DateTimeField(null=True, blank=True)
+    pdf_dropbox_link = models.URLField(max_length=500, blank=True, null=True)
+    pdf_dropbox_path = models.CharField(max_length=500, blank=True, null=True)
     
     def __str__(self): 
         return f"{self.cliente.nome_fantasia} - {self.titulo} ({self.mes}/{self.ano})"
@@ -131,22 +132,13 @@ class DropboxConfig(models.Model):
     refresh_token = models.TextField()
     expires_at = models.DateTimeField()
 
-# --- LÓGICA INTELIGENTE ATUALIZADA (SUPORTA LISTAS DE USUÁRIOS) ---
-
+# --- LÓGICA INTELIGENTE ---
 @property
 def get_agencia_inteligente(self):
-    # 1. Verifica se o usuário é SÓCIO de alguma agência
-    # (Pega a primeira agência da lista onde ele é sócio)
     agencia_propria = self.agencias_socio.first()
-    if agencia_propria:
-        return agencia_propria
-    
-    # 2. Verifica se o usuário é FUNCIONÁRIO/DONO de algum Cliente
-    # (Pega o primeiro cliente da lista onde ele tem acesso)
+    if agencia_propria: return agencia_propria
     cliente_vinculado = self.clientes_acesso.first()
-    if cliente_vinculado:
-        return cliente_vinculado.agencia
-        
+    if cliente_vinculado: return cliente_vinculado.agencia
     return None
 
 User.add_to_class('minha_agencia', get_agencia_inteligente)

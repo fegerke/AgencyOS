@@ -17,99 +17,107 @@
         
         .page-break { page-break-after: always; }
 
-        /* === CAPA === */
+        /* HEADER FIXO */
+        header {
+            position: fixed; top: 2cm; left: 3cm; right: 3cm;
+            height: 1cm;
+            border-bottom: 3px solid #000;
+            display: flex; align-items: center; justify-content: space-between;
+            background: #fff; z-index: 1000;
+        }
+        .header-text { font-size: 24px; font-weight: 700; text-transform: uppercase; }
+
+        /* FOOTER FIXO */
+        footer {
+            position: fixed; bottom: 2cm; left: 3cm; right: 3cm;
+            height: 2cm;
+            border-top: 1px solid #000;
+            display: flex; align-items: center; justify-content: space-between;
+            padding-top: 20px;
+            background: #fff; z-index: 1000;
+        }
+
+        /* PÍLULAS SEGURAS (FIX VISUAL) */
+        .pill-side {
+            background: #fff; border: 1px solid #cbd5e0;
+            padding: 10px 30px; border-radius: 50px;
+            font-size: 20px; font-weight: 600; color: #555;
+            white-space: nowrap; /* Impede quebra */
+        }
+        .pill-center {
+            background-color: #0d6efd; color: white;
+            padding: 15px 50px; border-radius: 60px;
+            font-size: 28px; font-weight: 700;
+            white-space: nowrap; /* Impede quebra */
+        }
+
+        /* CAPA */
         .cover-page { width: 50.80cm; height: 28.58cm; position: relative; background: #fcfcfc; }
         .cover-header { position: absolute; top: 2cm; left: 3cm; right: 3cm; border-bottom: 3px solid #000; height: 1cm; }
         .cover-center { position: absolute; top: 50%; left: 3cm; transform: translateY(-50%); }
-        .main-title { font-size: 140px; font-weight: 700; line-height: 0.9; letter-spacing: -4px; color: #000; margin: 0; }
-        .main-title span { font-weight: 300; } 
+        .main-title { font-size: 140px; font-weight: 800; line-height: 0.9; text-align: center; margin: 0; }
+        .main-title span { font-weight: 300; display: block; font-size: 80px; }
+        
         .cover-footer { position: absolute; bottom: 2cm; left: 3cm; right: 3cm; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #000; padding-top: 1cm; }
-        .pill { display: inline-block; padding: 15px 50px; border-radius: 100px; font-size: 24px; color: #000; font-weight: 600; border: 2px solid transparent; }
+        
+        .footer-group { display: flex; gap: 30px; align-items: center; }
+        
+        /* PÍLULAS CAPA (FIX VISUAL) */
+        .pill { 
+            display: inline-block;
+            padding: 15px 40px; 
+            border-radius: 100px; 
+            font-size: 24px; 
+            color: #000; 
+            font-weight: 600; 
+            border: 2px solid transparent; 
+            white-space: nowrap; /* Segredo anti-quebra */
+            text-align: center;
+        }
         .pill-gray { background: #e0e0e0; }
         .pill-clean { background: transparent; border: 2px solid #ccc; }
-        .footer-group { display: flex; gap: 30px; }
 
-        /* === GRADE (AJUSTE DE TAMANHO DA PÍLULA AQUI) === */
-        .grid-page-container { width: 50.80cm; height: 28.58cm; display: flex; align-items: center; justify-content: flex-end; background: #f9f9f9; padding-right: 10cm; box-sizing: border-box; }
-        .layout-wrapper-flex { display: flex; align-items: center; justify-content: flex-end; gap: 0; }
+        /* CONTEÚDO */
+        .content-container { padding: 4cm 3cm; } /* Margem para não bater no header fixo */
         
-        /* Pílula Menor e Mais Leve */
-        .feed-label-pill { 
-            background: #e0e0e0; 
-            padding: 20px 50px; /* Reduzido de 30px 80px */
-            border-radius: 100px; 
-            font-size: 35px; /* Reduzido de 50px */
-            font-weight: 700; 
-            color: #000; 
-            white-space: nowrap; 
-            z-index: 2; 
-        }
+        .grid-page { display: flex; align-items: center; justify-content: flex-end; height: 100%; padding-right: 10cm; }
+        .layout-wrapper-flex { display: flex; align-items: center; gap: 0; }
+        .feed-label-pill { background: #e0e0e0; padding: 20px 50px; border-radius: 100px; font-size: 35px; font-weight: 700; white-space: nowrap; }
+        .connector-line { height: 4px; background: #bbb; width: 150px; margin: 0 -5px; }
         
-        /* Conector Mais Curto (Puxa a pílula pra perto da grade) */
-        .connector-line { 
-            height: 4px; 
-            background: #bbb; 
-            width: 150px; /* Reduzido de 300px */
-            margin: 0 -5px; 
-        }
-        
-        .instagram-grid { width: 600px; background: #fff; box-shadow: 0 40px 80px rgba(0,0,0,0.15); display: flex; flex-wrap: wrap; flex-shrink: 0; }
-        .grid-item { width: 200px; height: 266px; position: relative; overflow: hidden; background: #eee; border: 2px solid #fff; box-sizing: border-box; }
-        .grid-img { width: 100%; height: 100%; object-fit: cover; display: block; }
-        .play-icon-small { position: absolute; top: 10px; right: 10px; color: white; font-size: 24px; text-shadow: 0 2px 5px rgba(0,0,0,0.5); z-index: 10; }
+        .instagram-grid { width: 600px; display: flex; flex-wrap: wrap; box-shadow: 0 40px 80px rgba(0,0,0,0.15); background: #fff; }
+        .grid-item { width: 200px; height: 266px; position: relative; background: #eee; border: 2px solid #fff; box-sizing: border-box; }
+        .grid-img { width: 100%; height: 100%; object-fit: cover; }
+        .play-icon-small { position: absolute; top: 10px; right: 10px; color: white; font-size: 24px; }
 
-        /* === TRINCAS === */
-        .trinca-page { width: 50.80cm; height: 28.58cm; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #fff; position: relative; }
-        .trinca-header-container { margin-bottom: 60px; position: relative; text-align: center; }
-        .trinca-header-pill { background: #e0e0e0; padding: 20px 80px; border-radius: 100px; font-size: 45px; font-weight: 300; color: #000; position: relative; z-index: 2; }
-        .line-up { position: absolute; bottom: 50%; left: 50%; width: 2px; height: 50vh; background: #ddd; z-index: 1; }
-        .line-down { position: absolute; top: 100%; left: 50%; width: 2px; height: 60px; background: #ddd; z-index: 1; }
-        .trinca-table { border-collapse: collapse; margin: 0 auto; }
-        .trinca-col { width: 400px; vertical-align: top; text-align: center; }
-        .trinca-spacer { width: 20px; }
-        .trinca-img-box-fixed { width: 400px; height: 533px !important; background: #eee; margin-bottom: 25px; position: relative; overflow: hidden; box-shadow: 0 15px 30px rgba(0,0,0,0.1); }
-        .trinca-img-real { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; }
-        .date-pill-small { display: inline-block; background: #e0e0e0; padding: 10px 50px; border-radius: 40px; font-size: 24px; color: #333; font-weight: 500; margin-bottom: 10px; }
-        .format-text { font-size: 28px; font-weight: 400; color: #000; }
+        .trinca-page { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; }
+        .trinca-header-pill { background: #e0e0e0; padding: 15px 60px; border-radius: 100px; font-size: 30px; margin-bottom: 40px; }
+        .trinca-table { border-collapse: collapse; }
+        .trinca-col { width: 400px; text-align: center; vertical-align: top; }
+        .trinca-spacer { width: 40px; }
+        .trinca-img-box { width: 400px; height: 533px; background: #eee; margin-bottom: 20px; position: relative; }
+        .trinca-img-real { width: 100%; height: 100%; object-fit: cover; }
+        .date-pill { background: #f0f0f0; padding: 8px 30px; border-radius: 30px; font-size: 20px; font-weight: 600; display: inline-block; margin-bottom: 5px; }
         .play-icon-large { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: rgba(255,255,255,0.9); font-size: 80px; text-shadow: 0 5px 15px rgba(0,0,0,0.5); }
 
-        /* === POSTS INDIVIDUAIS === */
-        .individual-page { 
-            padding: 0; width: 50.80cm; height: 28.58cm; 
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            background: #fcfcfc;
-        }
-        
-        .post-header-pill {
-            background: #e0e0e0; padding: 15px 60px; border-radius: 50px;
-            font-size: 35px; font-weight: 300; color: #000; margin-bottom: 60px; text-align: center;
-        }
-
-        .post-layout-table { width: 80%; border-collapse: collapse; }
-        .col-img { width: 45%; vertical-align: top; padding-right: 60px; }
-        .col-text { width: 55%; vertical-align: top; padding-top: 10px; }
-
-        .individual-img-box {
-            width: 100%; height: 750px; position: relative;
-            border-radius: 20px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.15);
-            background: #eee;
-        }
-
-        .post-main-image { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; }
-        .post-body-title { font-size: 32px; font-weight: 600; margin-bottom: 30px; line-height: 1.3; color: #000; }
-        .post-body-text { font-size: 26px; font-weight: 300; line-height: 1.6; color: #333; white-space: pre-wrap; }
-        
-        .briefing-box {
-            margin-top: 40px; padding: 20px; border-left: 5px solid #ccc;
-            background: #f5f5f5; color: #666; font-size: 18px;
-        }
+        .individual-page { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; }
+        .post-header-pill { background: #e0e0e0; padding: 15px 60px; border-radius: 50px; font-size: 30px; margin-bottom: 40px; }
+        .post-layout-table { width: 80%; }
+        .col-img { width: 45%; padding-right: 50px; vertical-align: top; }
+        .col-text { width: 55%; vertical-align: top; padding-top: 20px; }
+        .individual-img-box { width: 100%; height: 750px; position: relative; border-radius: 20px; overflow: hidden; background: #eee; box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
+        .post-main-image { width: 100%; height: 100%; object-fit: cover; }
+        .post-body-title { font-size: 32px; font-weight: 700; margin-bottom: 20px; }
+        .post-body-text { font-size: 24px; font-weight: 300; line-height: 1.5; white-space: pre-wrap; }
+        .briefing-box { margin-top: 40px; padding: 20px; border-left: 5px solid #ccc; background: #f9f9f9; color: #666; font-size: 18px; }
     </style>
 </head>
 <body>
 
     <div class="cover-page page-break">
-        <div class="cover-header"></div> 
-        <div class="cover-center"><h1 class="main-title">Cronograma<br><span>de postagens</span></h1></div>
+        <div class="cover-header"></div>
+        <div class="cover-center"><h1 class="main-title">CRONOGRAMA<br><span>DE POSTAGENS</span></h1></div>
+        
         <div class="cover-footer">
             <div class="footer-group">
                 {% if instagram_handle %}<div class="pill pill-gray">{{ instagram_handle }}</div>{% endif %}
@@ -123,10 +131,14 @@
 
     {% for lote in lotes %}
 
-    <div class="grid-page-container page-break">
+    <div class="grid-page page-break">
+        <header style="position: absolute; top: 2cm; width: 100%;">
+            <div class="header-text">{{ cronograma.cliente.nome_fantasia }}</div>
+            <div class="header-text">{{ agencia.nome_fantasia }}</div>
+        </header>
+
         <div class="layout-wrapper-flex">
             <div class="feed-label-pill">{{ lote.titulo_grade }}</div>
-            
             <div class="connector-line"></div>
             <div class="instagram-grid">
                 {% for post in lote.posts_grade %}
@@ -140,38 +152,54 @@
                 {% if lote.posts_grade|length < 9 %}<div class="grid-item" style="background: #f4f4f4;"></div>{% endif %}
             </div>
         </div>
+
+        <footer style="position: absolute; bottom: 2cm; width: 100%;">
+            <div class="pill-side">{{ instagram_agencia }}</div>
+            <div class="pill-center">{{ instagram_cliente }}</div>
+            <div class="pill-side">{{ cronograma.data_inicio|date:"d/m" }} - {{ cronograma.data_fim|date:"d/m" }}</div>
+        </footer>
     </div>
 
     {% for trinca in lote.trincas %}
-    
     <div class="trinca-page page-break">
-        <div class="trinca-header-container">
-            <div class="line-up"></div>
-            <div class="trinca-header-pill">Trinca #{{ forloop.counter }}</div>
-            <div class="line-down"></div>
-        </div>
+        <header style="position: absolute; top: 2cm; width: 100%;">
+            <div class="header-text">{{ cronograma.cliente.nome_fantasia }}</div>
+            <div class="header-text">{{ agencia.nome_fantasia }}</div>
+        </header>
 
+        <div class="trinca-header-pill">Trinca #{{ forloop.counter }}</div>
         <table class="trinca-table">
             <tr>
                 {% for post in trinca %}
                 <td class="trinca-col">
-                    <div class="trinca-img-box-fixed">
+                    <div class="trinca-img-box">
                         {% if post.pdf_img_url %}
                             <img src="{{ post.pdf_img_url }}" class="trinca-img-real">
                             {% if post.is_video %}<div class="play-icon-large">▶</div>{% endif %}
                         {% endif %}
                     </div>
-                    <div class="date-pill-small">{{ post.data_publicacao|date:"d/m" }}</div>
+                    <div class="date-pill">{{ post.data_publicacao|date:"d/m" }}</div>
                     <div class="format-text">{% if post.is_video %}Reel{% else %}Foto{% endif %}</div>
                 </td>
                 {% if not forloop.last %}<td class="trinca-spacer"></td>{% endif %}
                 {% endfor %}
             </tr>
         </table>
+
+        <footer style="position: absolute; bottom: 2cm; width: 100%;">
+            <div class="pill-side">{{ instagram_agencia }}</div>
+            <div class="pill-center">{{ instagram_cliente }}</div>
+            <div class="pill-side">{{ cronograma.data_inicio|date:"d/m" }} - {{ cronograma.data_fim|date:"d/m" }}</div>
+        </footer>
     </div>
 
     {% for post in trinca reversed %}
     <div class="individual-page page-break">
+        <header style="position: absolute; top: 2cm; width: 100%;">
+            <div class="header-text">{{ cronograma.cliente.nome_fantasia }}</div>
+            <div class="header-text">{{ agencia.nome_fantasia }}</div>
+        </header>
+
         <div class="post-header-pill">
             Post {{ post.data_publicacao|date:"d/m" }} - {% if post.is_video %}Reel{% else %}Foto{% endif %}
         </div>
@@ -188,18 +216,23 @@
                     </div>
                 </td>
                 <td class="col-text">
-                    {% if post.titulo %}<div class="post-body-title">{{ post.titulo }}</div>{% endif %}
-                    {% if post.legenda %}<div class="post-body-text">{{ post.legenda|linebreaksbr }}</div>{% endif %}
+                    <div class="post-body-title">{{ post.titulo }}</div>
+                    <div class="post-body-text">{{ post.legenda|linebreaksbr }}</div>
                     {% if post.briefing_arte %}
                         <div class="briefing-box"><strong>Briefing:</strong><br>{{ post.briefing_arte|linebreaksbr }}</div>
                     {% endif %}
                 </td>
             </tr>
         </table>
+
+        <footer style="position: absolute; bottom: 2cm; width: 100%;">
+            <div class="pill-side">{{ instagram_agencia }}</div>
+            <div class="pill-center">{{ instagram_cliente }}</div>
+            <div class="pill-side">{{ cronograma.data_inicio|date:"d/m" }} - {{ cronograma.data_fim|date:"d/m" }}</div>
+        </footer>
     </div>
     {% endfor %}
     {% endfor %}
-    
     {% endfor %}
 
 </body>
