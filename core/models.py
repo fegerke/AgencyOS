@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from django.utils.text import slugify
 from django.utils import timezone
 
+# --- MANTENHA AS LISTAS DE OPÇÕES IGUAIS (REDES_OPCOES, ETC...) ---
 REDES_OPCOES = [
     ('linktree', 'Linktree'),
     ('instagram', 'Instagram'),
@@ -54,13 +55,18 @@ class BaseEmpresa(models.Model):
     class Meta: abstract = True
 
 class Agencia(BaseEmpresa, BaseEndereco):
-    # AQUI MUDOU: related_name agora é 'agencia_dono' para não conflitar
-    dono = models.OneToOneField(User, on_delete=models.CASCADE, related_name='agencia_dono')
+    # AGORA PERMITE VÁRIOS SÓCIOS (Luisa, Beatriz, etc.)
+    socios = models.ManyToManyField(User, related_name='agencias_socio', blank=True)
+    
     def __str__(self): return self.nome_fantasia
 
 class Cliente(BaseEmpresa, BaseEndereco):
     agencia = models.ForeignKey(Agencia, on_delete=models.CASCADE, related_name='clientes')
-    usuario_acesso = models.OneToOneField(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='cliente_vinculado')
+    
+    # AGORA PERMITE VÁRIOS USUÁRIOS DO CLIENTE (Dono, Gerente, Estagiário)
+    # Mudei o nome de 'usuario_acesso' para 'usuarios' (plural)
+    usuarios = models.ManyToManyField(User, related_name='clientes_acesso', blank=True)
+    
     nome_contato = models.CharField(max_length=100, blank=True, null=True)
     whatsapp_contato = models.CharField(max_length=20, blank=True, null=True)
     def __str__(self): return self.nome_fantasia
@@ -100,7 +106,6 @@ class Post(models.Model):
         
         if self.excluido:
             return f"AgencyOS/LIXEIRA/{cli}/{self.cronograma.ano}/{mes_nome}/{crono_titulo}/{slugify(self.titulo)}/"
-        
         return f"AgencyOS/{cli}/{self.cronograma.ano}/{mes_nome}/{crono_titulo}/{slugify(self.titulo)}/"
     
     def gerar_caminho_base(self, lixeira=False):
@@ -109,7 +114,6 @@ class Post(models.Model):
         ano = str(self.cronograma.ano)
         meses = {1:"01 - JANEIRO", 2:"02 - FEVEREIRO", 3:"03 - MARCO", 4:"04 - ABRIL", 5:"05 - MAIO", 6:"06 - JUNHO", 7:"07 - JULHO", 8:"08 - AGOSTO", 9:"09 - SETEMBRO", 10:"10 - OUTUBRO", 11:"11 - NOVEMBRO", 12:"12 - DEZEMBRO"}
         mes_nome = meses.get(self.cronograma.mes)
-        # Retorna o caminho da PASTA do post
         return f"/{prefixo}/{cli}/{ano}/{mes_nome}/{self.cronograma.titulo}/{self.titulo}/".replace("//", "/")
 
 class PostArquivo(models.Model):
@@ -118,11 +122,8 @@ class PostArquivo(models.Model):
     dropbox_path = models.CharField(max_length=500, blank=True, null=True)
     ordem = models.PositiveIntegerField(default=0)
 
-    class Meta:
-        ordering = ['ordem']
-
-    def __str__(self):
-        return f"Arquivo {self.ordem} de {self.post.titulo}"
+    class Meta: ordering = ['ordem']
+    def __str__(self): return f"Arquivo {self.ordem} de {self.post.titulo}"
 
 class DropboxConfig(models.Model):
     agencia = models.OneToOneField(Agencia, on_delete=models.CASCADE, related_name='dropbox_config')
@@ -130,20 +131,22 @@ class DropboxConfig(models.Model):
     refresh_token = models.TextField()
     expires_at = models.DateTimeField()
 
-# --- LÓGICA INTELIGENTE DE ACESSO ---
+# --- LÓGICA INTELIGENTE ATUALIZADA (SUPORTA LISTAS DE USUÁRIOS) ---
 
 @property
 def get_agencia_inteligente(self):
-    # 1. Tenta ver se é Dono de Agência (pelo novo nome 'agencia_dono')
-    if hasattr(self, 'agencia_dono'):
-        return self.agencia_dono
+    # 1. Verifica se o usuário é SÓCIO de alguma agência
+    # (Pega a primeira agência da lista onde ele é sócio)
+    agencia_propria = self.agencias_socio.first()
+    if agencia_propria:
+        return agencia_propria
     
-    # 2. Tenta ver se é Sócia/Cliente (pelo vínculo que criamos na classe Cliente)
-    if hasattr(self, 'cliente_vinculado'):
-        return self.cliente_vinculado.agencia
+    # 2. Verifica se o usuário é FUNCIONÁRIO/DONO de algum Cliente
+    # (Pega o primeiro cliente da lista onde ele tem acesso)
+    cliente_vinculado = self.clientes_acesso.first()
+    if cliente_vinculado:
+        return cliente_vinculado.agencia
         
     return None
 
-# Injeta essa propriedade dentro do User padrão do Django com o nome 'minha_agencia'
-# Assim, suas views continuam funcionando chamando request.user.minha_agencia
 User.add_to_class('minha_agencia', get_agencia_inteligente)
