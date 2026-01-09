@@ -54,7 +54,8 @@ class BaseEmpresa(models.Model):
     class Meta: abstract = True
 
 class Agencia(BaseEmpresa, BaseEndereco):
-    dono = models.OneToOneField(User, on_delete=models.CASCADE, related_name='minha_agencia')
+    # AQUI MUDOU: related_name agora é 'agencia_dono' para não conflitar
+    dono = models.OneToOneField(User, on_delete=models.CASCADE, related_name='agencia_dono')
     def __str__(self): return self.nome_fantasia
 
 class Cliente(BaseEmpresa, BaseEndereco):
@@ -129,23 +130,20 @@ class DropboxConfig(models.Model):
     refresh_token = models.TextField()
     expires_at = models.DateTimeField()
 
-# --- COLOCAR NO FINAL DO ARQUIVO core/models.py ---
-
-from django.contrib.auth.models import User
+# --- LÓGICA INTELIGENTE DE ACESSO ---
 
 @property
-def minha_agencia_inteligente(self):
-    # 1. Tenta ver se é Dono de Agência
-    # (Supondo que no model Agencia o related_name seja 'agencia' ou padrão)
-    if hasattr(self, 'agencia'):
-        return self.agencia
+def get_agencia_inteligente(self):
+    # 1. Tenta ver se é Dono de Agência (pelo novo nome 'agencia_dono')
+    if hasattr(self, 'agencia_dono'):
+        return self.agencia_dono
     
-    # 2. Tenta ver se é Sócia/Cliente
-    # (O related_name que criamos no passo anterior foi 'cliente_vinculado')
+    # 2. Tenta ver se é Sócia/Cliente (pelo vínculo que criamos na classe Cliente)
     if hasattr(self, 'cliente_vinculado'):
         return self.cliente_vinculado.agencia
         
     return None
 
-# Injeta essa propriedade dentro do User padrão do Django
-User.add_to_class('minha_agencia', minha_agencia_inteligente)
+# Injeta essa propriedade dentro do User padrão do Django com o nome 'minha_agencia'
+# Assim, suas views continuam funcionando chamando request.user.minha_agencia
+User.add_to_class('minha_agencia', get_agencia_inteligente)
