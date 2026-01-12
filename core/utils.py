@@ -1,8 +1,9 @@
-# core/utils.py
 import base64
 import dropbox
 import requests
 import os 
+import io
+from PIL import Image # Necessário para otimização
 from django.conf import settings
 from django.template.loader import render_to_string
 from dropbox.files import ThumbnailSize, ThumbnailFormat, PathOrLink
@@ -10,10 +11,17 @@ import weasyprint
 from .models import DropboxConfig
 
 def fetch_image_as_base64(url):
+    """
+    Baixa, REDIMENSIONA e converte imagem para Base64.
+    Otimizado para evitar erro de memória no Render.
+    """
     if not url: return None
     try:
+        image_data = None
+        
+        # 1. Obter os dados brutos
         if url.startswith('http'):
-            response = requests.get(url)
+            response = requests.get(url, stream=True) # Stream para economizar memória
             if response.status_code == 200:
                 image_data = response.content
         else:
@@ -26,14 +34,38 @@ def fetch_image_as_base64(url):
             if os.path.exists(file_path):
                 with open(file_path, 'rb') as f:
                     image_data = f.read()
-            else:
-                return None
         
         if image_data:
-            mime = "image/jpeg" if url.lower().endswith(('.jpg', '.jpeg')) else "image/png"
+            # --- OTIMIZAÇÃO CRÍTICA DE MEMÓRIA ---
+            try:
+                # Abre a imagem da memória
+                img = Image.open(io.BytesIO(image_data))
+                
+                # Converte para RGB se for PNG transparente (para poder salvar como JPEG leve)
+                if img.mode in ('RGBA', 'P'):
+                    img = img.convert('RGB')
+                
+                # Redimensiona se for maior que 800px (Suficiente para PDF A3/A4)
+                max_size = (800, 800)
+                img.thumbnail(max_size, Image.Resampling.LANCZOS)
+                
+                # Salva em um buffer novo comprimido como JPEG
+                buffer = io.BytesIO()
+                img.save(buffer, format="JPEG", quality=70, optimize=True)
+                image_data = buffer.getvalue()
+                mime = "image/jpeg"
+            except Exception as e:
+                # Se der erro na otimização (ex: arquivo corrompido), usa o original
+                print(f"Erro ao otimizar imagem: {e}")
+                mime = "image/jpeg" if url.lower().endswith(('.jpg', '.jpeg')) else "image/png"
+
+            # Converte para Base64
             b64 = base64.b64encode(image_data).decode('utf-8')
             return f"data:{mime};base64,{b64}"
-    except Exception: pass
+            
+    except Exception as e:
+        print(f"Erro no fetch_image: {e}")
+        pass
     return None
 
 def gerar_pdf_cronograma(cronograma, user):
@@ -103,13 +135,16 @@ def gerar_pdf_cronograma(cronograma, user):
                         is_video = ext.endswith(('.mp4', '.mov', '.avi', '.m4v'))
                         url_data['is_video'] = is_video
                         if is_video:
+                            # Para vídeo, pega thumbnail pequena
                             _, res = dbx.files_get_thumbnail_v2(
                                 resource=PathOrLink.path(arquivo.dropbox_path), 
                                 format=ThumbnailFormat.png, size=ThumbnailSize.w640h480
                             )
+                            # Já vem pequeno, só converte
                             b64 = base64.b64encode(res.content).decode('utf-8')
                             url_data['url'] = f"data:image/png;base64,{b64}"
                         else:
+                            # Para imagem, pega link temporário e deixa o fetch_image_as_base64 otimizar
                             url_data['url'] = dbx.files_get_temporary_link(arquivo.dropbox_path).link
                     except: pass
                 url_map[post.id] = url_data
@@ -117,7 +152,11 @@ def gerar_pdf_cronograma(cronograma, user):
 
     def injetar_url(post):
         d = url_map.get(post.id, {'url': None, 'is_video': False})
-        post.pdf_img_url = d['url']
+        # Se for imagem do dropbox, passa pelo fetch otimizado agora
+        if d['url'] and d['url'].startswith('http') and not d['url'].startswith('data:'):
+             post.pdf_img_url = fetch_image_as_base64(d['url'])
+        else:
+             post.pdf_img_url = d['url']
         post.is_video = d['is_video']
 
     # --- MONTAGEM ---
