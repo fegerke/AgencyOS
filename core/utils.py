@@ -5,27 +5,26 @@ import os
 import io
 import tempfile
 import gc
-import pathlib # Necessário para corrigir o caminho do arquivo
+import pathlib
 from PIL import Image, ImageOps
 from django.conf import settings
 from django.template.loader import render_to_string
 from dropbox.files import ThumbnailSize, ThumbnailFormat, PathOrLink
 import weasyprint
+from weasyprint.text.fonts import FontConfiguration # Import necessário para gerenciar fontes
 from .models import DropboxConfig
 
 def process_image_to_temp_file(url, temp_file_list):
     """
     Baixa, corrige rotação, redimensiona e salva em arquivo temporário no disco.
-    Retorna a URI do arquivo (file://...) compatível com Windows/Linux.
+    Retorna a URI do arquivo.
     """
     if not url: return None
     
     try:
         image_data = None
         
-        # 1. Download (Stream) ou Leitura Local
         if url.startswith('http'):
-            # Timeout para não travar
             response = requests.get(url, stream=True, timeout=10)
             if response.status_code == 200:
                 image_data = response.content
@@ -41,30 +40,22 @@ def process_image_to_temp_file(url, temp_file_list):
                     image_data = f.read()
         
         if image_data:
-            # 2. Processamento com PIL
             img = Image.open(io.BytesIO(image_data))
-            
-            # Corrige rotação (EXIF)
             img = ImageOps.exif_transpose(img)
             
-            # Converte para RGB
             if img.mode in ('RGBA', 'P'):
                 img = img.convert('RGB')
             
-            # Redimensiona (550px é suficiente para a grade e economiza muito)
+            # 550px é suficiente para a grade
             max_size = (550, 550)
             img.thumbnail(max_size, Image.Resampling.LANCZOS)
             
-            # 3. Salva em Arquivo Temporário
-            # delete=False pois precisamos fechar o arquivo para o WeasyPrint abrir depois
             t = tempfile.NamedTemporaryFile(delete=False, suffix='.jpg')
+            # Quality 65 é leve e bom para PDF
             img.save(t, format='JPEG', quality=65, optimize=True)
             t.close()
             
-            # Registra para deletar depois
             temp_file_list.append(t.name)
-            
-            # FIX: Usa pathlib para gerar uma URI correta (file:///...) que funciona no Windows e Linux
             return pathlib.Path(t.name).as_uri()
             
     except Exception as e:
@@ -73,13 +64,11 @@ def process_image_to_temp_file(url, temp_file_list):
     
     return None
 
-# Mantido para retrocompatibilidade
 def fetch_image_as_base64(url):
     return None 
 
 def gerar_pdf_cronograma(cronograma, user):
     
-    # Lista para rastrear arquivos temporários criados
     temp_resources = []
     
     try:
@@ -141,20 +130,16 @@ def gerar_pdf_cronograma(cronograma, user):
                             is_video = ext.endswith(('.mp4', '.mov', '.avi', '.m4v'))
                             url_data['is_video'] = is_video
                             if is_video:
-                                # Vídeo: Pega thumb
                                 _, res = dbx.files_get_thumbnail_v2(
                                     resource=PathOrLink.path(arquivo.dropbox_path), 
                                     format=ThumbnailFormat.png, size=ThumbnailSize.w640h480
                                 )
-                                # Salva thumb em disco direto
                                 t = tempfile.NamedTemporaryFile(delete=False, suffix='.png')
                                 t.write(res.content)
                                 t.close()
                                 temp_resources.append(t.name)
-                                # Converte para URI correta
                                 url_data['url'] = pathlib.Path(t.name).as_uri()
                             else:
-                                # Imagem: Link temp para baixar depois
                                 url_data['url'] = dbx.files_get_temporary_link(arquivo.dropbox_path).link
                         except: pass
                     url_map[post.id] = url_data
@@ -162,13 +147,10 @@ def gerar_pdf_cronograma(cronograma, user):
 
         def injetar_url(post):
             d = url_map.get(post.id, {'url': None, 'is_video': False})
-            
-            # Se for URL http, processa e salva no disco. Se já for file://, mantém.
             if d['url'] and d['url'].startswith('http'):
                 post.pdf_img_url = process_image_to_temp_file(d['url'], temp_resources)
             else:
                 post.pdf_img_url = d['url']
-                
             post.is_video = d['is_video']
 
         # --- MONTAGEM ---
@@ -204,12 +186,22 @@ def gerar_pdf_cronograma(cronograma, user):
             'instagram_agencia': instagram_agencia,
         })
 
-        # Gera PDF
-        pdf_file = weasyprint.HTML(string=html_string, base_url=settings.BASE_DIR).write_pdf()
+        # --- CONFIGURAÇÃO DE FONTE E GERAÇÃO OTIMIZADA ---
+        font_config = FontConfiguration()
+        
+        # optimize_images=False é o SEGREDO. 
+        # Já otimizamos as imagens com Pillow. O WeasyPrint não precisa gastar RAM fazendo de novo.
+        pdf_file = weasyprint.HTML(
+            string=html_string, 
+            base_url=settings.BASE_DIR
+        ).write_pdf(
+            font_config=font_config,
+            optimize_images=False 
+        )
+        
         return pdf_file
 
     finally:
-        # --- LIMPEZA CRÍTICA ---
         for path in temp_resources:
             try:
                 if os.path.exists(path):
