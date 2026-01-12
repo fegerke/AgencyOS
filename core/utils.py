@@ -3,7 +3,7 @@ import dropbox
 import requests
 import os 
 import io
-from PIL import Image # Necessário para otimização
+from PIL import Image, ImageOps # Adicionado ImageOps
 from django.conf import settings
 from django.template.loader import render_to_string
 from dropbox.files import ThumbnailSize, ThumbnailFormat, PathOrLink
@@ -12,8 +12,7 @@ from .models import DropboxConfig
 
 def fetch_image_as_base64(url):
     """
-    Baixa, REDIMENSIONA e converte imagem para Base64.
-    Otimizado para evitar erro de memória no Render.
+    Baixa, CORRIGE ROTAÇÃO, REDIMENSIONA e converte imagem para Base64.
     """
     if not url: return None
     try:
@@ -21,7 +20,7 @@ def fetch_image_as_base64(url):
         
         # 1. Obter os dados brutos
         if url.startswith('http'):
-            response = requests.get(url, stream=True) # Stream para economizar memória
+            response = requests.get(url, stream=True)
             if response.status_code == 200:
                 image_data = response.content
         else:
@@ -36,27 +35,30 @@ def fetch_image_as_base64(url):
                     image_data = f.read()
         
         if image_data:
-            # --- OTIMIZAÇÃO CRÍTICA DE MEMÓRIA ---
+            # --- OTIMIZAÇÃO E CORREÇÃO DE ROTAÇÃO ---
             try:
                 # Abre a imagem da memória
                 img = Image.open(io.BytesIO(image_data))
                 
-                # Converte para RGB se for PNG transparente (para poder salvar como JPEG leve)
+                # FIX: Aplica a rotação baseada no EXIF (corrige fotos de celular deitadas)
+                img = ImageOps.exif_transpose(img)
+                
+                # Converte para RGB se necessário
                 if img.mode in ('RGBA', 'P'):
                     img = img.convert('RGB')
                 
-                # Redimensiona se for maior que 800px (Suficiente para PDF A3/A4)
+                # Redimensiona (Economia de RAM)
                 max_size = (800, 800)
                 img.thumbnail(max_size, Image.Resampling.LANCZOS)
                 
-                # Salva em um buffer novo comprimido como JPEG
+                # Salva comprimido
                 buffer = io.BytesIO()
                 img.save(buffer, format="JPEG", quality=70, optimize=True)
+                
                 image_data = buffer.getvalue()
                 mime = "image/jpeg"
             except Exception as e:
-                # Se der erro na otimização (ex: arquivo corrompido), usa o original
-                print(f"Erro ao otimizar imagem: {e}")
+                print(f"Aviso: Erro ao processar imagem (usando original): {e}")
                 mime = "image/jpeg" if url.lower().endswith(('.jpg', '.jpeg')) else "image/png"
 
             # Converte para Base64
@@ -70,7 +72,6 @@ def fetch_image_as_base64(url):
 
 def gerar_pdf_cronograma(cronograma, user):
     
-    # 1. Posts e Agência
     todos_posts = cronograma.posts.filter(excluido=False).order_by('data_publicacao')
     agencia = cronograma.cliente.agencia
 
@@ -78,17 +79,11 @@ def gerar_pdf_cronograma(cronograma, user):
     def get_handle(obj):
         redes = obj.redes_sociais.get('instagram', {})
         val = redes.get('perfil') or redes.get('usuario') or ""
-        
         if not val: return ""
-        
         if 'instagram.com/' in val:
             val = val.split('instagram.com/')[-1].replace('/', '')
-        
-        val = val.strip()
-        val = val.lower().replace(' ', '_')
-
-        if not val.startswith('@'): 
-            return f"@{val}"
+        val = val.strip().lower().replace(' ', '_')
+        if not val.startswith('@'): return f"@{val}"
         return val
 
     instagram_cliente = get_handle(cronograma.cliente)
@@ -135,16 +130,13 @@ def gerar_pdf_cronograma(cronograma, user):
                         is_video = ext.endswith(('.mp4', '.mov', '.avi', '.m4v'))
                         url_data['is_video'] = is_video
                         if is_video:
-                            # Para vídeo, pega thumbnail pequena
                             _, res = dbx.files_get_thumbnail_v2(
                                 resource=PathOrLink.path(arquivo.dropbox_path), 
                                 format=ThumbnailFormat.png, size=ThumbnailSize.w640h480
                             )
-                            # Já vem pequeno, só converte
                             b64 = base64.b64encode(res.content).decode('utf-8')
                             url_data['url'] = f"data:image/png;base64,{b64}"
                         else:
-                            # Para imagem, pega link temporário e deixa o fetch_image_as_base64 otimizar
                             url_data['url'] = dbx.files_get_temporary_link(arquivo.dropbox_path).link
                     except: pass
                 url_map[post.id] = url_data
@@ -152,7 +144,6 @@ def gerar_pdf_cronograma(cronograma, user):
 
     def injetar_url(post):
         d = url_map.get(post.id, {'url': None, 'is_video': False})
-        # Se for imagem do dropbox, passa pelo fetch otimizado agora
         if d['url'] and d['url'].startswith('http') and not d['url'].startswith('data:'):
              post.pdf_img_url = fetch_image_as_base64(d['url'])
         else:
