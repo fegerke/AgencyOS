@@ -110,7 +110,14 @@
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-    // 1. Script de Exclusão (Servidor)
+    // FIX MOBILE: Força o input a aceitar imagens e vídeos (abre Galeria no Android)
+    document.addEventListener("DOMContentLoaded", function() {
+        const fileInput = document.querySelector('input[type="file"][multiple]');
+        if(fileInput) {
+            fileInput.setAttribute('accept', 'image/*,video/*');
+        }
+    });
+
     function confirmarExclusaoPost(url) {
         Swal.fire({
             title: 'Excluir Post?', text: "Não será possível reverter.", icon: 'warning',
@@ -125,47 +132,39 @@
         }).then((result) => { if (result.isConfirmed) window.location.href = url; })
     }
 
-    // 2. SCRIPT DE PREVIEW LOCAL AVANÇADO (Com Botão Remover)
     document.addEventListener('DOMContentLoaded', function() {
         const input = document.querySelector('input[type="file"][multiple]');
         const container = document.getElementById('local-previews-container');
         const list = document.getElementById('local-previews-list');
-        // Objeto DataTransfer para gerenciar a lista de arquivos "na unha"
         const dt = new DataTransfer(); 
 
         if (input) {
             input.addEventListener('change', function(event) {
-                // Se o usuário selecionou algo novo
                 if (this.files && this.files.length > 0) {
-                    dt.items.clear(); // Limpa o anterior (comportamento padrão de input file)
+                    dt.items.clear(); 
                     Array.from(this.files).forEach(file => dt.items.add(file));
                     renderPreviews();
                 }
             });
         }
 
-        // Função global para remover um arquivo específico da lista de upload
         window.removeLocalFile = function(index) {
-            dt.items.remove(index); // Remove do DataTransfer
-            input.files = dt.files; // Atualiza o Input real com a nova lista
-            renderPreviews(); // Redesenha a tela
+            dt.items.remove(index);
+            input.files = dt.files;
+            renderPreviews();
         }
 
         function renderPreviews() {
-            list.innerHTML = ''; // Limpa visual
+            list.innerHTML = ''; 
             
             if (dt.files.length > 0) {
                 container.classList.remove('d-none');
-                
-                // Percorre os arquivos e cria os cards
                 Array.from(dt.files).forEach((file, index) => {
-                    // Cria estrutura do card
                     const card = document.createElement('div');
                     card.className = "position-relative border bg-white rounded shadow-sm overflow-hidden";
                     card.style.width = "120px";
                     card.style.height = "120px";
                     
-                    // Adiciona container de mídia e botão X imediatamente (para manter ordem)
                     card.innerHTML = `
                         <div id="media-content-${index}" class="w-100 h-100 d-flex align-items-center justify-content-center bg-light">
                             <div class="spinner-border spinner-border-sm text-secondary" role="status"></div>
@@ -181,7 +180,6 @@
                     `;
                     list.appendChild(card);
 
-                    // Carrega a imagem/vídeo assincronamente
                     const reader = new FileReader();
                     reader.onload = function(e) {
                         const isVideo = file.type.startsWith('video/');

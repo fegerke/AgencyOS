@@ -26,7 +26,7 @@
         </div>
     </div>
 
-    <div class="d-flex justify-content-between align-items-center mb-4 px-1">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 px-1 gap-3">
         <div class="d-flex align-items-center">
             <a href="{% url 'listar_cronogramas' %}" class="btn btn-light rounded-circle shadow-sm me-3" title="Voltar para Lista">
                 <i class="bi bi-arrow-left"></i>
@@ -37,10 +37,10 @@
             </div>
         </div>
         
-        <div class="d-flex gap-2">
+        <div class="d-flex flex-wrap gap-2 justify-content-start justify-content-md-end">
             {% if cronograma.pdf_dropbox_link %}
                 <div class="btn-group shadow-sm">
-                    <a href="{% url 'visualizar_pdf_cronograma' cronograma.id %}" target="_blank" class="btn btn-success fw-bold">
+                    <a href="{% url 'visualizar_pdf_cronograma' cronograma.id %}" target="_blank" class="btn btn-success fw-bold text-nowrap">
                         <i class="bi bi-file-earmark-pdf"></i> Visualizar PDF
                     </a>
                     <a href="{% url 'gerar_pdf_cronograma' cronograma.id %}" class="btn btn-warning btn-loading-pdf" title="Regerar PDF">
@@ -48,12 +48,12 @@
                     </a>
                 </div>
             {% else %}
-                <a href="{% url 'gerar_pdf_cronograma' cronograma.id %}" class="btn btn-outline-danger rounded-pill px-3 fw-bold shadow-sm btn-loading-pdf">
+                <a href="{% url 'gerar_pdf_cronograma' cronograma.id %}" class="btn btn-outline-danger rounded-pill px-3 fw-bold shadow-sm btn-loading-pdf text-nowrap">
                     <i class="bi bi-file-earmark-pdf me-1"></i> Gerar PDF
                 </a>
             {% endif %}
             
-            <a href="{% url 'cadastrar_post' %}?cronograma={{ cronograma.id }}" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" style="background: #6c5ce7; border: none;">
+            <a href="{% url 'cadastrar_post' %}?cronograma={{ cronograma.id }}" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm text-nowrap" style="background: #6c5ce7; border: none;">
                 <i class="bi bi-plus-lg me-1"></i> Post
             </a>
         </div>
@@ -148,7 +148,6 @@
     .text-shadow { text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
     .pointer-events-none { pointer-events: none; }
     
-    /* Estilo para botão desabilitado visualmente */
     .btn-loading-active {
         pointer-events: none;
         opacity: 0.7;
@@ -158,20 +157,14 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", function() {
-        // Pega todos os botões de PDF (Gerar ou Regerar)
         const pdfButtons = document.querySelectorAll('.btn-loading-pdf');
         
         pdfButtons.forEach(btn => {
             btn.addEventListener('click', function(e) {
-                // Muda o texto e o estilo
                 const originalContent = this.innerHTML;
                 this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Gerando... (Aguarde)';
                 this.classList.add('btn-secondary', 'btn-loading-active');
-                
-                // Remove as cores antigas para ficar cinza
                 this.classList.remove('btn-outline-danger', 'btn-warning');
-                
-                // Nota: O link continua funcionando e vai recarregar a página ao final
             });
         });
     });

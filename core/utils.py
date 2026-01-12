@@ -38,27 +38,36 @@ def fetch_image_as_base64(url):
 
 def gerar_pdf_cronograma(cronograma, user):
     
-    # 1. PEGA TUDO EM ORDEM CRONOLÓGICA
+    # 1. Posts e Agência
     todos_posts = cronograma.posts.filter(excluido=False).order_by('data_publicacao')
     agencia = cronograma.cliente.agencia
 
-    # --- DEFINIÇÃO DE VARIÁVEIS DE TEXTO (CORREÇÃO DE DADOS) ---
+    # --- TRATAMENTO DE HANDLES ---
     def get_handle(obj):
-        # Tenta pegar perfil, se falhar pega usuario
         redes = obj.redes_sociais.get('instagram', {})
         val = redes.get('perfil') or redes.get('usuario') or ""
-        if val and not val.startswith('@'): return f"@{val}"
+        
+        if not val: return ""
+        
+        if 'instagram.com/' in val:
+            val = val.split('instagram.com/')[-1].replace('/', '')
+        
+        val = val.strip()
+        val = val.lower().replace(' ', '_')
+
+        if not val.startswith('@'): 
+            return f"@{val}"
         return val
 
-    # Dados para o Rodapé
     instagram_cliente = get_handle(cronograma.cliente)
-    if not instagram_cliente: instagram_cliente = cronograma.cliente.nome_fantasia
+    if not instagram_cliente: 
+        nome_limpo = cronograma.cliente.nome_fantasia.strip().lower().replace(' ', '_')
+        instagram_cliente = f"@{nome_limpo}"
 
     instagram_agencia = get_handle(agencia)
-    if not instagram_agencia: instagram_agencia = agencia.nome_fantasia
-
-    # Capa usa o handle do cliente
-    instagram_handle = instagram_cliente
+    if not instagram_agencia: 
+        nome_limpo = agencia.nome_fantasia.strip().lower().replace(' ', '_')
+        instagram_agencia = f"@{nome_limpo}"
 
     # --- LOGOS ---
     logo_cliente_b64 = None
@@ -73,7 +82,7 @@ def gerar_pdf_cronograma(cronograma, user):
     elif agencia.logo:
         logo_agencia_b64 = fetch_image_as_base64(agencia.logo.url)
 
-    # --- PROCESSAMENTO IMAGENS ---
+    # --- IMAGENS (DROPBOX) ---
     url_map = {} 
     dbx_config = DropboxConfig.objects.filter(agencia=agencia).first()
     
@@ -140,8 +149,6 @@ def gerar_pdf_cronograma(cronograma, user):
         'agencia': agencia,
         'logo_cliente': logo_cliente_b64,
         'logo_agencia': logo_agencia_b64,
-        # AQUI ESTAVA O PROBLEMA: Garantindo que as variáveis vão para o HTML
-        'instagram_handle': instagram_handle,
         'instagram_cliente': instagram_cliente,
         'instagram_agencia': instagram_agencia,
     })
