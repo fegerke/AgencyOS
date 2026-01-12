@@ -5,6 +5,7 @@ import os
 import io
 import tempfile
 import gc
+import pathlib # Necessário para corrigir o caminho do arquivo
 from PIL import Image, ImageOps
 from django.conf import settings
 from django.template.loader import render_to_string
@@ -15,8 +16,7 @@ from .models import DropboxConfig
 def process_image_to_temp_file(url, temp_file_list):
     """
     Baixa, corrige rotação, redimensiona e salva em arquivo temporário no disco.
-    Retorna o caminho do arquivo (file://...) para o WeasyPrint usar.
-    Adiciona o caminho na lista temp_file_list para limpeza posterior.
+    Retorna a URI do arquivo (file://...) compatível com Windows/Linux.
     """
     if not url: return None
     
@@ -25,7 +25,7 @@ def process_image_to_temp_file(url, temp_file_list):
         
         # 1. Download (Stream) ou Leitura Local
         if url.startswith('http'):
-            # Timeout para não travar o worker
+            # Timeout para não travar
             response = requests.get(url, stream=True, timeout=10)
             if response.status_code == 200:
                 image_data = response.content
@@ -64,8 +64,8 @@ def process_image_to_temp_file(url, temp_file_list):
             # Registra para deletar depois
             temp_file_list.append(t.name)
             
-            # Retorna path absoluto para o template
-            return f"file://{t.name}"
+            # FIX: Usa pathlib para gerar uma URI correta (file:///...) que funciona no Windows e Linux
+            return pathlib.Path(t.name).as_uri()
             
     except Exception as e:
         print(f"Erro processando imagem {url}: {e}")
@@ -73,7 +73,7 @@ def process_image_to_temp_file(url, temp_file_list):
     
     return None
 
-# Mantido para retrocompatibilidade se algo externo usar (opcional)
+# Mantido para retrocompatibilidade
 def fetch_image_as_base64(url):
     return None 
 
@@ -151,7 +151,8 @@ def gerar_pdf_cronograma(cronograma, user):
                                 t.write(res.content)
                                 t.close()
                                 temp_resources.append(t.name)
-                                url_data['url'] = f"file://{t.name}"
+                                # Converte para URI correta
+                                url_data['url'] = pathlib.Path(t.name).as_uri()
                             else:
                                 # Imagem: Link temp para baixar depois
                                 url_data['url'] = dbx.files_get_temporary_link(arquivo.dropbox_path).link
@@ -197,8 +198,8 @@ def gerar_pdf_cronograma(cronograma, user):
             'cronograma': cronograma,
             'lotes': lotes_renderizacao,
             'agencia': agencia,
-            'logo_cliente': logo_cliente_path, # Agora é path, não b64
-            'logo_agencia': logo_agencia_path, # Agora é path, não b64
+            'logo_cliente': logo_cliente_path, 
+            'logo_agencia': logo_agencia_path, 
             'instagram_cliente': instagram_cliente,
             'instagram_agencia': instagram_agencia,
         })
@@ -209,12 +210,9 @@ def gerar_pdf_cronograma(cronograma, user):
 
     finally:
         # --- LIMPEZA CRÍTICA ---
-        # Apaga todos os arquivos temporários do disco
         for path in temp_resources:
             try:
                 if os.path.exists(path):
                     os.remove(path)
             except: pass
-        
-        # Força coleta de lixo do Python
         gc.collect()
