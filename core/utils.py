@@ -189,12 +189,19 @@ def gerar_pdf_cronograma(cronograma, user):
             'base_dir': settings.BASE_DIR,
         })
 
-        # --- GERAÇÃO DO PDF (CORRIGIDO) ---
+        # --- GERAÇÃO DO PDF (VERSÃO ROBUSTA E CORRIGIDA) ---
         font_config = FontConfiguration()
         
+        # 1. Cria a instância do HTML (ESSA LINHA QUE FALTAVA)
+        html_obj = weasyprint.HTML(
+            string=html_string, 
+            base_url=settings.BASE_DIR
+        )
+
+        # 2. Renderiza o layout aplicando as fontes
         documento_renderizado = html_obj.render(font_config=font_config)
 
-        # Geramos os bytes do PDF com target=None e os parâmetros nomeados
+        # 3. Escreve o PDF sem tentar re-aplicar configurações conflitantes
         pdf_file = documento_renderizado.write_pdf(optimize_images=False)
         
         return pdf_file
