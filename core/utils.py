@@ -84,8 +84,8 @@ def texto_com_twemoji(texto):
         hex_code = '-'.join(codes)
         url = f"https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/{hex_code}.png"
         
-        # Retorna uma imagenzinha alinhada com a altura do texto
-        return f'<img src="{url}" style="height: 1.1em; width: 1.1em; vertical-align: -0.15em; margin: 0 0.05em; display: inline-block;" />'
+        # Substituímos 'em' por 'px' e 'vertical-align' simples para zerar o cálculo matemático do servidor
+        return f'<img src="{url}" style="height: 30px; width: 30px; vertical-align: middle; margin: 0 2px; display: inline-block;" />'
         
     return emoji.replace_emoji(texto, replace=formatar_twemoji)
 
