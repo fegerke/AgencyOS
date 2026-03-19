@@ -47,11 +47,11 @@ def process_image_to_temp_file(url, temp_file_list):
                 img = img.convert('RGB')
             
             # 550px é suficiente para a grade e economiza RAM no Render
-            max_size = (550, 550)
+            max_size = (300, 300)
             img.thumbnail(max_size, Image.Resampling.LANCZOS)
             
             t = tempfile.NamedTemporaryFile(delete=False, suffix='.jpg')
-            img.save(t, format='JPEG', quality=65, optimize=True)
+            img.save(t, format='JPEG', quality=50, optimize=True)
             t.close()
             
             temp_file_list.append(t.name)
