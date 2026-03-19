@@ -192,18 +192,10 @@ def gerar_pdf_cronograma(cronograma, user):
         # --- GERAÇÃO DO PDF (CORRIGIDO) ---
         font_config = FontConfiguration()
         
-        # Criamos o objeto HTML separadamente
-        html_obj = weasyprint.HTML(
-            string=html_string, 
-            base_url=settings.BASE_DIR # Permite encontrar arquivos locais e fontes
-        )
+        documento_renderizado = html_obj.render(font_config=font_config)
 
         # Geramos os bytes do PDF com target=None e os parâmetros nomeados
-        pdf_file = html_obj.write_pdf(
-            target=None,
-            font_config=font_config,
-            optimize_images=False # Mantemos False para economizar memória no Render
-        )
+        pdf_file = documento_renderizado.write_pdf(optimize_images=False)
         
         return pdf_file
 
