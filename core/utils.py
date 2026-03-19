@@ -11,7 +11,7 @@ from django.conf import settings
 from django.template.loader import render_to_string
 from dropbox.files import ThumbnailSize, ThumbnailFormat, PathOrLink
 import weasyprint
-from weasyprint.text.fonts import FontConfiguration # Import necessário para gerenciar fontes
+from weasyprint.text.fonts import FontConfiguration 
 from .models import DropboxConfig
 
 def process_image_to_temp_file(url, temp_file_list):
@@ -46,12 +46,11 @@ def process_image_to_temp_file(url, temp_file_list):
             if img.mode in ('RGBA', 'P'):
                 img = img.convert('RGB')
             
-            # 550px é suficiente para a grade
+            # 550px é suficiente para a grade e economiza RAM no Render
             max_size = (550, 550)
             img.thumbnail(max_size, Image.Resampling.LANCZOS)
             
             t = tempfile.NamedTemporaryFile(delete=False, suffix='.jpg')
-            # Quality 65 é leve e bom para PDF
             img.save(t, format='JPEG', quality=65, optimize=True)
             t.close()
             
@@ -68,7 +67,9 @@ def fetch_image_as_base64(url):
     return None 
 
 def gerar_pdf_cronograma(cronograma, user):
-    
+    """
+    Gera o PDF do cronograma usando WeasyPrint com suporte a fontes personalizadas.
+    """
     temp_resources = []
     
     try:
@@ -96,7 +97,7 @@ def gerar_pdf_cronograma(cronograma, user):
             nome_limpo = agencia.nome_fantasia.strip().lower().replace(' ', '_')
             instagram_agencia = f"@{nome_limpo}"
 
-        # --- LOGOS (Para disco) ---
+        # --- LOGOS ---
         logo_cliente_path = None
         if cronograma.cliente.logo_dropbox_link:
             logo_cliente_path = process_image_to_temp_file(cronograma.cliente.logo_dropbox_link, temp_resources)
@@ -153,19 +154,17 @@ def gerar_pdf_cronograma(cronograma, user):
                 post.pdf_img_url = d['url']
             post.is_video = d['is_video']
 
-        # --- MONTAGEM ---
+        # --- MONTAGEM DOS LOTES ---
         lotes_renderizacao = []
         feeds_cadastrados = cronograma.feeds.all().order_by('numero')
         
         for feed in feeds_cadastrados:
             posts_do_feed = list(feed.posts.filter(excluido=False).order_by('data_publicacao'))
-            if not posts_do_feed:
-                continue # Pula feed vazio
+            if not posts_do_feed: continue
                 
             for p in posts_do_feed: injetar_url(p)
                 
-            grade_visual = posts_do_feed[::-1] # Mantém a ordem do visual do Insta
-            
+            grade_visual = posts_do_feed[::-1]
             trincas_do_lote = []
             for j in range(0, len(posts_do_feed), 3):
                 trincas_do_lote.append(posts_do_feed[j:j+3][::-1])
@@ -178,7 +177,7 @@ def gerar_pdf_cronograma(cronograma, user):
                 'titulo_grade': titulo_grade
             })
 
-        # --- RENDERIZA ---
+        # --- RENDERIZAÇÃO HTML ---
         html_string = render_to_string('core/pdf_cronograma.html', {
             'cronograma': cronograma,
             'lotes': lotes_renderizacao,
@@ -190,22 +189,26 @@ def gerar_pdf_cronograma(cronograma, user):
             'base_dir': settings.BASE_DIR,
         })
 
-        # --- CONFIGURAÇÃO DE FONTE E GERAÇÃO OTIMIZADA ---
+        # --- GERAÇÃO DO PDF (CORRIGIDO) ---
         font_config = FontConfiguration()
         
-        # optimize_images=False é o SEGREDO. 
-        # Já otimizamos as imagens com Pillow. O WeasyPrint não precisa gastar RAM fazendo de novo.
-        pdf_file = weasyprint.HTML(
+        # Criamos o objeto HTML separadamente
+        html_obj = weasyprint.HTML(
             string=html_string, 
-            base_url=settings.BASE_DIR
-        ).write_pdf(
+            base_url=settings.BASE_DIR # Permite encontrar arquivos locais e fontes
+        )
+
+        # Geramos os bytes do PDF com target=None e os parâmetros nomeados
+        pdf_file = html_obj.write_pdf(
+            target=None,
             font_config=font_config,
-            optimize_images=False 
+            optimize_images=False # Mantemos False para economizar memória no Render
         )
         
         return pdf_file
 
     finally:
+        # Limpeza de arquivos temporários para não encher o disco do servidor
         for path in temp_resources:
             try:
                 if os.path.exists(path):

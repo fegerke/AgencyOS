@@ -1,6 +1,7 @@
 import os
 import dj_database_url
 from pathlib import Path
+from decouple import config
 
 # Build paths
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -63,9 +64,7 @@ WSGI_APPLICATION = 'AgencyOS.wsgi.application'
 # No desenvolvimento local (seu PC), ele usa o 'default' (banco local).
 DATABASES = {
     'default': dj_database_url.config(
-        default='postgres://neondb_owner:npg_Qgi62duXxJvU@ep-wandering-sunset-aidzgrhq-pooler.c-4.us-east-1.aws.neon.tech/agency_db?sslmode=require',
-        conn_max_age=600,
-        ssl_require=True
+        default=config('DATABASE_URL')
     )
 }
 
