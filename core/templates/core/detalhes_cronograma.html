@@ -180,19 +180,20 @@ document.addEventListener("DOMContentLoaded", function() {
     const cacheKey = 'polling_pdf_' + cronogramaId;
 
     function startPolling() {
-        // Esconde os botões normais e mostra o loading
+        // FASE 2: Mostra que está indo pro Dropbox
         if (btnGerar) btnGerar.classList.add('d-none');
         if (pdfButtons) pdfButtons.classList.add('d-none');
+        
         btnLoading.classList.remove('d-none');
+        btnLoading.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Processando PDF no Dropbox...';
 
-        // Pergunta pro servidor a cada 3 segundos
         const interval = setInterval(() => {
             fetch(`/cronograma/${cronogramaId}/check-pdf/`)
             .then(res => res.json())
             .then(data => {
                 if (data.has_pdf) {
                     clearInterval(interval);
-                    sessionStorage.removeItem(cacheKey); // Limpa o cache
+                    sessionStorage.removeItem(cacheKey); 
                     window.location.reload(); // Recarrega para mostrar o botão verde!
                 }
             })
@@ -200,17 +201,21 @@ document.addEventListener("DOMContentLoaded", function() {
         }, 3000);
     }
 
-    // Se a página carregou e no cache diz que estamos esperando o PDF, inicia o visual
     if (sessionStorage.getItem(cacheKey)) {
         startPolling();
     }
 
-    // Quando clica em qualquer botão de gerar PDF
     const triggerButtons = document.querySelectorAll('.btn-loading-pdf');
     triggerButtons.forEach(btn => {
         btn.addEventListener('click', function() {
+            // FASE 1: Ao clicar, muda a cara do botão na mesma hora
+            this.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Gerando novo PDF...';
+            this.classList.add('btn-secondary', 'disabled');
+            this.classList.remove('btn-outline-danger', 'btn-warning');
+            this.style.pointerEvents = 'none'; // Evita clique duplo
+            
+            // Avisa o navegador para entrar na Fase 2 na próxima tela
             sessionStorage.setItem(cacheKey, 'true');
-            // O formulário/link segue o fluxo normal pro backend
         });
     });
 });

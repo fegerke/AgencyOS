@@ -13,6 +13,7 @@ from dropbox.files import ThumbnailSize, ThumbnailFormat, PathOrLink
 import weasyprint
 from weasyprint.text.fonts import FontConfiguration 
 from .models import DropboxConfig
+import emoji
 
 def process_image_to_temp_file(url, temp_file_list):
     """
@@ -65,6 +66,28 @@ def process_image_to_temp_file(url, temp_file_list):
 
 def fetch_image_as_base64(url):
     return None 
+
+def texto_com_twemoji(texto):
+    """
+    Substitui emojis nativos por tags <img> do Twemoji para renderização no PDF.
+    """
+    if not texto: return ""
+    
+    def formatar_twemoji(em, data):
+        # Transforma o emoji no código hexadecimal que a URL do Twemoji exige
+        codes = [f"{ord(c):x}" for c in em]
+        
+        # O Twemoji ignora o sufixo 'fe0f' em emojis simples, precisamos limpar
+        if 'fe0f' in codes and len(codes) > 1 and '20e3' not in codes:
+            codes.remove('fe0f')
+            
+        hex_code = '-'.join(codes)
+        url = f"https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/{hex_code}.png"
+        
+        # Retorna uma imagenzinha alinhada com a altura do texto
+        return f'<img src="{url}" style="height: 1.1em; width: 1.1em; vertical-align: -0.15em; margin: 0 0.05em; display: inline-block;" />'
+        
+    return emoji.replace_emoji(texto, replace=formatar_twemoji)
 
 def gerar_pdf_cronograma(cronograma, user):
     """
@@ -153,6 +176,7 @@ def gerar_pdf_cronograma(cronograma, user):
             else:
                 post.pdf_img_url = d['url']
             post.is_video = d['is_video']
+            post.legenda_formatada = texto_com_twemoji(post.legenda)
 
         # --- MONTAGEM DOS LOTES ---
         lotes_renderizacao = []

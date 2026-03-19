@@ -281,7 +281,7 @@
                                 </span>
                             </div>
                             
-                            <div class="post-legenda">{{ post.legenda|default:"Sem legenda." }}</div>
+                            <div class="post-legenda">{{ post.legenda_formatada|default:"Sem legenda."|safe|linebreaksbr }}</div>
                             
                             {% if post.obs_criativo %}
                                 <div class="obs-box">
