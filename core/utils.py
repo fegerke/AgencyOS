@@ -195,7 +195,7 @@ def gerar_pdf_cronograma(cronograma, user):
         # 1. Cria a instância do HTML (ESSA LINHA QUE FALTAVA)
         html_obj = weasyprint.HTML(
             string=html_string, 
-            base_url=settings.BASE_DIR
+            base_url=str(settings.BASE_DIR)
         )
 
         # 2. Renderiza o layout aplicando as fontes
