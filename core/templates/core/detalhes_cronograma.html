@@ -38,20 +38,26 @@
         </div>
         
         <div class="d-flex flex-wrap gap-2 justify-content-start justify-content-md-end">
-            {% if cronograma.pdf_dropbox_link %}
-                <div class="btn-group shadow-sm">
-                    <a href="{% url 'visualizar_pdf_cronograma' cronograma.id %}" target="_blank" class="btn btn-success fw-bold text-nowrap">
-                        <i class="bi bi-file-earmark-pdf"></i> Visualizar PDF
+            <div id="pdf-action-area" class="d-flex gap-2">
+                {% if cronograma.pdf_dropbox_link %}
+                    <div class="btn-group shadow-sm" id="pdf-buttons">
+                        <a id="btn-visualizar" href="{% url 'visualizar_pdf_cronograma' cronograma.id %}" target="_blank" class="btn btn-success fw-bold text-nowrap">
+                            <i class="bi bi-file-earmark-pdf"></i> Visualizar PDF
+                        </a>
+                        <a href="{% url 'gerar_pdf_cronograma' cronograma.id %}" id="btn-regerar" class="btn btn-warning btn-loading-pdf" title="Regerar PDF">
+                            <i class="bi bi-arrow-clockwise"></i>
+                        </a>
+                    </div>
+                {% else %}
+                    <a href="{% url 'gerar_pdf_cronograma' cronograma.id %}" id="btn-gerar" class="btn btn-outline-danger rounded-pill px-3 fw-bold shadow-sm btn-loading-pdf text-nowrap">
+                        <i class="bi bi-file-earmark-pdf me-1"></i> Gerar PDF
                     </a>
-                    <a href="{% url 'gerar_pdf_cronograma' cronograma.id %}" class="btn btn-warning btn-loading-pdf" title="Regerar PDF">
-                        <i class="bi bi-arrow-clockwise"></i>
-                    </a>
-                </div>
-            {% else %}
-                <a href="{% url 'gerar_pdf_cronograma' cronograma.id %}" class="btn btn-outline-danger rounded-pill px-3 fw-bold shadow-sm btn-loading-pdf text-nowrap">
-                    <i class="bi bi-file-earmark-pdf me-1"></i> Gerar PDF
-                </a>
-            {% endif %}
+                {% endif %}
+
+                <button id="pdf-loading-btn" class="btn btn-secondary rounded-pill px-3 fw-bold shadow-sm text-nowrap d-none" disabled>
+                    <span class="spinner-border spinner-border-sm"></span> Processando PDF no Dropbox...
+                </button>
+            </div>
             
             <a href="{% url 'cadastrar_feed' cronograma.id %}" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm text-nowrap" style="background: #6c5ce7; border: none;">
                 <i class="bi bi-plus-square-dotted me-1"></i> Novo Feed
@@ -163,26 +169,50 @@
     .status-dot { width: 8px; height: 8px; border-radius: 50%; display: block; box-shadow: 0 0 0 1px white; }
     .text-shadow { text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
     .pointer-events-none { pointer-events: none; }
-    
-    .btn-loading-active {
-        pointer-events: none;
-        opacity: 0.7;
-        cursor: not-allowed;
-    }
 </style>
 
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        const pdfButtons = document.querySelectorAll('.btn-loading-pdf');
-        
-        pdfButtons.forEach(btn => {
-            btn.addEventListener('click', function(e) {
-                const originalContent = this.innerHTML;
-                this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Gerando... (Aguarde)';
-                this.classList.add('btn-secondary', 'btn-loading-active');
-                this.classList.remove('btn-outline-danger', 'btn-warning');
-            });
+document.addEventListener("DOMContentLoaded", function() {
+    const btnGerar = document.getElementById('btn-gerar');
+    const pdfButtons = document.getElementById('pdf-buttons');
+    const btnLoading = document.getElementById('pdf-loading-btn');
+    const cronogramaId = "{{ cronograma.id }}";
+    const cacheKey = 'polling_pdf_' + cronogramaId;
+
+    function startPolling() {
+        // Esconde os botões normais e mostra o loading
+        if (btnGerar) btnGerar.classList.add('d-none');
+        if (pdfButtons) pdfButtons.classList.add('d-none');
+        btnLoading.classList.remove('d-none');
+
+        // Pergunta pro servidor a cada 3 segundos
+        const interval = setInterval(() => {
+            fetch(`/cronograma/${cronogramaId}/check-pdf/`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.has_pdf) {
+                    clearInterval(interval);
+                    sessionStorage.removeItem(cacheKey); // Limpa o cache
+                    window.location.reload(); // Recarrega para mostrar o botão verde!
+                }
+            })
+            .catch(err => console.error("Erro ao checar PDF:", err));
+        }, 3000);
+    }
+
+    // Se a página carregou e no cache diz que estamos esperando o PDF, inicia o visual
+    if (sessionStorage.getItem(cacheKey)) {
+        startPolling();
+    }
+
+    // Quando clica em qualquer botão de gerar PDF
+    const triggerButtons = document.querySelectorAll('.btn-loading-pdf');
+    triggerButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            sessionStorage.setItem(cacheKey, 'true');
+            // O formulário/link segue o fluxo normal pro backend
         });
     });
+});
 </script>
 {% endblock %}

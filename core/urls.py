@@ -25,6 +25,7 @@ urlpatterns = [
     path('cronograma/<int:cronograma_id>/gerar-pdf/', views.gerar_pdf_cronograma_view, name='gerar_pdf_cronograma'),
     path('cronograma/<int:cronograma_id>/visualizar-pdf/', views.visualizar_pdf_cronograma_view, name='visualizar_pdf_cronograma'),
     path('cronograma/<int:cronograma_id>/testar-layout/', views.testar_layout_pdf, name='testar_layout_pdf'),
+    path('cronograma/<int:cronograma_id>/check-pdf/', views.check_pdf_status, name='check_pdf_status'),
 
     # Posts - ROTA NOVA E ROTAS ANTIGAS
     path('feed/<int:feed_id>/novo-post/', views.cadastrar_post, name='cadastrar_post'), # <-- ROTA ATUALIZADA

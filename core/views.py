@@ -567,3 +567,11 @@ def desconectar_dropbox(request):
     DropboxConfig.objects.filter(agencia=request.user.minha_agencia).delete()
     messages.info(request, "Dropbox desconectado.")
     return redirect('configurar_agencia')
+
+@login_required
+def check_pdf_status(request, cronograma_id):
+    cronograma = get_object_or_404(Cronograma, id=cronograma_id)
+    return JsonResponse({
+        'has_pdf': bool(cronograma.pdf_dropbox_link),
+        'pdf_link': cronograma.pdf_dropbox_link if cronograma.pdf_dropbox_link else None
+    })
