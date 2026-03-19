@@ -187,6 +187,7 @@ def gerar_pdf_cronograma(cronograma, user):
             'logo_agencia': logo_agencia_path, 
             'instagram_cliente': instagram_cliente,
             'instagram_agencia': instagram_agencia,
+            'base_dir': settings.BASE_DIR,
         })
 
         # --- CONFIGURAÇÃO DE FONTE E GERAÇÃO OTIMIZADA ---
