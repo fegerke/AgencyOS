@@ -6,10 +6,14 @@
     <title>Cronograma {{ cronograma.titulo }}</title>
     <style>
         /* --- 1. FONTES --- */
+        
+        /* Desativado temporariamente para evitar estouro de RAM (Variable Font Bug no Weasyprint)
         @font-face {
             font-family: 'Montserrat';
             src: url('file://{{ base_dir }}/core/static/fonts/Montserrat-Regular.ttf');
         }
+        */
+        
         /*
         @font-face {
             font-family: 'Noto Color Emoji';
@@ -27,7 +31,8 @@
 
         /* --- 3. BASE --- */
         body {
-            font-family: 'Montserrat', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', sans-serif;
+            /* Usando a fonte nativa do sistema para poupar memória do servidor gratuito */
+            font-family: sans-serif; 
             margin: 0; 
             padding: 0;
             background-color: #fcfcfc;
@@ -52,7 +57,7 @@
         }
         .capa-titulo-box { position: absolute; top: 400px; left: 150px; }
         .texto-cronograma {
-            font-size: 130px; font-weight: 900; font-family: sans-serif; text-transform: uppercase;
+            font-size: 130px; font-weight: 900; text-transform: uppercase;
             line-height: 0.9; letter-spacing: -3px; display: block; margin-bottom: 15px; color: #000;
         }
         .texto-de-postagens {
