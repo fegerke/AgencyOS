@@ -18,12 +18,16 @@ urlpatterns = [
     path('cronograma/<int:pk>/', views.detalhes_cronograma, name='detalhes_cronograma'),
     path('cronograma/excluir/<int:pk>/', views.excluir_cronograma, name='excluir_cronograma'),
     
-    # PDF - ROTAS NOVAS
+    # Feeds - ROTA NOVA
+    path('cronograma/<int:cronograma_id>/novo-feed/', views.cadastrar_feed, name='cadastrar_feed'),
+    
+    # PDF 
     path('cronograma/<int:cronograma_id>/gerar-pdf/', views.gerar_pdf_cronograma_view, name='gerar_pdf_cronograma'),
     path('cronograma/<int:cronograma_id>/visualizar-pdf/', views.visualizar_pdf_cronograma_view, name='visualizar_pdf_cronograma'),
+    path('cronograma/<int:cronograma_id>/testar-layout/', views.testar_layout_pdf, name='testar_layout_pdf'),
 
-    # Posts
-    path('post/novo/', views.cadastrar_post, name='cadastrar_post'),
+    # Posts - ROTA NOVA E ROTAS ANTIGAS
+    path('feed/<int:feed_id>/novo-post/', views.cadastrar_post, name='cadastrar_post'), # <-- ROTA ATUALIZADA
     path('post/editar/<int:pk>/', views.editar_post, name='editar_post'),
     path('post/excluir/<int:pk>/', views.excluir_post, name='excluir_post'),
     path('arquivo/excluir/<int:pk>/', views.excluir_arquivo_post, name='excluir_arquivo_post'),
@@ -39,5 +43,4 @@ urlpatterns = [
     path('conectar-dropbox/', views.conectar_dropbox, name='conectar_dropbox'),
     path('dropbox-callback/', views.dropbox_callback, name='dropbox_callback'),
     path('desconectar-dropbox/', views.desconectar_dropbox, name='desconectar_dropbox'),
-    path('cronograma/<int:cronograma_id>/testar-layout/', views.testar_layout_pdf, name='testar_layout_pdf'),
 ]

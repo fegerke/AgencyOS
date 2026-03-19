@@ -85,8 +85,20 @@ class Cronograma(models.Model):
     def __str__(self): 
         return f"{self.cliente.nome_fantasia} - {self.titulo} ({self.mes}/{self.ano})"
 
+class Feed(models.Model):
+    cronograma = models.ForeignKey(Cronograma, on_delete=models.CASCADE, related_name='feeds')
+    numero = models.IntegerField(default=1)
+    titulo = models.CharField(max_length=100, default="Feed 01")
+
+    class Meta:
+        ordering = ['numero']
+
+    def __str__(self):
+        return f"{self.titulo} - {self.cronograma.titulo}"
+    
 class Post(models.Model):
     cronograma = models.ForeignKey(Cronograma, on_delete=models.CASCADE, related_name='posts')
+    feed = models.ForeignKey(Feed, on_delete=models.CASCADE, related_name='posts', null=True, blank=True)
     titulo = models.CharField(max_length=200)
     data_publicacao = models.DateField()
     rede_social = models.CharField(max_length=20, choices=REDES_OPCOES)

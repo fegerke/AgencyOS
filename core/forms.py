@@ -1,5 +1,5 @@
 from django import forms
-from .models import Agencia, Cliente, Post, Cronograma, PostArquivo, REDES_OPCOES, FORMATO_CHOICES
+from .models import Agencia, Cliente, Post, Cronograma, PostArquivo, REDES_OPCOES, FORMATO_CHOICES, Feed
 from django.contrib.auth.models import User
 from datetime import datetime
 
@@ -70,6 +70,19 @@ class CronogramaForm(forms.ModelForm):
 
         if user and hasattr(user, 'minha_agencia'):
             self.fields['cliente'].queryset = Cliente.objects.filter(agencia=user.minha_agencia)
+
+class FeedForm(forms.ModelForm):
+    class Meta:
+        model = Feed
+        fields = ['numero', 'titulo']
+        labels = {
+            'numero': 'Número do Feed',
+            'titulo': 'Título (Ex: Feed 01)'
+        }
+        widgets = {
+            'numero': forms.NumberInput(attrs={'class': 'form-control'}),
+            'titulo': forms.TextInput(attrs={'class': 'form-control'}),
+        }
 
 class PostForm(forms.ModelForm):
     arquivos_multiplos = MultipleFileField(label="Arquivos do Post", required=False)

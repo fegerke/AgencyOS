@@ -59,10 +59,13 @@ TEMPLATES = [
 WSGI_APPLICATION = 'AgencyOS.wsgi.application'
 
 # Database
+# Em produção (Render), ele pega a variável DATABASE_URL automaticamente.
+# No desenvolvimento local (seu PC), ele usa o 'default' (banco local).
 DATABASES = {
     'default': dj_database_url.config(
-        default='postgres://agency_user:agency123admin@localhost:5432/agency_db',
-        conn_max_age=600
+        default='postgres://neondb_owner:npg_Qgi62duXxJvU@ep-wandering-sunset-aidzgrhq-pooler.c-4.us-east-1.aws.neon.tech/agency_db?sslmode=require',
+        conn_max_age=600,
+        ssl_require=True
     )
 }
 

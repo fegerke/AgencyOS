@@ -13,8 +13,8 @@ import base64
 import os
 from dropbox.files import ThumbnailSize, ThumbnailFormat, PathOrLink
 
-from .models import Agencia, Cliente, Post, DropboxConfig, Cronograma, PostArquivo, REDES_OPCOES
-from .forms import AgenciaForm, ClienteForm, PostForm, CronogramaForm, UserRegistrationForm
+from .models import Agencia, Cliente, Post, DropboxConfig, Cronograma, PostArquivo, REDES_OPCOES, Feed
+from .forms import AgenciaForm, ClienteForm, PostForm, CronogramaForm, UserRegistrationForm, FeedForm
 from .services import upload_file_dropbox
 from .utils import gerar_pdf_cronograma 
 
@@ -95,28 +95,24 @@ def gerar_pdf_cronograma_view(request, cronograma_id):
     cronograma = get_object_or_404(Cronograma, id=cronograma_id)
     
     try:
-        # Usa o template padrão (V1 Aprovado)
         pdf_bytes = gerar_pdf_cronograma(cronograma, request.user)
     except Exception as e:
         messages.error(request, f"Erro ao gerar PDF: {e}")
         return redirect('detalhes_cronograma', pk=cronograma.id)
 
-    # --- DEFINIÇÃO DO CAMINHO PADRÃO ---
-    # Dicionário de meses igual ao dos Posts/Models
     meses = {
         1:"01 - JANEIRO", 2:"02 - FEVEREIRO", 3:"03 - MARCO", 4:"04 - ABRIL", 
         5:"05 - MAIO", 6:"06 - JUNHO", 7:"07 - JULHO", 8:"08 - AGOSTO", 
         9:"09 - SETEMBRO", 10:"10 - OUTUBRO", 11:"11 - NOVEMBRO", 12:"12 - DEZEMBRO"
     }
     
-    cli_slug = slugify(cronograma.cliente.nome_fantasia)
-    titulo_slug = slugify(cronograma.titulo) 
-    mes_nome = meses.get(cronograma.mes, f"{cronograma.mes:02d}") # Pega o nome padronizado
+    cli_slug = slugify(cronograma.cliente.nome_fantasia).replace('-', '_')
+    titulo_slug = slugify(cronograma.titulo).replace('-', '_')
+    mes_nome = meses.get(cronograma.mes, f"{cronograma.mes:02d}") 
     
-    # Caminho ajustado: /AgencyOS/CLIENTES/{CLIENTE}/{ANO}/{01 - JANEIRO}/{TITULO}/Arquivo.pdf
-    path = f"/AgencyOS/CLIENTES/{cli_slug}/{cronograma.ano}/{mes_nome}/{titulo_slug}/Cronograma_{titulo_slug}.pdf"
+    nome_arquivo = f"Cronograma_{cli_slug}_{titulo_slug}.pdf"
+    path = f"/AgencyOS/CLIENTES/{cli_slug}/{cronograma.ano}/{mes_nome}/{titulo_slug}/{nome_arquivo}"
 
-    # Upload (Retorna raw=1 para visualização direta)
     link = upload_file_dropbox(request.user, pdf_bytes, path)
     
     if link:
@@ -138,26 +134,23 @@ def visualizar_pdf_cronograma_view(request, cronograma_id):
         messages.warning(request, "PDF ainda não foi gerado.")
         return redirect('detalhes_cronograma', pk=cronograma.id)
 
-# --- VIEW DE LABORATÓRIO (TESTE DE LAYOUT V2) ---
 @login_required
 def testar_layout_pdf(request, cronograma_id):
-    """
-    Gera o PDF usando o layout 'pdf_cronograma_v2.html' e exibe direto no navegador.
-    Não salva no Dropbox.
-    """
     cronograma = get_object_or_404(Cronograma, id=cronograma_id)
     
     try:
-        # Chama o utils forçando o template V2
-        pdf_bytes = gerar_pdf_cronograma(cronograma, request.user, template_nome='core/pdf_cronograma_v2.html')
+        pdf_bytes = gerar_pdf_cronograma(cronograma, request.user)
         
-        # Retorna o PDF direto para o navegador (inline)
+        cli_slug = slugify(cronograma.cliente.nome_fantasia).replace('-', '_')
+        titulo_slug = slugify(cronograma.titulo).replace('-', '_')
+        nome_arquivo = f"Cronograma_{cli_slug}_{titulo_slug}.pdf"
+        
         response = HttpResponse(pdf_bytes, content_type='application/pdf')
-        response['Content-Disposition'] = f'inline; filename="TESTE_V2_{cronograma.titulo}.pdf"'
+        response['Content-Disposition'] = f'inline; filename="{nome_arquivo}"'
         return response
         
     except Exception as e:
-        return HttpResponse(f"<h1>Erro no Laboratório</h1><p>{e}</p><p>Verifique se o arquivo 'core/templates/core/pdf_cronograma_v2.html' existe.</p>")
+        return HttpResponse(f"<h1>Erro no Laboratório</h1><p>{e}</p>")
 
 
 # --- CONFIGURAÇÃO AGENCIA ---
@@ -177,9 +170,8 @@ def configurar_agencia(request):
         if form.is_valid():
             agencia_inst = form.save(commit=False)
             
-            # UPLOAD LOGO AGENCIA DROPBOX
             if 'logo' in request.FILES:
-                agencia_inst.save() # Salva local primeiro para gerar path
+                agencia_inst.save() 
                 nome_limpo = slugify(agencia_inst.nome_fantasia)
                 extensao = os.path.splitext(agencia_inst.logo.name)[1]
                 path_dropbox = f"/AgencyOS/SISTEMA/AGENCIA/{nome_limpo}/LOGO/logo_{nome_limpo}{extensao}"
@@ -190,7 +182,6 @@ def configurar_agencia(request):
                         if link: agencia_inst.logo_dropbox_link = link
                 except Exception as e: print(f"Erro upload logo agencia: {e}")
 
-            # Salvar Redes
             novas_redes = {}
             for rede_id, rede_nome in REDES_OPCOES:
                 if request.POST.get(f'rede_ativa_{rede_id}'):
@@ -225,7 +216,6 @@ def cadastrar_cliente(request):
             cliente = form.save(commit=False)
             cliente.agencia = request.user.minha_agencia
             
-            # Redes
             redes_data = {}
             for rede_id, _ in REDES_OPCOES:
                 if request.POST.get(f'rede_ativa_{rede_id}'):
@@ -235,9 +225,8 @@ def cadastrar_cliente(request):
                         'senha': request.POST.get(f'pass_{rede_id}')
                     }
             cliente.redes_sociais = redes_data
-            cliente.save() # Salva para ter o arquivo local
+            cliente.save() 
             
-            # UPLOAD LOGO CLIENTE DROPBOX
             if 'logo' in request.FILES:
                 nome_limpo = slugify(cliente.nome_fantasia)
                 extensao = os.path.splitext(cliente.logo.name)[1]
@@ -263,7 +252,6 @@ def editar_cliente(request, pk):
         form = ClienteForm(request.POST, request.FILES, instance=cliente)
         if form.is_valid():
             cliente_inst = form.save(commit=False)
-            # Redes
             redes_data = {}
             for rede_id, _ in REDES_OPCOES:
                 if request.POST.get(f'rede_ativa_{rede_id}'):
@@ -275,7 +263,6 @@ def editar_cliente(request, pk):
             cliente_inst.redes_sociais = redes_data
             cliente_inst.save()
 
-            # UPLOAD LOGO DROPBOX (EDIÇÃO)
             if 'logo' in request.FILES:
                 nome_limpo = slugify(cliente_inst.nome_fantasia)
                 extensao = os.path.splitext(cliente_inst.logo.name)[1]
@@ -341,9 +328,6 @@ def detalhes_cronograma(request, pk):
     else:
         form_cronograma = CronogramaForm(instance=cronograma, user=request.user)
 
-    posts = cronograma.posts.filter(excluido=False).order_by('-data_publicacao')
-
-    # LÓGICA DROPBOX PREVIEW
     dbx_config = DropboxConfig.objects.filter(agencia=request.user.minha_agencia).first()
     
     if dbx_config:
@@ -354,32 +338,36 @@ def detalhes_cronograma(request, pk):
                 app_key=settings.DROPBOX_APP_KEY,
                 app_secret=settings.DROPBOX_APP_SECRET
             )
-            for post in posts:
-                arquivo_principal = post.arquivos.first()
-                post.temp_img_url = None
-                post.is_video = False 
-                if arquivo_principal and arquivo_principal.dropbox_path:
-                    try:
-                        ext = arquivo_principal.dropbox_path.lower()
-                        if ext.endswith(('.mp4', '.mov', '.avi', '.m4v')):
-                            post.is_video = True
-                        post.temp_img_url = dbx.files_get_temporary_link(arquivo_principal.dropbox_path).link
-                    except Exception: pass
+            for feed in cronograma.feeds.all():
+                for post in feed.posts.filter(excluido=False):
+                    arquivo_principal = post.arquivos.first()
+                    post.temp_img_url = None
+                    post.is_video = False 
+                    if arquivo_principal and arquivo_principal.dropbox_path:
+                        try:
+                            ext = arquivo_principal.dropbox_path.lower()
+                            if ext.endswith(('.mp4', '.mov', '.avi', '.m4v')):
+                                post.is_video = True
+                            post.temp_img_url = dbx.files_get_temporary_link(arquivo_principal.dropbox_path).link
+                        except Exception: pass
         except Exception: pass
 
     return render(request, 'core/detalhes_cronograma.html', {
-        'cronograma': cronograma, 'posts': posts, 'form_cronograma': form_cronograma
+        'cronograma': cronograma, 'form_cronograma': form_cronograma
     })
 
 @login_required
 def excluir_cronograma(request, pk):
     cronograma = get_object_or_404(Cronograma, pk=pk, cliente__agencia=request.user.minha_agencia)
     agora = timezone.now()
-    for post in cronograma.posts.all():
-        mover_pasta_dropbox(request, post, para_lixeira=True)
+    for feed in cronograma.feeds.all():
+        for post in feed.posts.all():
+            mover_pasta_dropbox(request, post, para_lixeira=True)
+            post.excluido = True
+            post.data_exclusao = agora
+            post.save()
     cronograma.excluido = True
     cronograma.data_exclusao = agora
-    cronograma.posts.all().update(excluido=True, data_exclusao=agora)
     cronograma.save()
     messages.warning(request, "Cronograma movido para a lixeira.")
     return redirect('listar_cronogramas')
@@ -387,25 +375,50 @@ def excluir_cronograma(request, pk):
 @login_required
 def recuperar_cronograma(request, pk):
     cronograma = get_object_or_404(Cronograma, pk=pk, cliente__agencia=request.user.minha_agencia)
-    for post in cronograma.posts.all():
-        mover_pasta_dropbox(request, post, para_lixeira=False)
+    for feed in cronograma.feeds.all():
+        for post in feed.posts.all():
+            mover_pasta_dropbox(request, post, para_lixeira=False)
+            post.excluido = False
+            post.data_exclusao = None
+            post.save()
     cronograma.excluido = False
     cronograma.data_exclusao = None
     cronograma.save()
-    cronograma.posts.all().update(excluido=False, data_exclusao=None)
     messages.success(request, f"Cronograma restaurado!")
     return redirect('lixeira')
 
-# --- POSTS ---
+# --- FEEDS E POSTS ---
 
 @login_required
-def cadastrar_post(request):
-    cronograma_id = request.GET.get('cronograma')
+def cadastrar_feed(request, cronograma_id):
     cronograma_obj = get_object_or_404(Cronograma, pk=cronograma_id, cliente__agencia=request.user.minha_agencia)
+    if request.method == 'POST':
+        form = FeedForm(request.POST)
+        if form.is_valid():
+            feed = form.save(commit=False)
+            feed.cronograma = cronograma_obj
+            feed.save()
+            messages.success(request, "Novo Feed adicionado!")
+            return redirect('detalhes_cronograma', pk=cronograma_obj.id)
+    else:
+        ultimo_feed = cronograma_obj.feeds.order_by('numero').last()
+        prox_num = (ultimo_feed.numero + 1) if ultimo_feed else 1
+        titulo_sugerido = f"Feed {prox_num:02d}"
+        form = FeedForm(initial={'numero': prox_num, 'titulo': titulo_sugerido})
+    return render(request, 'core/cadastrar_feed.html', {'form': form, 'cronograma_obj': cronograma_obj})
+
+
+@login_required
+def cadastrar_post(request, feed_id):
+    feed_obj = get_object_or_404(Feed, pk=feed_id, cronograma__cliente__agencia=request.user.minha_agencia)
+    cronograma_obj = feed_obj.cronograma
     if request.method == 'POST':
         form = PostForm(request.POST, request.FILES)
         if form.is_valid():
-            post = form.save()
+            post = form.save(commit=False)
+            post.feed = feed_obj
+            post.cronograma = cronograma_obj
+            post.save()
             arquivos = request.FILES.getlist('arquivos_multiplos')
             if arquivos:
                 for f in arquivos:
@@ -434,7 +447,6 @@ def editar_post(request, pk):
         form = PostForm(instance=post)
     
     arquivos_existentes = post.arquivos.all()
-    # Logica de preview (omitida para brevidade, mas igual cadastrar_post)
     return render(request, 'core/cadastrar_post.html', {'form': form, 'cronograma_obj': cronograma_obj, 'arquivos_existentes': arquivos_existentes})
 
 @login_required

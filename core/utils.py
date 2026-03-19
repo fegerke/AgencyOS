@@ -155,19 +155,22 @@ def gerar_pdf_cronograma(cronograma, user):
 
         # --- MONTAGEM ---
         lotes_renderizacao = []
-        lista_completa = list(todos_posts)
+        feeds_cadastrados = cronograma.feeds.all().order_by('numero')
         
-        for i in range(0, len(lista_completa), 9):
-            lote_atual = lista_completa[i:i+9]
-            for p in lote_atual: injetar_url(p)
+        for feed in feeds_cadastrados:
+            posts_do_feed = list(feed.posts.filter(excluido=False).order_by('data_publicacao'))
+            if not posts_do_feed:
+                continue # Pula feed vazio
                 
-            grade_visual = lote_atual[::-1]
+            for p in posts_do_feed: injetar_url(p)
+                
+            grade_visual = posts_do_feed[::-1] # Mantém a ordem do visual do Insta
+            
             trincas_do_lote = []
-            for j in range(0, len(lote_atual), 3):
-                trincas_do_lote.append(lote_atual[j:j+3][::-1])
+            for j in range(0, len(posts_do_feed), 3):
+                trincas_do_lote.append(posts_do_feed[j:j+3][::-1])
                 
-            numero_pagina = (i // 9) + 1
-            titulo_grade = cronograma.titulo if numero_pagina == 1 else f"{cronograma.titulo} - Pág {numero_pagina:02d}"
+            titulo_grade = feed.titulo or f"Feed {feed.numero:02d}"
 
             lotes_renderizacao.append({
                 'posts_grade': grade_visual,

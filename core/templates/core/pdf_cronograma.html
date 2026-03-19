@@ -1,259 +1,317 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Cronograma {{ cronograma.cliente.nome_fantasia }}</title>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    
+    <title>Cronograma {{ cronograma.titulo }}</title>
     <style>
-        @page { 
-            size: 50.80cm 28.58cm; 
-            margin: 0; padding: 0;
+        /* --- 1. FONTES --- */
+        @font-face {
+            font-family: 'Montserrat';
+            src: url('file://{{ base_dir }}/core/static/fonts/Montserrat-Regular.ttf');
         }
-        
-        * { box-sizing: border-box; }
-
-        html, body {
-            height: 100%; width: 100%; margin: 0; padding: 0;
-            font-family: 'Montserrat', sans-serif;
-            background: #fff; color: #000;
-            -webkit-print-color-adjust: exact;
-        }
-        
-        .page-break { page-break-after: always; }
-
-        /* HEADER FIXO */
-        header {
-            position: fixed; top: 2cm; left: 3cm; right: 3cm;
-            height: 1cm;
-            border-bottom: 3px solid #000;
-            display: flex; align-items: center; justify-content: space-between;
-            background: #fff; z-index: 1000;
-        }
-        .header-text { font-size: 24px; font-weight: 700; text-transform: uppercase; }
-
-        /* FOOTER FIXO */
-        footer {
-            position: fixed; bottom: 2cm; left: 3cm; right: 3cm;
-            height: 2cm;
-            border-top: 1px solid #000;
-            display: flex; align-items: center; justify-content: space-between;
-            padding-top: 20px;
-            background: #fff; z-index: 1000;
+        @font-face {
+            font-family: 'Noto Color Emoji';
+            src: url('file://{{ base_dir }}/core/static/fonts/NotoColorEmoji.ttf');
         }
 
-        .pill-side {
-            background: #fff; border: 1px solid #cbd5e0;
-            padding: 10px 40px; border-radius: 50px;
-            font-size: 22px; font-weight: 600; color: #555;
-            white-space: nowrap;
-        }
-        .pill-center {
-            background-color: #e7f1ff; color: #0d6efd;
-            padding: 15px 60px; border-radius: 60px;
-            font-size: 28px; font-weight: 700;
-            white-space: nowrap;
-            border: 1px solid #cce5ff;
+        /* --- 2. PÁGINA (FULL HD PIXELS) --- */
+        @page {
+            size: 1920px 1080px;
+            margin: 0;
+            @top-center { content: none; }
+            @bottom-center { content: none; }
         }
 
-        /* CAPA */
-        .cover-page { 
-            width: 100%; height: 100%; 
-            display: flex; flex-direction: column; justify-content: center;
-            padding-left: 3cm; 
-            background: #fcfcfc; 
+        /* --- 3. BASE --- */
+        body {
+            font-family: 'Montserrat', 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif;
+            margin: 0; 
+            padding: 0;
+            background-color: #fcfcfc;
+            color: #000;
+            width: 1920px;
+            height: 1080px;
         }
-        .main-title { 
-            font-size: 140px; font-weight: 800; line-height: 0.9; 
-            text-align: left; margin: 0; color: #000;
-        }
-        .main-title span { font-weight: 300; display: block; font-size: 80px; }
+        .quebra-pagina { page-break-after: always; }
 
-        /* GRADE (3x3) */
-        .grid-page { 
-            display: flex; 
-            align-items: flex-start;
-            
-            /* VERTICAL */
-            padding-top: 4.5cm; 
-            
-            /* HORIZONTAL */
-            padding-left: 13cm; 
-            
-            padding-right: 2cm; 
-            padding-bottom: 5cm; 
-            width: 100%;
+        .slide {
+            width: 1920px;
+            height: 1080px;
+            position: relative; 
+            box-sizing: border-box;
+            overflow: hidden;
+            background-color: #fcfcfc;
         }
-        
-        .layout-wrapper-flex { 
-            display: flex; 
-            align-items: center; 
-            gap: 0; 
-            width: auto;
-            /* Garante alinhamento à direita no espaço restante */
-            margin-left: auto; 
-            margin-right: 0;
+
+        /* ================= CAPA ================= */
+        .capa-top-line {
+            position: absolute; top: 100px; left: 150px; width: 1620px; height: 3px; background-color: #000;
         }
-        
-        .feed-label-pill { 
-            background: #e0e0e0; padding: 20px 50px; border-radius: 100px; 
-            font-size: 35px; font-weight: 700; white-space: nowrap; 
+        .capa-titulo-box { position: absolute; top: 400px; left: 150px; }
+        .texto-cronograma {
+            font-size: 130px; font-weight: 900; font-family: sans-serif; text-transform: uppercase;
+            line-height: 0.9; letter-spacing: -3px; display: block; margin-bottom: 15px; color: #000;
         }
-        .connector-line { height: 4px; background: #bbb; width: 150px; margin: 0 -5px; }
-        
-        /* Tamanho 520px */
-        .instagram-grid { width: 520px; display: flex; flex-wrap: wrap; box-shadow: 0 40px 80px rgba(0,0,0,0.15); background: #fff; }
-        .grid-item { width: 173px; height: 230px; position: relative; background: #eee; border: 2px solid #fff; box-sizing: border-box; }
+        .texto-de-postagens {
+            font-size: 130px; font-weight: normal; line-height: 0.9; letter-spacing: -3px; display: block;
+        }
+        .capa-footer-left { position: absolute; bottom: 120px; left: 150px; }
+        .capa-footer-right { position: absolute; bottom: 120px; right: 150px; }
+
+        .pilula {
+            padding: 25px 60px; border-radius: 100px; font-size: 28px; display: inline-block; line-height: 1;
+        }
+        .pilula-cinza { background-color: #e6e6e6; color: #333; border: 2px solid #000; }
+        .pilula-branca { background-color: #fff; color: #000; border: 2px solid #000; margin-left: 20px; }
+
+        /* ================= ELEMENTOS COMUNS ================= */
+        .linha-lateral-fixa {
+            position: absolute; top: 535px; left: 0; width: 700px; height: 10px; background-color: #e6e6e6; z-index: 0;
+        }
+        .linha-trinca-fixa { top: 130px; width: 300px; }
+        .pilula-titulo-secao {
+            background: #e6e6e6; padding: 20px 60px; border-radius: 100px; font-size: 45px; color: #000;
+            font-weight: normal; display: inline-block;
+        }
+
+        /* ================= GRADE (FEED) ================= */
+        .titulo-wrapper-left { position: absolute; top: 500px; left: 450px; z-index: 2; }
+        .grade-container {
+            position: absolute; top: 45px; right: 150px; width: 792px; height: 990px; font-size: 0; z-index: 2;
+        }
+        .grid-item {
+            display: inline-block; width: 264px; height: 330px; margin: 0; border: 2px solid #fcfcfc;
+            box-sizing: border-box; position: relative; background: #ddd; overflow: hidden; vertical-align: top;
+        }
         .grid-img { width: 100%; height: 100%; object-fit: cover; }
-        .play-icon-small { position: absolute; top: 10px; right: 10px; color: white; font-size: 24px; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+        .grid-video-badge {
+            position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.4); border-radius: 5px; padding: 5px;
+        }
 
-        /* === TRINCAS === */
-        .trinca-page { 
-            display: flex; flex-direction: column; 
-            align-items: center; 
-            justify-content: flex-start; 
-            height: 100%; 
-            padding-top: 4.5cm; 
-            padding-bottom: 5cm;
+        /* ================= TRINCA ================= */
+        .titulo-wrapper-trinca { position: absolute; top: 95px; left: 230px; z-index: 2; }
+        .trinca-container { position: absolute; top: 300px; left: 0; width: 1920px; text-align: center; font-size: 0; }
+        .trinca-item { display: inline-block; width: 450px; margin: 0 45px; vertical-align: top; }
+        .trinca-img-box {
+            width: 450px; height: 550px; overflow: hidden; background: #fff; position: relative; margin-bottom: 25px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
         }
-        .trinca-header-pill { background: #e0e0e0; padding: 15px 60px; border-radius: 100px; font-size: 30px; font-weight: 300; margin-bottom: 40px; }
-        .trinca-table { border-collapse: collapse; }
-        .trinca-col { width: 400px; text-align: center; vertical-align: top; }
-        .trinca-spacer { width: 40px; }
-        .trinca-img-box { width: 400px; height: 533px; background: #eee; margin-bottom: 20px; position: relative; }
-        .trinca-img-real { width: 100%; height: 100%; object-fit: cover; }
-        .date-pill { background: #f0f0f0; padding: 8px 30px; border-radius: 30px; font-size: 20px; font-weight: 600; display: inline-block; margin-bottom: 5px; }
-        .format-text { font-size: 22px; color: #888; }
-        .play-icon-large { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: rgba(255,255,255,0.9); font-size: 80px; text-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        .trinca-img { width: 100%; height: 100%; object-fit: cover; }
+        .trinca-meta { text-align: center; }
+        .trinca-data-pill {
+            background: #e6e6e6; padding: 10px 40px; border-radius: 50px; font-size: 24px; color: #000;
+            font-weight: bold; display: inline-block; margin-bottom: 15px;
+        }
+        .trinca-tipo {
+            font-size: 22px; color: #000; text-transform: uppercase; font-weight: 600; display: block; letter-spacing: 1px;
+        }
 
-        /* === POSTS INDIVIDUAIS === */
-        .individual-page { 
-            display: flex; flex-direction: column; 
-            align-items: center; 
-            justify-content: flex-start; 
+        /* ================= POST INDIVIDUAL ================= */
+        /* Flexbox Wrapper para centralizar verticalmente! */
+        .post-individual-wrapper {
+            position: absolute;
+            top: 0; left: 0;
+            width: 1920px; height: 1080px;
+            display: flex;
+            align-items: center; /* Centraliza no meio da tela */
+            justify-content: center; /* Centraliza horizontalmente */
+            padding: 0 150px;
+            box-sizing: border-box;
+        }
+
+        .post-img-col {
+            width: 640px; 
+            height: 800px; 
+            background: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 120px; /* Espaço entre imagem e texto */
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1); /* Sombra estilo a trinca */
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        .post-img-full {
+            width: 100%; 
             height: 100%; 
-            padding-top: 3.5cm; 
-            padding-bottom: 6cm;
+            object-fit: cover;
+        }
+
+        .post-info-col { 
+            width: 800px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .pilula-wrapper { width: 100%; text-align: center; margin-bottom: 50px; }
+        .pilula-post {
+            background: #e6e6e6; padding: 15px 70px; border-radius: 100px; font-size: 35px; color: #333; display: inline-block;
+        }
+
+        .post-legenda { 
+            font-size: 28px; line-height: 1.6; white-space: pre-wrap; color: #222; width: 100%; 
         }
         
-        .post-header-pill { 
-            background: #e0e0e0; padding: 15px 60px; border-radius: 50px; 
-            font-size: 30px; margin-bottom: 30px; 
+        .obs-box {
+             margin-top: 50px; background: #fff9e6; padding: 25px; border-radius: 10px; border-left: 8px solid #ffd700;
+             font-size: 24px; width: 100%; box-sizing: border-box;
         }
-        
-        .post-layout-table { width: 85%; }
-        .col-img { width: 45%; padding-right: 50px; vertical-align: top; }
-        .col-text { width: 55%; vertical-align: top; padding-top: 20px; }
-        
-        .individual-img-box { 
-            width: 450px; 
-            height: 600px; 
-            position: relative; border-radius: 20px; 
-            overflow: hidden; background: #eee; 
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1); 
-            margin: 0 auto 20px auto; 
-            display: flex; align-items: center; justify-content: center;
+
+        /* ================= ANEXOS CARROSSEL ================= */
+        .carrossel-container {
+            position: absolute; top: 250px; left: 150px; width: 1620px; font-size: 0;
         }
-        
-        .post-main-image { width: 100%; height: 100%; object-fit: cover; }
-        
-        .post-body-title { font-size: 32px; font-weight: 700; margin-bottom: 20px; }
-        .post-body-text { font-size: 24px; font-weight: 300; line-height: 1.5; white-space: pre-wrap; }
-        .briefing-box { margin-top: 40px; padding: 20px; border-left: 5px solid #ccc; background: #f9f9f9; color: #666; font-size: 18px; }
+        .img-extra-box {
+            display: inline-block; height: 700px; margin-right: 25px; margin-bottom: 25px; vertical-align: top;
+        }
+        .img-extra-box img { height: 100%; border-radius: 8px; }
 
     </style>
 </head>
 <body>
 
-    <div class="cover-page page-break">
-        <h1 class="main-title">CRONOGRAMA<br><span>DE POSTAGENS</span></h1>
+    <div class="slide quebra-pagina">
+        <div class="capa-top-line"></div>
+        <div class="capa-titulo-box">
+            <span class="texto-cronograma">CRONOGRAMA</span>
+            <span class="texto-de-postagens">de postagens</span>
+        </div>
+        <div class="capa-footer-left">
+            {% if instagram_cliente %}
+                <span class="pilula pilula-cinza">{{ instagram_cliente }}</span>
+            {% endif %}
+            <span class="pilula pilula-branca">{{ cronograma.cliente.nome_fantasia }}</span>
+        </div>
+        <div class="capa-footer-right">
+            <span class="pilula pilula-branca">
+                {{ cronograma.data_inicio|date:"M y"|upper }} / {{ cronograma.data_fim|date:"M y"|upper }}
+            </span>
+        </div>
     </div>
-
-    <header>
-        <div class="header-text">{{ cronograma.cliente.nome_fantasia }}</div>
-        <div class="header-text">{{ agencia.nome_fantasia }}</div>
-    </header>
-
-    <footer>
-        <div class="pill-side">{{ instagram_agencia }}</div>
-        <div class="pill-center">{{ instagram_cliente }}</div>
-        <div class="pill-side">{{ cronograma.data_inicio|date:"d/m" }} - {{ cronograma.data_fim|date:"d/m" }}</div>
-    </footer>
-
 
     {% for lote in lotes %}
 
-    <div class="grid-page page-break">
-        <div class="layout-wrapper-flex">
-            <div class="feed-label-pill">{{ lote.titulo_grade }}</div>
-            <div class="connector-line"></div>
-            <div class="instagram-grid">
+        <div class="slide quebra-pagina">
+            <div class="linha-lateral-fixa"></div>
+            <div class="titulo-wrapper-left">
+                <span class="pilula-titulo-secao">{{ lote.titulo_grade }}</span>
+            </div>
+            <div class="grade-container">
                 {% for post in lote.posts_grade %}
                     <div class="grid-item">
                         {% if post.pdf_img_url %}
                             <img src="{{ post.pdf_img_url }}" class="grid-img">
-                            {% if post.is_video %}<div class="play-icon-small">▶</div>{% endif %}
+                        {% endif %}
+                        {% if post.is_video %}
+                            <div class="grid-video-badge">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="#fff" stroke="none"><path d="M8 5v14l11-7z"/></svg>
+                            </div>
                         {% endif %}
                     </div>
                 {% endfor %}
-                {% if lote.posts_grade|length < 9 %}<div class="grid-item" style="background: #f4f4f4;"></div>{% endif %}
-                {% if lote.posts_grade|length < 8 %}<div class="grid-item" style="background: #f4f4f4;"></div>{% endif %}
             </div>
         </div>
-    </div>
 
-    {% for trinca in lote.trincas %}
-    <div class="trinca-page page-break">
-        <div class="trinca-header-pill">Trinca #{{ forloop.counter }}</div>
-        <table class="trinca-table">
-            <tr>
-                {% for post in trinca %}
-                <td class="trinca-col">
-                    <div class="trinca-img-box">
-                        {% if post.pdf_img_url %}
-                            <img src="{{ post.pdf_img_url }}" class="trinca-img-real">
-                            {% if post.is_video %}<div class="play-icon-large">▶</div>{% endif %}
-                        {% endif %}
+        {% for trinca in lote.trincas %}
+
+            <div class="slide quebra-pagina">
+                <div class="linha-lateral-fixa linha-trinca-fixa"></div>
+                <div class="titulo-wrapper-trinca">
+                    <span class="pilula-titulo-secao">Trinca {{ forloop.counter }}</span>
+                </div>
+                <div class="trinca-container">
+                    {% for post in trinca %}
+                        <div class="trinca-item">
+                            <div class="trinca-img-box">
+                                {% if post.pdf_img_url %}
+                                    <img src="{{ post.pdf_img_url }}" class="trinca-img">
+                                {% else %}
+                                    <div style="background:#eee; width:100%; height:100%;"></div>
+                                {% endif %}
+                                {% if post.is_video %}
+                                    <div style="position:absolute; top:15px; right:15px;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="#fff" stroke="none"><path d="M8 5v14l11-7z"/></svg>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="trinca-meta">
+                                <span class="trinca-data-pill">{{ post.data_publicacao|date:"d/m" }}</span>
+                                <span class="trinca-tipo">
+                                    {% if post.formato == 'feed_estatico' %}FOTO
+                                    {% elif post.formato == 'feed_carrossel' %}CARROSSEL
+                                    {% elif post.formato == 'reels' %}REEL
+                                    {% elif post.formato == 'stories' %}STORY
+                                    {% elif post.formato == 'video_longo' %}VÍDEO
+                                    {% else %}{{ post.get_formato_display|default:"POST"|upper }}
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            {% for post in trinca reversed %}
+                
+                <div class="slide quebra-pagina">
+                    <div class="post-individual-wrapper">
+                        
+                        <div class="post-img-col">
+                            {% if post.pdf_img_url %}
+                                <img src="{{ post.pdf_img_url }}" class="post-img-full">
+                            {% endif %}
+                        </div>
+                        
+                        <div class="post-info-col">
+                            <div class="pilula-wrapper">
+                                <span class="pilula-post">
+                                    Post {{ post.data_publicacao|date:"d/m" }} - 
+                                    {% if post.formato == 'feed_estatico' %}FOTO
+                                    {% elif post.formato == 'reels' %}REEL
+                                    {% elif post.formato == 'feed_carrossel' %}CARROSSEL
+                                    {% elif post.formato == 'stories' %}STORY
+                                    {% else %}{{ post.get_formato_display|upper }}
+                                    {% endif %}
+                                </span>
+                            </div>
+                            
+                            <div class="post-legenda">{{ post.legenda|default:"Sem legenda." }}</div>
+                            
+                            {% if post.obs_criativo %}
+                                <div class="obs-box">
+                                    <strong style="color:#bfa300; display:block; margin-bottom:5px;">OBSERVAÇÃO:</strong> 
+                                    {{ post.obs_criativo }}
+                                </div>
+                            {% endif %}
+                        </div>
+
                     </div>
-                    <div class="date-pill">{{ post.data_publicacao|date:"d/m" }}</div>
-                    <div class="format-text">{% if post.is_video %}Reel{% else %}Foto{% endif %}</div>
-                </td>
-                {% if not forloop.last %}<td class="trinca-spacer"></td>{% endif %}
-                {% endfor %}
-            </tr>
-        </table>
-    </div>
+                </div>
 
-    {% for post in trinca reversed %}
-    <div class="individual-page page-break">
-        <div class="post-header-pill">
-            Post {{ post.data_publicacao|date:"d/m" }} - {% if post.is_video %}Reel{% else %}Foto{% endif %}
-        </div>
-        <table class="post-layout-table">
-            <tr>
-                <td class="col-img">
-                    <div class="individual-img-box">
-                        {% if post.pdf_img_url %}
-                            <img src="{{ post.pdf_img_url }}" class="post-main-image">
-                            {% if post.is_video %}<div class="play-icon-large">▶</div>{% endif %}
-                        {% else %}
-                            <div class="post-main-image" style="background: #eee; display:flex; align-items:center; justify-content:center; color:#999;">Sem Mídia</div>
-                        {% endif %}
+                {% if post.tem_carrossel %}
+                    <div class="slide quebra-pagina">
+                        <div class="linha-lateral-fixa linha-trinca-fixa"></div>
+                        <div class="titulo-wrapper-trinca">
+                            <span class="pilula-titulo-secao">Anexos Carrossel</span>
+                        </div>
+
+                        <div class="carrossel-container">
+                            {% for img_extra in post.pdf_imagens_extras %}
+                                <div class="img-extra-box">
+                                    <img src="{{ img_extra }}">
+                                </div>
+                            {% endfor %}
+                        </div>
                     </div>
-                </td>
-                <td class="col-text">
-                    <div class="post-body-title">{{ post.titulo }}</div>
-                    <div class="post-body-text">{{ post.legenda|linebreaksbr }}</div>
-                    {% if post.briefing_arte %}
-                        <div class="briefing-box"><strong>Briefing:</strong><br>{{ post.briefing_arte|linebreaksbr }}</div>
-                    {% endif %}
-                </td>
-            </tr>
-        </table>
-    </div>
-    {% endfor %}
-    {% endfor %}
-    {% endfor %}
+                {% endif %}
 
+            {% endfor %}
+
+        {% endfor %} 
+    {% endfor %} 
 </body>
 </html>

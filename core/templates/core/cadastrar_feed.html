@@ -1,0 +1,42 @@
+{% extends 'core/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="container-fluid p-0">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            
+            <div class="d-flex align-items-center mb-4">
+                <a href="{% url 'detalhes_cronograma' cronograma_obj.id %}" class="btn btn-light rounded-circle shadow-sm me-3">
+                    <i class="bi bi-arrow-left"></i>
+                </a>
+                <div>
+                    <h2 class="fw-bold h4 mb-0">Novo Feed</h2>
+                    <p class="text-muted small mb-0">{{ cronograma_obj.cliente.nome_fantasia }} - {{ cronograma_obj.titulo }}</p>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm p-4" style="border-radius: 20px;">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        {{ form.numero|as_crispy_field }}
+                    </div>
+                    <div class="mb-4">
+                        {{ form.titulo|as_crispy_field }}
+                        <small class="text-muted d-block mt-1">Ex: Feed 01, Lote 02, Especial Dia das Mães...</small>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary py-3 fw-bold rounded-pill" style="background: #6c5ce7; border: none;">
+                            <i class="bi bi-check2-circle me-1"></i> Criar Feed
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
