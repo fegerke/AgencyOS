@@ -17,6 +17,7 @@ from .models import Agencia, Cliente, Post, DropboxConfig, Cronograma, PostArqui
 from .forms import AgenciaForm, ClienteForm, PostForm, CronogramaForm, UserRegistrationForm, FeedForm
 from .services import upload_file_dropbox
 from .utils import gerar_pdf_cronograma 
+import threading
 
 # --- DASHBOARD & GERAL ---
 
@@ -90,6 +91,23 @@ def mover_pasta_dropbox(request, post, para_lixeira=True):
 
 # --- PDF ---
 
+def upload_dropbox_background(user, pdf_bytes, path, cronograma_id):
+    """Faz o upload para o Dropbox em segundo plano sem travar o servidor"""
+    from .models import Cronograma
+    try:
+        # Tenta fazer o upload usando sua função original
+        link = upload_file_dropbox(user, pdf_bytes, path)
+        
+        if link:
+            # Pega o cronograma fresco do banco e atualiza o link
+            cronograma = Cronograma.objects.get(id=cronograma_id)
+            cronograma.pdf_dropbox_link = link
+            cronograma.pdf_dropbox_path = path
+            cronograma.save()
+            print(f"Sucesso: PDF {cronograma_id} salvo no Dropbox em background!")
+    except Exception as e:
+        print(f"Erro no upload em background: {e}")
+
 @login_required
 def gerar_pdf_cronograma_view(request, cronograma_id):
     cronograma = get_object_or_404(Cronograma, id=cronograma_id)
@@ -97,11 +115,9 @@ def gerar_pdf_cronograma_view(request, cronograma_id):
     try:
         pdf_bytes = gerar_pdf_cronograma(cronograma, request.user)
     except Exception as e:
-        # AS TRÊS LINHAS ABAIXO SÃO A MÁGICA PRA VER O ERRO
         print("=== INÍCIO DO ERRO DO PDF ===")
         print(traceback.format_exc())
         print("=== FIM DO ERRO DO PDF ===")
-        
         messages.error(request, f"Erro ao gerar PDF: {e}")
         return redirect('detalhes_cronograma', pk=cronograma.id)
 
@@ -118,16 +134,15 @@ def gerar_pdf_cronograma_view(request, cronograma_id):
     nome_arquivo = f"Cronograma_{cli_slug}_{titulo_slug}.pdf"
     path = f"/AgencyOS/CLIENTES/{cli_slug}/{cronograma.ano}/{mes_nome}/{titulo_slug}/{nome_arquivo}"
 
-    link = upload_file_dropbox(request.user, pdf_bytes, path)
+    # --- A MÁGICA ACONTECE AQUI ---
+    # Inicia o upload em uma Thread separada
+    thread = threading.Thread(
+        target=upload_dropbox_background, 
+        args=(request.user, pdf_bytes, path, cronograma.id)
+    )
+    thread.start() # Dispara e esquece!
     
-    if link:
-        cronograma.pdf_dropbox_link = link
-        cronograma.pdf_dropbox_path = path
-        cronograma.save()
-        messages.success(request, "PDF Salvo no Dropbox (Visualização Direta)!")
-    else:
-        messages.error(request, "Erro ao salvar no Dropbox. Verifique a conexão.")
-
+    messages.success(request, "PDF gerado! Ele está sendo salvo no Dropbox em segundo plano e aparecerá aqui em instantes.")
     return redirect('detalhes_cronograma', pk=cronograma.id)
 
 @login_required
