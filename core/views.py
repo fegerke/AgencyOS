@@ -141,8 +141,7 @@ def gerar_pdf_cronograma_view(request, cronograma_id):
         args=(request.user, pdf_bytes, path, cronograma.id)
     )
     thread.start() # Dispara e esquece!
-    
-    messages.success(request, "PDF gerado! Ele está sendo salvo no Dropbox em segundo plano e aparecerá aqui em instantes.")
+     
     return redirect('detalhes_cronograma', pk=cronograma.id)
 
 @login_required
