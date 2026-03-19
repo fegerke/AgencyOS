@@ -12,7 +12,7 @@ import requests
 import base64
 import os
 from dropbox.files import ThumbnailSize, ThumbnailFormat, PathOrLink
-
+import traceback
 from .models import Agencia, Cliente, Post, DropboxConfig, Cronograma, PostArquivo, REDES_OPCOES, Feed
 from .forms import AgenciaForm, ClienteForm, PostForm, CronogramaForm, UserRegistrationForm, FeedForm
 from .services import upload_file_dropbox
@@ -97,6 +97,11 @@ def gerar_pdf_cronograma_view(request, cronograma_id):
     try:
         pdf_bytes = gerar_pdf_cronograma(cronograma, request.user)
     except Exception as e:
+        # AS TRÊS LINHAS ABAIXO SÃO A MÁGICA PRA VER O ERRO
+        print("=== INÍCIO DO ERRO DO PDF ===")
+        print(traceback.format_exc())
+        print("=== FIM DO ERRO DO PDF ===")
+        
         messages.error(request, f"Erro ao gerar PDF: {e}")
         return redirect('detalhes_cronograma', pk=cronograma.id)
 
