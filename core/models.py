@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from django.utils.text import slugify
 from django.utils import timezone
 import uuid
+from django.core.exceptions import ValidationError
 
 # --- MANTENHA AS LISTAS DE OPÇÕES IGUAIS ---
 REDES_OPCOES = [
@@ -110,6 +111,12 @@ class Post(models.Model):
     dropbox_path = models.CharField(max_length=500, blank=True, null=True)
     excluido = models.BooleanField(default=False)
     data_exclusao = models.DateTimeField(null=True, blank=True)
+
+    def clean(self):
+        super().clean()
+        # Se for um post novo, verifica se o feed dele já chegou em 9
+        if not self.pk and self.feed and self.feed.posts.count() >= 9:
+            raise ValidationError("Ação bloqueada: Este feed já atingiu o limite de 9 posts.")
 
     def gerar_caminho_dropbox(self):
         cli = slugify(self.cronograma.cliente.nome_fantasia)

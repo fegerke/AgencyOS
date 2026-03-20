@@ -73,10 +73,23 @@
             <div class="feed-section">
                 <div class="d-flex justify-content-between align-items-center mb-3 ps-2" style="border-left: 4px solid #6c5ce7;">
                     <h4 class="fw-bold h5 mb-0">{{ feed.titulo }}</h4>
-                    <a href="{% url 'cadastrar_post' feed.id %}" class="btn btn-sm btn-outline-primary rounded-pill fw-bold">
-                        <i class="bi bi-plus-lg"></i> Post
-                    </a>
+                    
+                    {% if feed.posts.count >= 9 %}
+                        <span class="badge bg-warning text-dark border border-warning rounded-pill px-3 py-2 shadow-sm" style="font-size: 0.85rem;">
+                            <i class="bi bi-exclamation-triangle-fill"></i> Limite (9) Atingido
+                        </span>
+                    {% else %}
+                        <a href="{% url 'cadastrar_post' feed.id %}" class="btn btn-sm btn-outline-primary rounded-pill fw-bold">
+                            <i class="bi bi-plus-lg"></i> Post
+                        </a>
+                    {% endif %}
                 </div>
+                
+                {% if feed.posts.count >= 9 %}
+                    <div class="alert alert-warning py-2 px-3 small mb-3 border-0 rounded-4 shadow-sm" style="background-color: #fff3cd; color: #856404;">
+                        <strong>Atenção:</strong> A grade do Instagram está cheia. Crie um <b>Novo Feed</b> para adicionar mais postagens à sua campanha.
+                    </div>
+                {% endif %}
 
                 <div class="mobile-frame bg-white shadow-lg p-3 flex-shrink-0">
                     <div class="d-flex justify-content-between align-items-center mb-3 px-1 text-muted">
@@ -189,7 +202,10 @@ document.addEventListener("DOMContentLoaded", function() {
 
         const interval = setInterval(() => {
             fetch(`/cronograma/${cronogramaId}/check-pdf/`)
-            .then(res => res.json())
+            .then(res => {
+                if (!res.ok) throw new Error('Servidor engasgou com erro 500'); // BLINDAGEM DO RENDER
+                return res.json();
+            })
             .then(data => {
                 if (data.has_pdf) {
                     clearInterval(interval);
@@ -197,7 +213,39 @@ document.addEventListener("DOMContentLoaded", function() {
                     window.location.reload(); // Recarrega para mostrar o botão verde!
                 }
             })
-            .catch(err => console.error("Erro ao checar PDF:", err));
+            .catch(err => {
+                // FASE 3: Captura a falha, para o loop e avisa o usuário (ANTI TELA BRANCA)
+                console.error("Erro na checagem:", err);
+                clearInterval(interval);
+                sessionStorage.removeItem(cacheKey);
+                
+                // Transforma o botão em um aviso visual de erro
+                btnLoading.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> Servidor sobrecarregado. Aguarde e tente de novo.';
+                btnLoading.classList.replace('btn-secondary', 'btn-danger');
+                
+                // Dá um respiro de 8 segundos para o Render reiniciar o Worker e devolve os botões originais
+                setTimeout(() => {
+                    btnLoading.classList.add('d-none');
+                    btnLoading.classList.replace('btn-danger', 'btn-secondary'); // Reseta a cor para o futuro
+                    
+                    if (btnGerar) {
+                        btnGerar.classList.remove('d-none', 'disabled', 'btn-secondary');
+                        btnGerar.classList.add('btn-outline-danger');
+                        btnGerar.innerHTML = '<i class="bi bi-file-earmark-pdf me-1"></i> Gerar PDF Novamente';
+                        btnGerar.style.pointerEvents = 'auto'; // Libera o clique novamente
+                    }
+                    if (pdfButtons) {
+                        pdfButtons.classList.remove('d-none');
+                        const btnRegerar = document.getElementById('btn-regerar');
+                        if (btnRegerar) {
+                            btnRegerar.classList.remove('disabled', 'btn-secondary');
+                            btnRegerar.classList.add('btn-warning');
+                            btnRegerar.innerHTML = '<i class="bi bi-arrow-clockwise"></i>';
+                            btnRegerar.style.pointerEvents = 'auto';
+                        }
+                    }
+                }, 8000);
+            });
         }, 3000);
     }
 
