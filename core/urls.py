@@ -11,6 +11,9 @@ urlpatterns = [
     path('clientes/novo/', views.cadastrar_cliente, name='cadastrar_cliente'),
     path('clientes/editar/<int:pk>/', views.editar_cliente, name='editar_cliente'),
     path('clientes/excluir/<int:pk>/', views.excluir_cliente, name='excluir_cliente'),
+
+    # API Interna (Ajax)
+    path('api/cliente/<int:cliente_id>/redes/', views.api_get_redes_cliente, name='api_get_redes_cliente'),
     
     # Cronogramas
     path('cronogramas/', views.listar_cronogramas, name='listar_cronogramas'),

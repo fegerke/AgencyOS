@@ -11,7 +11,7 @@
                 </a>
                 <div>
                     <h2 class="fw-bold h4 mb-0">{% if form.instance.pk %}Editar{% else %}Novo{% endif %} Post</h2>
-                    <p class="text-muted small mb-0">{{ cronograma_obj.cliente.nome_fantasia }} - {{ cronograma_obj.titulo }}</p>
+                    <p class="text-muted small mb-0">{{ cronograma_obj.cliente.nome_fantasia }} - {{ cronograma_obj.titulo }} ({{ cronograma_obj.get_rede_social_display }})</p>
                 </div>
             </div>
 
@@ -28,9 +28,8 @@
                         <input type="hidden" name="cronograma" value="{{ cronograma_obj.id }}">
 
                         <div class="row g-3">
-                            <div class="col-md-4">{{ form.data_publicacao|as_crispy_field }}</div>
-                            <div class="col-md-4">{{ form.rede_social|as_crispy_field }}</div>
-                            <div class="col-md-4">{{ form.formato|as_crispy_field }}</div>
+                            <div class="col-md-6">{{ form.data_publicacao|as_crispy_field }}</div>
+                            <div class="col-md-6">{{ form.formato|as_crispy_field }}</div>
                             
                             <div class="col-12">{{ form.titulo|as_crispy_field }}</div>
                             <div class="col-12">{{ form.legenda|as_crispy_field }}</div>
@@ -77,7 +76,7 @@
                                     <div id="local-previews-container" class="d-none mt-3">
                                         <label class="form-label small fw-bold text-success"><i class="bi bi-check-circle me-1"></i>Prontos para subir:</label>
                                         <div class="d-flex flex-wrap gap-3 p-3 bg-white border border-success border-opacity-25 rounded" id="local-previews-list">
-                                            </div>
+                                        </div>
                                     </div>
 
                                     <div class="form-text small text-muted mt-2">

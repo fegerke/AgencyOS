@@ -26,14 +26,18 @@ class ClienteAdmin(admin.ModelAdmin):
 
 @admin.register(Cronograma)
 class CronogramaAdmin(admin.ModelAdmin):
-    list_display = ('cliente', 'titulo', 'mes', 'ano', 'excluido')
-    list_filter = ('mes', 'ano', 'excluido')
+    # Adicionamos a rede_social na listagem e nos filtros do Cronograma
+    list_display = ('titulo', 'cliente', 'rede_social', 'mes', 'ano', 'excluido')
+    list_filter = ('rede_social', 'mes', 'ano', 'excluido', 'cliente')
+    search_fields = ('titulo', 'cliente__nome_fantasia')
 
 @admin.register(Post)
 class PostAdmin(admin.ModelAdmin):
-    list_display = ('titulo', 'cronograma', 'data_publicacao', 'status', 'rede_social')
-    list_filter = ('status', 'rede_social', 'data_publicacao')
-    search_fields = ('titulo',)
+    # Removemos a rede_social daqui e adicionamos o formato
+    list_display = ('titulo', 'cronograma', 'feed', 'formato', 'status', 'data_publicacao', 'excluido')
+    # Trocamos o filtro de rede_social para filtrar pelo formato e status
+    list_filter = ('status', 'formato', 'excluido', 'data_publicacao')
+    search_fields = ('titulo', 'legenda', 'cronograma__titulo')
 
 @admin.register(DropboxConfig)
 class DropboxConfigAdmin(admin.ModelAdmin):

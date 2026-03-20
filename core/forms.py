@@ -51,20 +51,20 @@ class ClienteForm(forms.ModelForm):
 class CronogramaForm(forms.ModelForm):
     class Meta:
         model = Cronograma
-        fields = ['cliente', 'titulo', 'mes', 'ano', 'data_inicio', 'data_fim']
+        # ADICIONADO 'rede_social' AQUI
+        fields = ['cliente', 'titulo', 'rede_social', 'mes', 'ano', 'data_inicio', 'data_fim']
         widgets = {
-            # O format='%Y-%m-%d' é essencial para o <input type="date"> do navegador
             'data_inicio': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}, format='%Y-%m-%d'),
             'data_fim': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}, format='%Y-%m-%d'),
+            'rede_social': forms.Select(attrs={'class': 'form-select'}),
         }
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
         super(CronogramaForm, self).__init__(*args, **kwargs)
         
-        # Preenchimento automático de Mês e Ano atuais
         hoje = datetime.now()
-        if not self.instance.pk:  # Só preenche se for um novo registro
+        if not self.instance.pk:
             self.fields['mes'].initial = hoje.month
             self.fields['ano'].initial = hoje.year
 
@@ -89,7 +89,8 @@ class PostForm(forms.ModelForm):
 
     class Meta:
         model = Post
-        fields = ['cronograma', 'rede_social', 'formato', 'titulo', 'data_publicacao', 'legenda', 'briefing_arte', 'status']
+        # REMOVIDO 'rede_social' DAQUI
+        fields = ['cronograma', 'formato', 'titulo', 'data_publicacao', 'legenda', 'briefing_arte', 'status']
         labels = {
             'legenda': 'Legenda (Texto da publicação)',
             'briefing_arte': 'Instruções / Observações (Briefing para arte)',
@@ -102,18 +103,11 @@ class PostForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        crono = None
-        if self.instance and hasattr(self.instance, 'cronograma') and self.instance.cronograma:
-            crono = self.instance.cronograma
-        elif 'initial' in kwargs and 'cronograma' in kwargs['initial']:
-            crono = kwargs['initial']['cronograma']
-
+        
+        # A lógica de filtrar as redes_sociais foi removida porque o post não escolhe mais a rede.
+        # Apenas mantivemos a inicialização da data_publicacao
         if self.instance and self.instance.data_publicacao:
             self.fields['data_publicacao'].initial = self.instance.data_publicacao
-
-        if crono:
-            redes_ativas = crono.cliente.redes_sociais.keys()
-            self.fields['rede_social'].choices = [(id, nome) for id, nome in REDES_OPCOES if id in redes_ativas]
 
 class UserRegistrationForm(forms.ModelForm):
     password = forms.CharField(label="Senha", widget=forms.PasswordInput(attrs={'class': 'form-control'}))

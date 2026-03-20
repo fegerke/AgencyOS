@@ -6,20 +6,22 @@
     
     <div class="card border-0 shadow-sm mb-5" style="border-radius: 15px;">
         <div class="card-body p-4">
-            <form method="post" class="row g-3 align-items-end">
+            <form method="post" class="row g-3 align-items-center">
                 {% csrf_token %}
                 <input type="hidden" name="editar_cronograma" value="1">
                 
-                <div class="col-md-3 col-12">{{ form_cronograma.cliente|as_crispy_field }}</div>
-                <div class="col-md-3 col-12">{{ form_cronograma.titulo|as_crispy_field }}</div>
-                <div class="col-md-1 col-6">{{ form_cronograma.mes|as_crispy_field }}</div>
-                <div class="col-md-1 col-6">{{ form_cronograma.ano|as_crispy_field }}</div>
-                <div class="col-md-2 col-6">{{ form_cronograma.data_inicio|as_crispy_field }}</div>
-                <div class="col-md-2 col-6">{{ form_cronograma.data_fim|as_crispy_field }}</div>
+                <div class="col-md-4 col-12">{{ form_cronograma.cliente|as_crispy_field }}</div>
+                <div class="col-md-5 col-12">{{ form_cronograma.titulo|as_crispy_field }}</div>
+                <div class="col-md-3 col-12">{{ form_cronograma.rede_social|as_crispy_field }}</div>
                 
-                <div class="col-12 text-end mt-3">
-                    <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm">
-                        <i class="bi bi-check-lg me-1"></i> Salvar Alterações
+                <div class="col-md-2 col-4">{{ form_cronograma.mes|as_crispy_field }}</div>
+                <div class="col-md-2 col-4">{{ form_cronograma.ano|as_crispy_field }}</div>
+                <div class="col-md-3 col-4">{{ form_cronograma.data_inicio|as_crispy_field }}</div>
+                <div class="col-md-3 col-6">{{ form_cronograma.data_fim|as_crispy_field }}</div>
+                
+                <div class="col-md-2 col-6 text-end">
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm w-100 mt-2">
+                        <i class="bi bi-check-lg me-1"></i> Salvar
                     </button>
                 </div>
             </form>
@@ -71,25 +73,20 @@
         {% for feed in cronograma.feeds.all %}
             
             <div class="feed-section">
+                
                 <div class="d-flex justify-content-between align-items-center mb-3 ps-2" style="border-left: 4px solid #6c5ce7;">
                     <h4 class="fw-bold h5 mb-0">{{ feed.titulo }}</h4>
                     
                     {% if feed.posts.count >= 9 %}
-                        <span class="badge bg-warning text-dark border border-warning rounded-pill px-3 py-2 shadow-sm" style="font-size: 0.85rem;">
-                            <i class="bi bi-exclamation-triangle-fill"></i> Limite (9) Atingido
-                        </span>
+                        <button type="button" class="btn btn-sm btn-outline-primary rounded-pill fw-bold" onclick="alert('Atenção: A grade deste feed já está cheia (limite de 9 posts). Por favor, crie um Novo Feed para continuar organizando sua campanha.')">
+                            <i class="bi bi-plus-lg"></i> Post
+                        </button>
                     {% else %}
                         <a href="{% url 'cadastrar_post' feed.id %}" class="btn btn-sm btn-outline-primary rounded-pill fw-bold">
                             <i class="bi bi-plus-lg"></i> Post
                         </a>
                     {% endif %}
                 </div>
-                
-                {% if feed.posts.count >= 9 %}
-                    <div class="alert alert-warning py-2 px-3 small mb-3 border-0 rounded-4 shadow-sm" style="background-color: #fff3cd; color: #856404;">
-                        <strong>Atenção:</strong> A grade do Instagram está cheia. Crie um <b>Novo Feed</b> para adicionar mais postagens à sua campanha.
-                    </div>
-                {% endif %}
 
                 <div class="mobile-frame bg-white shadow-lg p-3 flex-shrink-0">
                     <div class="d-flex justify-content-between align-items-center mb-3 px-1 text-muted">
@@ -186,6 +183,70 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
+    // ==========================================
+    // 1. MÁGICA DAS REDES SOCIAIS DINÂMICAS (AJAX)
+    // ==========================================
+    const clienteSelect = document.getElementById('id_cliente');
+    const redeSelect = document.getElementById('id_rede_social');
+
+    if (clienteSelect && redeSelect) {
+        function atualizarRedes(isInitialLoad = false) {
+            const clienteId = clienteSelect.value;
+            // Guarda a rede atual para tentar mantê-la selecionada após o recarregamento
+            const redeAtual = redeSelect.value; 
+            
+            if (!clienteId) {
+                redeSelect.innerHTML = '<option value="">Selecione um cliente...</option>';
+                redeSelect.disabled = true;
+                return;
+            }
+
+            if (!isInitialLoad) {
+                redeSelect.disabled = true;
+                redeSelect.innerHTML = '<option value="">Carregando redes...</option>';
+            }
+
+            fetch(`/api/cliente/${clienteId}/redes/`)
+                .then(response => response.json())
+                .then(data => {
+                    redeSelect.innerHTML = ''; 
+                    
+                    if (data.redes && data.redes.length > 0) {
+                        data.redes.forEach(rede => {
+                            const option = document.createElement('option');
+                            option.value = rede.id;
+                            option.textContent = rede.nome;
+                            
+                            // Se a rede que veio da API for igual a que estava selecionada antes, mantém ela ativa
+                            if (rede.id === redeAtual) {
+                                option.selected = true;
+                            }
+                            
+                            redeSelect.appendChild(option);
+                        });
+                        redeSelect.disabled = false; 
+                    } else {
+                        redeSelect.innerHTML = '<option value="">Nenhuma rede configurada</option>';
+                        redeSelect.disabled = true;
+                    }
+                })
+                .catch(err => {
+                    console.error('Erro ao buscar redes do cliente:', err);
+                    if (!isInitialLoad) {
+                        redeSelect.innerHTML = '<option value="">Erro ao carregar</option>';
+                    }
+                });
+        }
+
+        clienteSelect.addEventListener('change', () => atualizarRedes(false));
+        // Dispara no carregamento inicial para garantir que a lista está limpa apenas com as redes do cliente atual
+        atualizarRedes(true);
+    }
+
+
+    // ==========================================
+    // 2. BLINDAGEM DO PDF E ERRO 500
+    // ==========================================
     const btnGerar = document.getElementById('btn-gerar');
     const pdfButtons = document.getElementById('pdf-buttons');
     const btnLoading = document.getElementById('pdf-loading-btn');
@@ -193,7 +254,6 @@ document.addEventListener("DOMContentLoaded", function() {
     const cacheKey = 'polling_pdf_' + cronogramaId;
 
     function startPolling() {
-        // FASE 2: Mostra que está indo pro Dropbox
         if (btnGerar) btnGerar.classList.add('d-none');
         if (pdfButtons) pdfButtons.classList.add('d-none');
         
@@ -203,36 +263,33 @@ document.addEventListener("DOMContentLoaded", function() {
         const interval = setInterval(() => {
             fetch(`/cronograma/${cronogramaId}/check-pdf/`)
             .then(res => {
-                if (!res.ok) throw new Error('Servidor engasgou com erro 500'); // BLINDAGEM DO RENDER
+                if (!res.ok) throw new Error('Servidor engasgou com erro 500'); 
                 return res.json();
             })
             .then(data => {
                 if (data.has_pdf) {
                     clearInterval(interval);
                     sessionStorage.removeItem(cacheKey); 
-                    window.location.reload(); // Recarrega para mostrar o botão verde!
+                    window.location.reload(); 
                 }
             })
             .catch(err => {
-                // FASE 3: Captura a falha, para o loop e avisa o usuário (ANTI TELA BRANCA)
                 console.error("Erro na checagem:", err);
                 clearInterval(interval);
                 sessionStorage.removeItem(cacheKey);
                 
-                // Transforma o botão em um aviso visual de erro
                 btnLoading.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> Servidor sobrecarregado. Aguarde e tente de novo.';
                 btnLoading.classList.replace('btn-secondary', 'btn-danger');
                 
-                // Dá um respiro de 8 segundos para o Render reiniciar o Worker e devolve os botões originais
                 setTimeout(() => {
                     btnLoading.classList.add('d-none');
-                    btnLoading.classList.replace('btn-danger', 'btn-secondary'); // Reseta a cor para o futuro
+                    btnLoading.classList.replace('btn-danger', 'btn-secondary'); 
                     
                     if (btnGerar) {
                         btnGerar.classList.remove('d-none', 'disabled', 'btn-secondary');
                         btnGerar.classList.add('btn-outline-danger');
                         btnGerar.innerHTML = '<i class="bi bi-file-earmark-pdf me-1"></i> Gerar PDF Novamente';
-                        btnGerar.style.pointerEvents = 'auto'; // Libera o clique novamente
+                        btnGerar.style.pointerEvents = 'auto'; 
                     }
                     if (pdfButtons) {
                         pdfButtons.classList.remove('d-none');
@@ -256,13 +313,10 @@ document.addEventListener("DOMContentLoaded", function() {
     const triggerButtons = document.querySelectorAll('.btn-loading-pdf');
     triggerButtons.forEach(btn => {
         btn.addEventListener('click', function() {
-            // FASE 1: Ao clicar, muda a cara do botão na mesma hora
             this.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Gerando novo PDF...';
             this.classList.add('btn-secondary', 'disabled');
             this.classList.remove('btn-outline-danger', 'btn-warning');
-            this.style.pointerEvents = 'none'; // Evita clique duplo
-            
-            // Avisa o navegador para entrar na Fase 2 na próxima tela
+            this.style.pointerEvents = 'none'; 
             sessionStorage.setItem(cacheKey, 'true');
         });
     });

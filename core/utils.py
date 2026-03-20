@@ -100,25 +100,31 @@ def gerar_pdf_cronograma(cronograma, user):
         agencia = cronograma.cliente.agencia
 
         # --- TRATAMENTO DE HANDLES ---
-        def get_handle(obj):
-            redes = obj.redes_sociais.get('instagram', {})
+        rede_alvo = cronograma.rede_social # Puxa a rede escolhida no cadastro do cronograma
+        
+        def get_handle(obj, rede):
+            redes = obj.redes_sociais.get(rede, {})
             val = redes.get('perfil') or redes.get('usuario') or ""
             if not val: return ""
-            if 'instagram.com/' in val:
-                val = val.split('instagram.com/')[-1].replace('/', '')
+            
+            # Limpa URLs comuns para pegar só o @
+            if '.com/' in val:
+                val = val.split('.com/')[-1].split('?')[0].replace('/', '')
+                
             val = val.strip().lower().replace(' ', '_')
-            if not val.startswith('@'): return f"@{val}"
+            if not val.startswith('@') and rede not in ['facebook', 'linkedin']: 
+                return f"@{val}"
             return val
 
-        instagram_cliente = get_handle(cronograma.cliente)
-        if not instagram_cliente: 
+        handle_cliente = get_handle(cronograma.cliente, rede_alvo)
+        if not handle_cliente: 
             nome_limpo = cronograma.cliente.nome_fantasia.strip().lower().replace(' ', '_')
-            instagram_cliente = f"@{nome_limpo}"
+            handle_cliente = f"@{nome_limpo}"
 
-        instagram_agencia = get_handle(agencia)
-        if not instagram_agencia: 
+        handle_agencia = get_handle(agencia, rede_alvo)
+        if not handle_agencia: 
             nome_limpo = agencia.nome_fantasia.strip().lower().replace(' ', '_')
-            instagram_agencia = f"@{nome_limpo}"
+            handle_agencia = f"@{nome_limpo}"
 
         # --- LOGOS ---
         logo_cliente_path = None
@@ -208,8 +214,8 @@ def gerar_pdf_cronograma(cronograma, user):
             'agencia': agencia,
             'logo_cliente': logo_cliente_path, 
             'logo_agencia': logo_agencia_path, 
-            'instagram_cliente': instagram_cliente,
-            'instagram_agencia': instagram_agencia,
+            'instagram_cliente': handle_cliente, # Agora puxa a arroba correta
+            'instagram_agencia': handle_agencia, # Agora puxa a arroba correta
             'base_dir': settings.BASE_DIR,
         })
 

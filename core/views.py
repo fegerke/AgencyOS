@@ -574,3 +574,18 @@ def check_pdf_status(request, cronograma_id):
         'has_pdf': bool(cronograma.pdf_dropbox_link),
         'pdf_link': cronograma.pdf_dropbox_link if cronograma.pdf_dropbox_link else None
     })
+
+# --- API INTERNA (AJAX) ---
+@login_required
+def api_get_redes_cliente(request, cliente_id):
+    cliente = get_object_or_404(Cliente, id=cliente_id, agencia=request.user.minha_agencia)
+    
+    # Pega as chaves do JSON (ex: dict_keys(['instagram', 'tiktok']))
+    redes_ativas = cliente.redes_sociais.keys()
+    
+    redes_formatadas = []
+    for rede_id, rede_nome in REDES_OPCOES:
+        if rede_id in redes_ativas:
+            redes_formatadas.append({'id': rede_id, 'nome': rede_nome})
+            
+    return JsonResponse({'redes': redes_formatadas})

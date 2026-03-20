@@ -74,6 +74,10 @@ class Cliente(BaseEmpresa, BaseEndereco):
 class Cronograma(models.Model):
     cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name='cronogramas')
     titulo = models.CharField(max_length=100, default="Geral")
+    
+    # NOVO CAMPO: Rede social agora pertence ao Cronograma inteiro
+    rede_social = models.CharField(max_length=20, choices=REDES_OPCOES, default='instagram')
+    
     mes = models.IntegerField()
     ano = models.IntegerField()
     data_inicio = models.DateField(null=True, blank=True)
@@ -84,7 +88,7 @@ class Cronograma(models.Model):
     pdf_dropbox_path = models.CharField(max_length=500, blank=True, null=True)
     
     def __str__(self): 
-        return f"{self.cliente.nome_fantasia} - {self.titulo} ({self.mes}/{self.ano})"
+        return f"{self.cliente.nome_fantasia} - {self.titulo} ({self.get_rede_social_display()} - {self.mes}/{self.ano})"
 
 class Feed(models.Model):
     cronograma = models.ForeignKey(Cronograma, on_delete=models.CASCADE, related_name='feeds')
@@ -102,7 +106,9 @@ class Post(models.Model):
     feed = models.ForeignKey(Feed, on_delete=models.CASCADE, related_name='posts', null=True, blank=True)
     titulo = models.CharField(max_length=200)
     data_publicacao = models.DateField()
-    rede_social = models.CharField(max_length=20, choices=REDES_OPCOES)
+    
+    # CAMPO 'rede_social' REMOVIDO DAQUI
+    
     formato = models.CharField(max_length=50, choices=FORMATO_CHOICES)
     legenda = models.TextField(blank=True, null=True)
     briefing_arte = models.TextField(blank=True, null=True)
@@ -111,12 +117,6 @@ class Post(models.Model):
     dropbox_path = models.CharField(max_length=500, blank=True, null=True)
     excluido = models.BooleanField(default=False)
     data_exclusao = models.DateTimeField(null=True, blank=True)
-
-    def clean(self):
-        super().clean()
-        # Se for um post novo, verifica se o feed dele já chegou em 9
-        if not self.pk and self.feed and self.feed.posts.count() >= 9:
-            raise ValidationError("Ação bloqueada: Este feed já atingiu o limite de 9 posts.")
 
     def gerar_caminho_dropbox(self):
         cli = slugify(self.cronograma.cliente.nome_fantasia)

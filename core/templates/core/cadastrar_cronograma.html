@@ -5,7 +5,7 @@
 <div class="container-fluid p-0">
     <div class="mb-4">
         <h2 class="fw-bold h4 mb-1">Novo Cronograma</h2>
-        <p class="text-muted small">Configure o período e o cliente do planejamento.</p>
+        <p class="text-muted small">Configure o período, cliente e a rede social do planejamento.</p>
     </div>
 
     <div class="row justify-content-center">
@@ -13,9 +13,14 @@
             <div class="card border-0 shadow-sm p-4" style="border-radius: 20px;">
                 <form method="post">
                     {% csrf_token %}
-                    <div class="mb-3">{{ form.cliente|as_crispy_field }}</div>
-                    <div class="mb-3">{{ form.titulo|as_crispy_field }}</div>
                     
+                    <div class="mb-3">{{ form.cliente|as_crispy_field }}</div>
+                    
+                    <div class="row">
+                        <div class="col-md-8 mb-3">{{ form.titulo|as_crispy_field }}</div>
+                        <div class="col-md-4 mb-3">{{ form.rede_social|as_crispy_field }}</div>
+                    </div>
+
                     <div class="row">
                         <div class="col-md-6 mb-3">{{ form.mes|as_crispy_field }}</div>
                         <div class="col-md-6 mb-3">{{ form.ano|as_crispy_field }}</div>
@@ -27,12 +32,66 @@
                     </div>
 
                     <div class="d-grid gap-2 mt-4">
-                        <button type="submit" class="btn btn-primary py-3 fw-bold rounded-pill">Salvar Cronograma</button>
-                        <a href="{% url 'listar_cronogramas' %}" class="btn btn-link text-muted">Voltar</a>
+                        <button type="submit" class="btn btn-primary py-3 fw-bold rounded-pill">
+                            <i class="bi bi-save me-1"></i> Salvar Cronograma
+                        </button>
+                        <a href="{% url 'listar_cronogramas' %}" class="btn btn-link text-muted text-decoration-none">Voltar</a>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const clienteSelect = document.getElementById('id_cliente');
+        const redeSelect = document.getElementById('id_rede_social');
+
+        function atualizarRedes() {
+            const clienteId = clienteSelect.value;
+            
+            if (!clienteId) {
+                redeSelect.innerHTML = '<option value="">Selecione um cliente...</option>';
+                redeSelect.disabled = true;
+                return;
+            }
+
+            // Desabilita enquanto carrega para evitar clique ansioso
+            redeSelect.disabled = true;
+            redeSelect.innerHTML = '<option value="">Carregando redes...</option>';
+
+            fetch(`/api/cliente/${clienteId}/redes/`)
+                .then(response => response.json())
+                .then(data => {
+                    redeSelect.innerHTML = ''; // Limpa as opções anteriores
+                    
+                    if (data.redes && data.redes.length > 0) {
+                        data.redes.forEach(rede => {
+                            const option = document.createElement('option');
+                            option.value = rede.id;
+                            option.textContent = rede.nome;
+                            redeSelect.appendChild(option);
+                        });
+                        redeSelect.disabled = false; // Libera o campo
+                    } else {
+                        redeSelect.innerHTML = '<option value="">Nenhuma rede configurada</option>';
+                        redeSelect.disabled = true;
+                    }
+                })
+                .catch(err => {
+                    console.error('Erro ao buscar redes do cliente:', err);
+                    redeSelect.innerHTML = '<option value="">Erro ao carregar</option>';
+                });
+        }
+
+        // Fica "escutando" se o usuário mudar o cliente na tela
+        clienteSelect.addEventListener('change', atualizarRedes);
+
+        // Quando a página abre, já puxa as redes do primeiro cliente que vier preenchido
+        atualizarRedes();
+    });
+</script>
 {% endblock %}
