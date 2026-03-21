@@ -312,14 +312,50 @@ def excluir_cliente(request, pk):
 @login_required
 def listar_cronogramas(request):
     agencia = request.user.minha_agencia
-    cliente_id = request.GET.get('cliente')
     clientes = Cliente.objects.filter(agencia=agencia)
     cronogramas = Cronograma.objects.filter(cliente__agencia=agencia, excluido=False)
+    
+    # 1. Pegando os parâmetros da URL (Filtros)
+    cliente_id = request.GET.get('cliente')
+    rede_selecionada = request.GET.get('rede')
+    mes_selecionado = request.GET.get('mes')
+    ano_selecionado = request.GET.get('ano')
+
+    # 2. Aplicando os filtros inteligentes
     if cliente_id:
         cronogramas = cronogramas.filter(cliente_id=cliente_id)
+    if rede_selecionada:
+        cronogramas = cronogramas.filter(rede_social=rede_selecionada)
+    if mes_selecionado:
+        cronogramas = cronogramas.filter(mes=mes_selecionado)
+    if ano_selecionado:
+        cronogramas = cronogramas.filter(ano=ano_selecionado)
+
     cronogramas = cronogramas.order_by('-id')
+
+    # 3. A Mágica das Cores Dinâmicas
+    # Paleta premium de 10 cores. O resto da divisão do ID garante a mesma cor sempre!
+    cores_paleta = ['#6c5ce7', '#00b894', '#0984e3', '#e17055', '#e84393', '#fdcb6e', '#00cec9', '#ff9f43', '#f368e0', '#ff6b6b']
+    
+    for c in cronogramas:
+        c.cor_cliente = cores_paleta[c.cliente_id % len(cores_paleta)]
+        # Calcula total de posts rapidinho para o badge do card
+        c.total_posts = sum(f.posts.filter(excluido=False).count() for f in c.feeds.all())
+
+    # 4. Opções para os selects do Filtro
+    meses_opcoes = [(1, 'Janeiro'), (2, 'Fevereiro'), (3, 'Março'), (4, 'Abril'), (5, 'Maio'), (6, 'Junho'), (7, 'Julho'), (8, 'Agosto'), (9, 'Setembro'), (10, 'Outubro'), (11, 'Novembro'), (12, 'Dezembro')]
+    anos_opcoes = range(2025, 2030) # Ajuste a margem de anos aqui se precisar
+
     return render(request, 'core/listar_cronogramas.html', {
-        'cronogramas': cronogramas, 'clientes': clientes, 'cliente_selecionado': int(cliente_id) if cliente_id and cliente_id.isdigit() else None
+        'cronogramas': cronogramas, 
+        'clientes': clientes, 
+        'cliente_selecionado': int(cliente_id) if cliente_id and cliente_id.isdigit() else '',
+        'rede_selecionada': rede_selecionada,
+        'mes_selecionado': int(mes_selecionado) if mes_selecionado and mes_selecionado.isdigit() else '',
+        'ano_selecionado': int(ano_selecionado) if ano_selecionado and ano_selecionado.isdigit() else '',
+        'redes_opcoes': REDES_OPCOES,
+        'meses_opcoes': meses_opcoes,
+        'anos_opcoes': anos_opcoes,
     })
 
 @login_required

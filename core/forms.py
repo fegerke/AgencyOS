@@ -51,9 +51,30 @@ class ClienteForm(forms.ModelForm):
 class CronogramaForm(forms.ModelForm):
     class Meta:
         model = Cronograma
-        # ADICIONADO 'rede_social' AQUI
         fields = ['cliente', 'titulo', 'rede_social', 'mes', 'ano', 'data_inicio', 'data_fim']
+        
+        # 1. Ajusta os textos que aparecem na tela para não parecer redundante
+        labels = {
+            'mes': 'Mês de Referência',
+            'ano': 'Ano',
+            'data_inicio': 'Primeiro Post',
+            'data_fim': 'Último Post',
+        }
+        
+        # 2. Adiciona o hover (tooltip) para explicar a integração com a nuvem
         widgets = {
+            'mes': forms.NumberInput(attrs={
+                'class': 'form-control', 
+                'title': 'Usado para organizar a estrutura de pastas no Dropbox/Drive (Ex: 02 - FEVEREIRO).',
+                'data-bs-toggle': 'tooltip',
+                'data-bs-placement': 'top'
+            }),
+            'ano': forms.NumberInput(attrs={
+                'class': 'form-control', 
+                'title': 'Usado para organizar a estrutura de pastas no Dropbox/Drive.',
+                'data-bs-toggle': 'tooltip',
+                'data-bs-placement': 'top'
+            }),
             'data_inicio': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}, format='%Y-%m-%d'),
             'data_fim': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}, format='%Y-%m-%d'),
             'rede_social': forms.Select(attrs={'class': 'form-select'}),
