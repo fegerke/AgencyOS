@@ -26,8 +26,12 @@
             <div class="tab-pane fade show active" id="geral">
                 <div class="card border-0 shadow-sm p-4" style="border-radius: 15px;">
                     <div class="row g-3">
-                        <div class="col-md-4">{{ form.tipo_pessoa|as_crispy_field }}</div>
-                        <div class="col-md-8">{{ form.nome_fantasia|as_crispy_field }}</div>
+                        <div class="col-md-3">{{ form.tipo_pessoa|as_crispy_field }}</div>
+                        <div class="col-md-6">{{ form.nome_fantasia|as_crispy_field }}</div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold small text-muted" style="margin-bottom: 0.5rem;">Cor do Cliente</label>
+                            {{ form.cor_personalizada }}
+                        </div>
                         <div id="div_id_cnpj" class="col-md-6">{{ form.cnpj|as_crispy_field }}</div>
                         <div id="div_id_cpf" class="col-md-6 d-none">{{ form.cpf|as_crispy_field }}</div>
                         <div class="col-md-6">{{ form.razao_social|as_crispy_field }}</div>
@@ -37,6 +41,11 @@
                         <div class="col-md-4">{{ form.whatsapp_contato|as_crispy_field }}</div>
                         <div class="col-12 mt-2">
                             <label class="form-label fw-bold small text-muted">Logo do Cliente</label>
+                            {% if form.instance.logo %}
+                                <div class="mb-3">
+                                    <img src="{{ form.instance.logo.url }}" class="img-thumbnail shadow-sm" style="max-height: 80px; border-radius: 10px;">
+                                </div>
+                            {% endif %}
                             <div class="custom-file-upload border rounded p-3 bg-light">
                                 {{ form.logo }}
                             </div>
@@ -124,7 +133,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
 <script>
     $(document).ready(function(){
-        // ... (Mantendo a lógica de máscaras e toggleDocs existente) ...
         var behavior = function (val) { return val.replace(/\D/g, '').length === 11 ? '(00) 00000-0000' : '(00) 0000-00009'; };
         var options = { onKeyPress: function (val, e, field, options) { field.mask(behavior.apply({}, arguments), options); } };
         $('#id_telefone').mask(behavior, options);

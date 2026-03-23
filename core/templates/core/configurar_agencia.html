@@ -48,9 +48,13 @@
                             <div class="row">
                                 <div class="col-md-6">{{ form.nome_fantasia|as_crispy_field }}</div>
                                 <div class="col-md-6">{{ form.razao_social|as_crispy_field }}</div>
-                                <div class="col-md-6">{{ form.cnpj|as_crispy_field }}</div>
-                                <div class="col-md-3">{{ form.email|as_crispy_field }}</div>
-                                <div class="col-md-3">{{ form.telefone|as_crispy_field }}</div>
+                                <div class="col-md-4">{{ form.cnpj|as_crispy_field }}</div>
+                                <div class="col-md-4">{{ form.email|as_crispy_field }}</div>
+                                <div class="col-md-4">{{ form.telefone|as_crispy_field }}</div>
+                                <div class="col-md-4 mt-2">
+                                    <label class="form-label fw-bold small text-muted" style="margin-bottom: 0.5rem;">Cor da Agência</label>
+                                    {{ form.cor_personalizada }}
+                                </div>
                             </div>
                             <hr class="my-4">
                             <h6 class="fw-bold mb-3 text-primary">Localização</h6>

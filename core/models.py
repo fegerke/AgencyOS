@@ -4,6 +4,8 @@ from django.utils.text import slugify
 from django.utils import timezone
 import uuid
 from django.core.exceptions import ValidationError
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 # --- MANTENHA AS LISTAS DE OPÇÕES IGUAIS ---
 REDES_OPCOES = [
@@ -49,7 +51,7 @@ class BaseEmpresa(models.Model):
     cnpj = models.CharField(max_length=18, blank=True, null=True)
     cpf = models.CharField(max_length=14, blank=True, null=True)
     tipo_pessoa = models.CharField(max_length=2, choices=[('PF', 'PESSOA FISICA'), ('PJ', 'PESSOA JURÍDICA')], default='PJ')
-    email = models.EmailField()
+    email = email = models.EmailField(max_length=255, blank=True, null=True)
     telefone = models.CharField(max_length=20, blank=True, null=True)
     logo = models.ImageField(upload_to='logos/', blank=True, null=True)
     # NOVO CAMPO PARA O LINK DO DROPBOX
@@ -61,7 +63,9 @@ class BaseEmpresa(models.Model):
 
 class Agencia(BaseEmpresa, BaseEndereco):
     socios = models.ManyToManyField(User, related_name='agencias_socio', blank=True)
+    perfil_cliente = models.OneToOneField('Cliente', on_delete=models.SET_NULL, null=True, blank=True, related_name='agencia_vinculada')
     def __str__(self): return self.nome_fantasia
+    cor_personalizada = models.CharField(max_length=7, default="#6c5ce7", help_text="Cor Hex")
 
 class Cliente(BaseEmpresa, BaseEndereco):
     agencia = models.ForeignKey(Agencia, on_delete=models.CASCADE, related_name='clientes')
@@ -70,6 +74,7 @@ class Cliente(BaseEmpresa, BaseEndereco):
     whatsapp_contato = models.CharField(max_length=20, blank=True, null=True)
     token_convite = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     def __str__(self): return self.nome_fantasia
+    cor_personalizada = models.CharField(max_length=7, default="#6c5ce7", help_text="Cor em formato Hex (ex: #6c5ce7)")
 
 class Cronograma(models.Model):
     cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name='cronogramas')
@@ -161,3 +166,29 @@ def get_agencia_inteligente(self):
     return None
 
 User.add_to_class('minha_agencia', get_agencia_inteligente)
+
+@receiver(post_save, sender=Agencia)
+def criar_perfil_cliente_agencia(sender, instance, created, **kwargs):
+    # Se a agência ainda não tem um perfil de cliente vinculado
+    if not instance.perfil_cliente:
+        # Cria um novo cliente usando os dados da agência
+        novo_cliente = Cliente.objects.create(
+            agencia=instance, # <--- A LINHA MÁGICA QUE FALTAVA
+            nome_fantasia=instance.nome_fantasia,
+            razao_social=instance.razao_social,
+            cnpj=instance.cnpj,
+            email=instance.email,
+            cor_personalizada=instance.cor_personalizada,
+            tipo_pessoa='PJ', 
+            logo=instance.logo
+        )
+        # Salva o vínculo no banco
+        Agencia.objects.filter(pk=instance.pk).update(perfil_cliente=novo_cliente)
+    else:
+        # Atualiza os dados se a agência for editada
+        cliente = instance.perfil_cliente
+        cliente.nome_fantasia = instance.nome_fantasia
+        cliente.cor_personalizada = instance.cor_personalizada
+        if instance.logo:
+            cliente.logo = instance.logo
+        cliente.save()

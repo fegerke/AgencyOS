@@ -4,39 +4,52 @@
 
 {% block content %}
 <div class="container-fluid p-0">
-    <div class="d-flex justify-content-between align-items-center mb-4 px-2">
-        <h2 class="fw-bold mb-0 h4"><i class="bi bi-people-fill text-primary me-2"></i>Clientes</h2>
-        <a href="{% url 'cadastrar_cliente' %}" class="btn btn-primary shadow btn-sm fw-bold">
-            <i class="bi bi-plus-lg"></i> Novo Cliente
-        </a>
+    <div class="row mb-4 px-2 g-3 align-items-center">
+        <div class="col-12 col-md-4 d-flex align-items-center">
+            <h2 class="fw-bold mb-0 h4"><i class="bi bi-people-fill text-primary me-2"></i>Clientes</h2>
+        </div>
+        <div class="col-12 col-md-8 d-flex justify-content-md-end gap-2">
+            <div class="input-group shadow-sm" style="max-width: 350px; border-radius: 8px; overflow: hidden;">
+                <span class="input-group-text bg-white border-0"><i class="bi bi-search text-muted"></i></span>
+                <input type="text" id="buscaCliente" class="form-control border-0 ps-0" placeholder="Buscar cliente, @ ou contato..." autocomplete="off">
+            </div>
+            <a href="{% url 'cadastrar_cliente' %}" class="btn btn-primary shadow btn-sm fw-bold d-flex align-items-center px-3" style="border-radius: 8px;">
+                <i class="bi bi-plus-lg me-1"></i> Novo Cliente
+            </a>
+        </div>
     </div>
 
     <div class="card border-0 shadow-sm d-none d-md-block" style="border-radius: 15px; overflow: hidden;">
         <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
+            <table class="table table-hover align-middle mb-0" id="tabelaClientes">
                 <thead class="table-light">
                     <tr>
                         <th class="ps-3">Empresa</th>
-                        <th>Documento</th>
+                        <th>Instagram</th>
                         <th>Contato</th>
                         <th class="text-end pe-4">Ações</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for cliente in clientes %}
-                    <tr>
+                    {% for cliente in clientes|dictsort:"nome_fantasia" %}
+                    <tr class="cliente-item">
                         <td class="ps-3">
                             <div class="fw-bold text-dark">{{ cliente.nome_fantasia }}</div>
-                            <small class="text-muted">{{ cliente.razao_social|default:"" }}</small>
                         </td>
                         <td>
-                            <small class="text-secondary">
-                                {% if cliente.tipo_pessoa == 'PJ' %}{{ cliente.cnpj }}{% else %}{{ cliente.cpf }}{% endif %}
-                            </small>
+                            {% if cliente.redes_sociais.instagram.perfil %}
+                                <span class="text-dark small fw-medium">
+                                    <i class="bi bi-instagram text-danger me-1"></i>{{ cliente.redes_sociais.instagram.perfil }}
+                                </span>
+                            {% else %}
+                                <span class="text-muted small">-</span>
+                            {% endif %}
                         </td>
                         <td>
-                            <div class="small">{{ cliente.nome_contato|default:"-" }}</div>
-                            <div class="text-muted" style="font-size: 0.75rem;">{{ cliente.telefone|default:"" }}</div>
+                            <div class="small fw-medium">{{ cliente.nome_contato|default:"-" }}</div>
+                            <div class="text-muted" style="font-size: 0.75rem;">
+                                <i class="bi bi-whatsapp text-success me-1"></i>{{ cliente.whatsapp_contato|default:"-" }}
+                            </div>
                         </td>
                         <td class="text-end pe-3">
                             <div class="btn-group">
@@ -50,7 +63,7 @@
                         </td>
                     </tr>
                     {% empty %}
-                    <tr>
+                    <tr id="semClientesMsg">
                         <td colspan="4" class="text-center py-5 text-muted">Nenhum cliente cadastrado.</td>
                     </tr>
                     {% endfor %}
@@ -59,13 +72,17 @@
         </div>
     </div>
 
-    <div class="d-md-none px-2">
-        {% for cliente in clientes %}
-        <div class="card border-0 shadow-sm mb-3 p-3" style="border-radius: 15px;">
+    <div class="d-md-none px-2" id="listaMobile">
+        {% for cliente in clientes|dictsort:"nome_fantasia" %}
+        <div class="card border-0 shadow-sm mb-3 p-3 cliente-item mobile-card" style="border-radius: 15px;">
             <div class="d-flex justify-content-between align-items-start mb-2">
                 <div>
                     <h6 class="fw-bold mb-0 text-dark">{{ cliente.nome_fantasia }}</h6>
-                    <small class="text-muted">{% if cliente.tipo_pessoa == 'PJ' %}{{ cliente.cnpj }}{% else %}{{ cliente.cpf }}{% endif %}</small>
+                    {% if cliente.redes_sociais.instagram.perfil %}
+                        <small class="text-muted"><i class="bi bi-instagram text-danger me-1"></i>{{ cliente.redes_sociais.instagram.perfil }}</small>
+                    {% else %}
+                        <small class="text-muted">Sem Instagram</small>
+                    {% endif %}
                 </div>
                 <span class="badge bg-success-light px-2 py-1">Ativo</span>
             </div>
@@ -98,12 +115,15 @@
     .bg-success-light { background-color: #e3fcef !important; color: #155724 !important; font-size: 0.7rem; }
     .table-hover tbody tr:hover { background-color: #f8f9fa; }
     .btn-light:hover { background-color: #e2e6ea; }
+    .input-group:focus-within { box-shadow: 0 0 0 0.25rem rgba(108, 92, 231, 0.25) !important; }
+    .input-group input:focus { box-shadow: none !important; }
 </style>
 {% endblock %}
 
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
+// CONFIRMAÇÃO DE EXCLUSÃO
 function confirmarExclusaoCliente(url, nome) {
     Swal.fire({
         title: 'Excluir Cliente?',
@@ -121,5 +141,20 @@ function confirmarExclusaoCliente(url, nome) {
         }
     })
 }
+
+// LÓGICA DE BUSCA EM TEMPO REAL
+document.getElementById('buscaCliente').addEventListener('keyup', function() {
+    let filter = this.value.toLowerCase();
+    let itens = document.querySelectorAll('.cliente-item');
+    
+    itens.forEach(function(item) {
+        let texto = item.innerText.toLowerCase();
+        if (texto.includes(filter)) {
+            item.style.display = '';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+});
 </script>
 {% endblock %}

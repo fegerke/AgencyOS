@@ -22,12 +22,13 @@ class MultipleFileField(forms.FileField):
 class AgenciaForm(forms.ModelForm):
     class Meta:
         model = Agencia
-        fields = ['nome_fantasia', 'razao_social', 'cnpj', 'email', 'telefone', 'logradouro', 'numero', 'complemento', 'bairro', 'cidade', 'estado', 'cep', 'logo']
+        fields = ['nome_fantasia', 'razao_social', 'cnpj', 'email', 'telefone', 'logradouro', 'numero', 'complemento', 'bairro', 'cidade', 'estado', 'cep', 'logo', 'cor_personalizada']
         widgets = {
             'cnpj': forms.TextInput(attrs={'class': 'form-control mask-cnpj', 'id': 'id_cnpj', 'autocomplete': 'off'}),
             'telefone': forms.TextInput(attrs={'class': 'form-control mask-tel', 'id': 'id_telefone', 'autocomplete': 'off'}),
             'cep': forms.TextInput(attrs={'class': 'form-control mask-cep', 'id': 'id_cep', 'autocomplete': 'off'}),
             'logo': forms.ClearableFileInput(attrs={'class': 'form-control'}),
+            'cor_personalizada': forms.TextInput(attrs={'type': 'color', 'class': 'form-control form-control-color'}),
         }
 
 class ClienteForm(forms.ModelForm):
@@ -37,7 +38,7 @@ class ClienteForm(forms.ModelForm):
     )
     class Meta:
         model = Cliente
-        fields = ['tipo_pessoa', 'nome_fantasia', 'razao_social', 'cnpj', 'cpf', 'email', 'telefone', 'nome_contato', 'whatsapp_contato', 'logo', 'cep', 'logradouro', 'numero', 'complemento', 'bairro', 'cidade', 'estado']
+        fields = ['tipo_pessoa', 'nome_fantasia', 'razao_social', 'cnpj', 'cpf', 'email', 'telefone', 'nome_contato', 'whatsapp_contato', 'logo', 'cep', 'logradouro', 'numero', 'complemento', 'bairro', 'cidade', 'estado', 'cor_personalizada']
         widgets = {
             'cnpj': forms.TextInput(attrs={'class': 'form-control mask-cnpj', 'id': 'id_cnpj', 'autocomplete': 'off'}),
             'cpf': forms.TextInput(attrs={'class': 'form-control mask-cpf', 'id': 'id_cpf', 'autocomplete': 'off'}),
@@ -46,6 +47,7 @@ class ClienteForm(forms.ModelForm):
             'cep': forms.TextInput(attrs={'class': 'form-control mask-cep', 'id': 'id_cep', 'autocomplete': 'off'}),
             'logo': forms.ClearableFileInput(attrs={'class': 'form-control'}),
             'email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'cor_personalizada': forms.TextInput(attrs={'type': 'color', 'class': 'form-control form-control-color'}),
         }
 
 class CronogramaForm(forms.ModelForm):

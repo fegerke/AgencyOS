@@ -3,7 +3,6 @@
 
 {% block content %}
 <div class="container-fluid p-0">
-    
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
         <div>
             <h2 class="fw-bold h3 mb-1"><i class="bi bi-calendar-week text-primary me-2"></i>Cronogramas</h2>
@@ -77,69 +76,49 @@
         {% for cronograma in cronogramas %}
         <div class="col">
             <div class="card border-0 shadow-sm h-100 cronograma-card" style="border-radius: 15px; overflow: hidden; transition: transform 0.2s;">
-                <div style="height: 6px; background-color: {{ cronograma.cor_cliente }};"></div>
+                <div style="height: 6px; background-color: {{ cronograma.cliente.cor_personalizada|default:'#6c5ce7' }};"></div>
                 
-                <div class="card-body position-relative p-3">
-                    
-                    <div class="d-flex justify-content-between align-items-start mb-2">
-                        <span class="badge bg-light border text-truncate" style="color: {{ cronograma.cor_cliente }}; border-color: {{ cronograma.cor_cliente }}40 !important; max-width: 75%; font-size: 0.75rem;">
-                            <i class="bi bi-person-fill me-1"></i>{{ cronograma.cliente.nome_fantasia }}
+                <div class="card-body p-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="badge rounded-pill text-truncate" style="background-color: {{ cronograma.cliente.cor_personalizada|default:'#6c5ce7' }}20; color: {{ cronograma.cliente.cor_personalizada|default:'#6c5ce7' }}; border: 1px solid {{ cronograma.cliente.cor_personalizada|default:'#6c5ce7' }}40; font-size: 0.7rem; max-width: 80%;">
+                            {{ cronograma.cliente.nome_fantasia }}
                         </span>
                         
-                        <span class="badge rounded-pill shadow-sm text-white" style="background-color: {{ cronograma.cor_cliente }}; font-size: 0.75rem;">
-                            {{ cronograma.total_posts }}
+                        <span class="badge rounded-pill text-white shadow-sm" style="background-color: {{ cronograma.cliente.cor_personalizada|default:'#6c5ce7' }}; font-size: 0.7rem;" title="Quantidade de posts">
+                            {{ cronograma.posts.count }}
                         </span>
                     </div>
 
-                    <h6 class="fw-bold text-dark mb-2 text-truncate" title="{{ cronograma.titulo }}">{{ cronograma.titulo }}</h6>
+                    <h6 class="fw-bold mb-2 text-truncate" title="{{ cronograma.titulo }}">{{ cronograma.titulo }}</h6>
                     
-                    <div class="mb-2">
-                        <span class="badge bg-light text-secondary border border-secondary border-opacity-25 rounded-pill" style="font-size: 0.7rem;">
-                            {% if cronograma.rede_social == 'instagram' %}<i class="bi bi-instagram me-1 text-danger"></i>
-                            {% elif cronograma.rede_social == 'tiktok' %}<i class="bi bi-tiktok me-1 text-dark"></i>
-                            {% elif cronograma.rede_social == 'linkedin' %}<i class="bi bi-linkedin me-1 text-primary"></i>
-                            {% else %}<i class="bi bi-diagram-3 me-1"></i>{% endif %}
-                            {{ cronograma.get_rede_social_display }}
-                        </span>
-                    </div>
-
-                    <hr class="text-muted opacity-10 my-2">
-
-                    <div class="d-flex align-items-center mb-1 small text-muted fw-medium" style="font-size: 0.75rem;">
-                        <i class="bi bi-calendar-event me-2" style="color: {{ cronograma.cor_cliente }};"></i> 
-                        Ref: {{ cronograma.mes|stringformat:"02d" }}/{{ cronograma.ano }}
-                    </div>
-                    <div class="d-flex align-items-center small text-muted" style="font-size: 0.7rem;">
-                        <i class="bi bi-calendar-range me-2" style="color: {{ cronograma.cor_cliente }};"></i>
-                        {{ cronograma.data_inicio|date:"d/m"|default:"--" }} a {{ cronograma.data_fim|date:"d/m"|default:"--" }}
+                    <div class="small text-muted mb-1" style="font-size: 0.75rem;">
+                        <i class="bi bi-calendar3 me-1"></i> Ref: {{ cronograma.mes|stringformat:"02d" }}/{{ cronograma.ano }}
                     </div>
                 </div>
 
-                <div class="card-footer bg-white border-0 p-3 pt-0 d-flex justify-content-between align-items-center gap-2">
-                    <a href="{% url 'detalhes_cronograma' cronograma.id %}" class="btn btn-sm rounded-pill flex-grow-1 fw-bold shadow-sm text-white" style="background-color: {{ cronograma.cor_cliente }}; opacity: 0.9;">
-                        Abrir
-                    </a>
-                    
-                    <button onclick="confirmarExclusao('{% url 'excluir_cronograma' cronograma.id %}')" class="btn btn-sm btn-outline-danger rounded-circle d-flex align-items-center justify-content-center border-0 bg-light flex-shrink-0" style="width: 32px; height: 32px;" title="Mover para lixeira">
-                        <i class="bi bi-trash3-fill"></i>
-                    </button>
+                <div class="card-footer bg-white border-0 p-3 pt-0">
+                    <div class="d-grid gap-2 d-flex">
+                        <a href="{% url 'detalhes_cronograma' cronograma.id %}" class="btn btn-sm text-white fw-bold rounded-pill flex-grow-1" style="background-color: {{ cronograma.cliente.cor_personalizada|default:'#6c5ce7' }};">
+                            Abrir
+                        </a>
+                        <button onclick="confirmarExclusao('{% url 'excluir_cronograma' cronograma.id %}')" class="btn btn-sm btn-outline-danger rounded-circle border-0 bg-light" style="width: 32px; height: 32px;">
+                            <i class="bi bi-trash3-fill"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
         {% empty %}
         <div class="col-12 text-center py-5">
-            <div class="bg-white shadow-sm mx-auto p-5 rounded-4 d-inline-block">
-                <i class="bi bi-calendar-x text-muted opacity-25 mb-3 d-block" style="font-size: 3rem;"></i>
-                <h5 class="text-muted">Nenhum cronograma encontrado</h5>
-                <p class="small text-muted mb-0">Tente limpar os filtros ou crie um novo planejamento.</p>
-            </div>
+            <i class="bi bi-calendar-x text-muted opacity-25 display-1"></i>
+            <p class="text-muted mt-3">Nenhum cronograma encontrado.</p>
         </div>
         {% endfor %}
     </div>
 </div>
 
 <style>
-    .cronograma-card:hover { transform: translateY(-5px); box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important; }
+    .cronograma-card:hover { transform: translateY(-5px); }
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -147,7 +126,7 @@
     function confirmarExclusao(url) {
         Swal.fire({
             title: 'Mover para Lixeira?',
-            text: "O cronograma e seus arquivos não aparecerão mais aqui.",
+            text: "O cronograma não aparecerá mais aqui.",
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#d33',
