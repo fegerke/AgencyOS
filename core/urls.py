@@ -11,6 +11,12 @@ urlpatterns = [
     path('clientes/novo/', views.cadastrar_cliente, name='cadastrar_cliente'),
     path('clientes/editar/<int:pk>/', views.editar_cliente, name='editar_cliente'),
     path('clientes/excluir/<int:pk>/', views.excluir_cliente, name='excluir_cliente'),
+    path('convites/novo/', views.gerar_convite, name='gerar_convite'),
+
+    # Cargos e Funções
+    path('funcoes/', views.gerenciar_funcoes, name='gerenciar_funcoes'),
+    path('funcoes/editar/<int:funcao_id>/', views.gerenciar_funcoes, name='editar_funcao'),
+    path('funcoes/excluir/<int:funcao_id>/', views.excluir_funcao, name='excluir_funcao'),
 
     # API Interna (Ajax)
     path('api/cliente/<int:cliente_id>/redes/', views.api_get_redes_cliente, name='api_get_redes_cliente'),

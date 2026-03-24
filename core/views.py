@@ -13,8 +13,8 @@ import base64
 import os
 from dropbox.files import ThumbnailSize, ThumbnailFormat, PathOrLink
 import traceback
-from .models import Agencia, Cliente, Post, DropboxConfig, Cronograma, PostArquivo, REDES_OPCOES, Feed
-from .forms import AgenciaForm, ClienteForm, PostForm, CronogramaForm, UserRegistrationForm, FeedForm
+from .models import Agencia, Cliente, Post, DropboxConfig, Cronograma, PostArquivo, REDES_OPCOES, Feed, Funcao, Convite
+from .forms import AgenciaForm, ClienteForm, PostForm, CronogramaForm, UserRegistrationForm, FeedForm, FuncaoForm, ConviteForm
 from .services import upload_file_dropbox
 from .utils import gerar_pdf_cronograma 
 import threading
@@ -306,6 +306,67 @@ def excluir_cliente(request, pk):
     cliente.delete()
     messages.success(request, f"Cliente removido com sucesso.")
     return redirect('listar_clientes')
+
+@login_required
+def gerenciar_funcoes(request, funcao_id=None):
+    agencia = request.user.minha_agencia
+    
+    instancia = get_object_or_404(Funcao, pk=funcao_id, agencia=agencia) if funcao_id else None
+
+    if request.method == 'POST':
+        form = FuncaoForm(request.POST, instance=instancia)
+        if form.is_valid():
+            funcao = form.save(commit=False)
+            funcao.agencia = agencia
+            funcao.save()
+            messages.success(request, 'Função salva com sucesso!')
+            return redirect('gerenciar_funcoes')
+    else:
+        form = FuncaoForm(instance=instancia)
+
+    funcoes = Funcao.objects.filter(agencia=agencia)
+
+    context = {
+        'form': form,
+        'funcoes': funcoes,
+    }
+    return render(request, 'core/gerenciar_funcoes.html', context)
+
+@login_required
+def excluir_funcao(request, funcao_id):
+    agencia = request.user.minha_agencia
+    funcao = get_object_or_404(Funcao, pk=funcao_id, agencia=agencia)
+    
+    funcao_nome = funcao.nome
+    funcao.delete()
+    
+    messages.success(request, f'Função "{funcao_nome}" excluída com sucesso!')
+    return redirect('gerenciar_funcoes')
+
+@login_required
+def gerar_convite(request):
+    agencia = request.user.minha_agencia
+    link_gerado = None
+    convite_obj = None
+
+    if request.method == 'POST':
+        form = ConviteForm(request.POST, agencia=agencia)
+        if form.is_valid():
+            convite = form.save(commit=False)
+            convite.agencia = agencia
+            convite.save()
+            form.save_m2m() 
+            
+            link_gerado = request.build_absolute_uri(f'/convite/{convite.token}/')
+            convite_obj = convite
+    else:
+        form = ConviteForm(agencia=agencia)
+
+    return render(request, 'core/gerar_convite.html', {
+        'form': form, 
+        'link_gerado': link_gerado, 
+        'convite': convite_obj
+    })
 
 # --- CRONOGRAMAS ---
 
@@ -615,8 +676,6 @@ def check_pdf_status(request, cronograma_id):
 @login_required
 def api_get_redes_cliente(request, cliente_id):
     cliente = get_object_or_404(Cliente, id=cliente_id, agencia=request.user.minha_agencia)
-    
-    # Pega as chaves do JSON (ex: dict_keys(['instagram', 'tiktok']))
     redes_ativas = cliente.redes_sociais.keys()
     
     redes_formatadas = []

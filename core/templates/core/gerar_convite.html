@@ -1,0 +1,109 @@
+{% extends 'core/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Gerar Convite | AgencyOS{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0">
+    <div class="mb-4 px-1">
+        <h2 class="fw-bold h4 mb-1 text-dark">
+            <i class="bi bi-envelope-paper-heart text-primary me-2"></i>Enviar Convite
+        </h2>
+        <p class="text-muted small">Crie um link de acesso exclusivo para a sua Equipe ou Clientes.</p>
+    </div>
+
+    <div class="row">
+        <div class="col-12 col-md-6 col-lg-5">
+            <div class="card border-0 shadow-sm p-4" style="border-radius: 15px;">
+                
+                {% if link_gerado %}
+                    <div class="text-center mb-4">
+                        <i class="bi bi-check-circle-fill text-success" style="font-size: 3rem;"></i>
+                        <h5 class="fw-bold mt-3">Convite Gerado!</h5>
+                        <p class="text-muted small">Envie o link abaixo para <strong>{{ convite.nome }}</strong>.</p>
+                    </div>
+
+                    <div class="bg-light p-3 rounded border mb-4 text-center" style="word-break: break-all;">
+                        <code class="text-dark fs-6" id="linkConvite">{{ link_gerado }}</code>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-outline-primary fw-bold rounded-pill" onclick="copiarLink()">
+                            <i class="bi bi-copy me-1"></i> Copiar Link
+                        </button>
+                        
+                        <a href="https://api.whatsapp.com/send?text=Olá {{ convite.nome }}! Aqui está o seu convite exclusivo para acessar o sistema da nossa agência. Clique no link para criar sua senha: {{ link_gerado }}" target="_blank" class="btn text-white fw-bold rounded-pill shadow-sm" style="background-color: #25D366;">
+                            <i class="bi bi-whatsapp me-1"></i> Enviar por WhatsApp
+                        </a>
+                        
+                        <a href="{% url 'gerar_convite' %}" class="btn btn-light fw-bold rounded-pill mt-3 text-muted">Gerar outro convite</a>
+                    </div>
+
+                {% else %}
+                    <form method="post" autocomplete="off">
+                        {% csrf_token %}
+                        
+                        {{ form.nome|as_crispy_field }}
+                        {{ form.email|as_crispy_field }}
+                        {{ form.tipo|as_crispy_field }}
+                        
+                        <div id="divFuncoes" class="border rounded p-3 mb-3 bg-light shadow-sm">
+                            <label class="form-label fw-bold small text-muted mb-2">Selecione as funções desta pessoa:</label>
+                            {{ form.funcoes }}
+                        </div>
+
+                        <div id="divCliente" class="d-none border rounded p-3 mb-3 bg-light shadow-sm">
+                            <label class="form-label fw-bold small text-muted mb-2">Para qual cliente será o acesso?</label>
+                            {{ form.cliente_vinculado }}
+                        </div>
+
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-primary w-100 py-2 fw-bold rounded-pill shadow-sm" style="background: #6c5ce7; border: none;">
+                                <i class="bi bi-link-45deg fs-5 me-1"></i> Gerar Link
+                            </button>
+                        </div>
+                    </form>
+                {% endif %}
+
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const selectTipo = document.getElementById('id_tipo');
+    const divCliente = document.getElementById('divCliente');
+    const divFuncoes = document.getElementById('divFuncoes');
+
+    function toggleCampos() {
+        if (selectTipo.value === 'CLIENTE') {
+            divCliente.classList.remove('d-none');
+            divFuncoes.classList.add('d-none');
+        } else {
+            divCliente.classList.add('d-none');
+            divFuncoes.classList.remove('d-none');
+        }
+    }
+
+    if(selectTipo) {
+        selectTipo.addEventListener('change', toggleCampos);
+        toggleCampos(); // Roda no início pra configurar
+    }
+
+    function copiarLink() {
+        var copyText = document.getElementById("linkConvite").innerText;
+        navigator.clipboard.writeText(copyText).then(function() {
+            alert("Link copiado para a área de transferência!");
+        }, function() {
+            alert("Erro ao copiar o link.");
+        });
+    }
+</script>
+<style>
+    /* Deixa os checkboxes das funções em grade e mais bonitos */
+    #div_id_funcoes div { display: flex; flex-wrap: wrap; gap: 10px; }
+    #div_id_funcoes .form-check { margin-bottom: 0; background: #fff; padding: 5px 10px 5px 30px; border-radius: 5px; border: 1px solid #dee2e6; }
+</style>
+{% endblock %}

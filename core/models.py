@@ -7,7 +7,6 @@ from django.core.exceptions import ValidationError
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
-# --- MANTENHA AS LISTAS DE OPÇÕES IGUAIS ---
 REDES_OPCOES = [
     ('linktree', 'Linktree'),
     ('instagram', 'Instagram'),
@@ -51,12 +50,10 @@ class BaseEmpresa(models.Model):
     cnpj = models.CharField(max_length=18, blank=True, null=True)
     cpf = models.CharField(max_length=14, blank=True, null=True)
     tipo_pessoa = models.CharField(max_length=2, choices=[('PF', 'PESSOA FISICA'), ('PJ', 'PESSOA JURÍDICA')], default='PJ')
-    email = email = models.EmailField(max_length=255, blank=True, null=True)
+    email = models.EmailField(max_length=255, blank=True, null=True)
     telefone = models.CharField(max_length=20, blank=True, null=True)
     logo = models.ImageField(upload_to='logos/', blank=True, null=True)
-    # NOVO CAMPO PARA O LINK DO DROPBOX
     logo_dropbox_link = models.URLField(max_length=500, blank=True, null=True)
-    
     redes_sociais = models.JSONField(default=dict, blank=True)
     data_cadastro = models.DateTimeField(default=timezone.now)
     class Meta: abstract = True
@@ -64,8 +61,8 @@ class BaseEmpresa(models.Model):
 class Agencia(BaseEmpresa, BaseEndereco):
     socios = models.ManyToManyField(User, related_name='agencias_socio', blank=True)
     perfil_cliente = models.OneToOneField('Cliente', on_delete=models.SET_NULL, null=True, blank=True, related_name='agencia_vinculada')
-    def __str__(self): return self.nome_fantasia
     cor_personalizada = models.CharField(max_length=7, default="#6c5ce7", help_text="Cor Hex")
+    def __str__(self): return self.nome_fantasia
 
 class Cliente(BaseEmpresa, BaseEndereco):
     agencia = models.ForeignKey(Agencia, on_delete=models.CASCADE, related_name='clientes')
@@ -73,16 +70,13 @@ class Cliente(BaseEmpresa, BaseEndereco):
     nome_contato = models.CharField(max_length=100, blank=True, null=True)
     whatsapp_contato = models.CharField(max_length=20, blank=True, null=True)
     token_convite = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    def __str__(self): return self.nome_fantasia
     cor_personalizada = models.CharField(max_length=7, default="#6c5ce7", help_text="Cor em formato Hex (ex: #6c5ce7)")
+    def __str__(self): return self.nome_fantasia
 
 class Cronograma(models.Model):
     cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name='cronogramas')
     titulo = models.CharField(max_length=100, default="Geral")
-    
-    # NOVO CAMPO: Rede social agora pertence ao Cronograma inteiro
     rede_social = models.CharField(max_length=20, choices=REDES_OPCOES, default='instagram')
-    
     mes = models.IntegerField()
     ano = models.IntegerField()
     data_inicio = models.DateField(null=True, blank=True)
@@ -111,9 +105,6 @@ class Post(models.Model):
     feed = models.ForeignKey(Feed, on_delete=models.CASCADE, related_name='posts', null=True, blank=True)
     titulo = models.CharField(max_length=200)
     data_publicacao = models.DateField()
-    
-    # CAMPO 'rede_social' REMOVIDO DAQUI
-    
     formato = models.CharField(max_length=50, choices=FORMATO_CHOICES)
     legenda = models.TextField(blank=True, null=True)
     briefing_arte = models.TextField(blank=True, null=True)
@@ -156,7 +147,6 @@ class DropboxConfig(models.Model):
     refresh_token = models.TextField()
     expires_at = models.DateTimeField()
 
-# --- LÓGICA INTELIGENTE ---
 @property
 def get_agencia_inteligente(self):
     agencia_propria = self.agencias_socio.first()
@@ -167,28 +157,70 @@ def get_agencia_inteligente(self):
 
 User.add_to_class('minha_agencia', get_agencia_inteligente)
 
+class Funcao(models.Model):
+    agencia = models.ForeignKey(Agencia, on_delete=models.CASCADE, related_name='funcoes')
+    nome = models.CharField(max_length=100)
+    descricao = models.TextField(blank=True, null=True, help_text="Opcional. Ex: Responsável pelas artes.")
+
+    class Meta:
+        ordering = ['nome']
+        unique_together = ('agencia', 'nome')
+
+    def __str__(self):
+        return self.nome
+
+class Colaborador(models.Model):
+    usuario = models.OneToOneField(User, on_delete=models.CASCADE, related_name='perfil_colaborador')
+    agencia = models.ForeignKey(Agencia, on_delete=models.CASCADE, related_name='colaboradores')
+    funcoes = models.ManyToManyField(Funcao, blank=True, related_name='colaboradores')
+    telefone = models.CharField(max_length=20, blank=True, null=True)
+    foto = models.ImageField(upload_to='colaboradores/fotos/', blank=True, null=True)
+    ativo = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.usuario.get_full_name() or self.usuario.username
+
+class Convite(models.Model):
+    TIPO_ESCOLHAS = (
+        ('EQUIPE', 'Membro da Equipe'),
+        ('CLIENTE', 'Cliente da Agência'),
+    )
+    agencia = models.ForeignKey(Agencia, on_delete=models.CASCADE, related_name='convites')
+    nome = models.CharField(max_length=100, help_text="Nome de quem vai receber o convite")
+    email = models.EmailField(help_text="E-mail principal para envio")
+    tipo = models.CharField(max_length=10, choices=TIPO_ESCOLHAS, default='EQUIPE')
+    cliente_vinculado = models.ForeignKey('Cliente', on_delete=models.CASCADE, null=True, blank=True, related_name='convites_enviados')
+    funcoes = models.ManyToManyField(Funcao, blank=True, help_text="Quais funções essa pessoa terá na agência?")
+    token = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    criado_em = models.DateTimeField(auto_now_add=True)
+    aceito = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ['-criado_em']
+
+    def __str__(self):
+        return f"Convite para {self.nome} ({self.get_tipo_display()})"
+    
+    @property
+    def link_whatsapp(self):
+        return f"Olá {self.nome}! Aqui está o seu link de acesso ao AgencyOS: /convite/{self.token}"
+
 @receiver(post_save, sender=Agencia)
-def criar_perfil_cliente_agencia(sender, instance, created, **kwargs):
-    # Se a agência ainda não tem um perfil de cliente vinculado
+def configurar_agencia_padrao(sender, instance, created, **kwargs):
     if not instance.perfil_cliente:
-        # Cria um novo cliente usando os dados da agência
         novo_cliente = Cliente.objects.create(
-            agencia=instance, # <--- A LINHA MÁGICA QUE FALTAVA
-            nome_fantasia=instance.nome_fantasia,
-            razao_social=instance.razao_social,
-            cnpj=instance.cnpj,
-            email=instance.email,
-            cor_personalizada=instance.cor_personalizada,
-            tipo_pessoa='PJ', 
-            logo=instance.logo
+            agencia=instance, nome_fantasia=instance.nome_fantasia, razao_social=instance.razao_social,
+            cnpj=instance.cnpj, email=instance.email, cor_personalizada=instance.cor_personalizada,
+            tipo_pessoa='PJ', logo=instance.logo
         )
-        # Salva o vínculo no banco
         Agencia.objects.filter(pk=instance.pk).update(perfil_cliente=novo_cliente)
     else:
-        # Atualiza os dados se a agência for editada
         cliente = instance.perfil_cliente
-        cliente.nome_fantasia = instance.nome_fantasia
-        cliente.cor_personalizada = instance.cor_personalizada
-        if instance.logo:
-            cliente.logo = instance.logo
+        cliente.nome_fantasia = instance.nome_fantasia; cliente.cor_personalizada = instance.cor_personalizada
+        if instance.logo: cliente.logo = instance.logo
         cliente.save()
+
+    if not Funcao.objects.filter(agencia=instance).exists():
+        funcoes_padrao = ['Atendimento', 'Designer', 'Redator', 'Social Media', 'Gestor de Tráfego', 'Diretor de Arte', 'Desenvolvedor']
+        for nome in funcoes_padrao:
+            Funcao.objects.create(agencia=instance, nome=nome)

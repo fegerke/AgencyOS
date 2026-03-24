@@ -1,5 +1,5 @@
 from django import forms
-from .models import Agencia, Cliente, Post, Cronograma, PostArquivo, REDES_OPCOES, FORMATO_CHOICES, Feed
+from .models import Agencia, Cliente, Post, Cronograma, PostArquivo, REDES_OPCOES, FORMATO_CHOICES, Feed, Funcao, Convite
 from django.contrib.auth.models import User
 from datetime import datetime
 
@@ -50,12 +50,19 @@ class ClienteForm(forms.ModelForm):
             'cor_personalizada': forms.TextInput(attrs={'type': 'color', 'class': 'form-control form-control-color'}),
         }
 
+class FuncaoForm(forms.ModelForm):
+    class Meta:
+        model = Funcao
+        fields = ['nome', 'descricao']
+        widgets = {
+            'descricao': forms.Textarea(attrs={'rows': 2, 'placeholder': 'Opcional. Ex: Responsável pelas artes.'}),
+        }
+        
 class CronogramaForm(forms.ModelForm):
     class Meta:
         model = Cronograma
         fields = ['cliente', 'titulo', 'rede_social', 'mes', 'ano', 'data_inicio', 'data_fim']
         
-        # 1. Ajusta os textos que aparecem na tela para não parecer redundante
         labels = {
             'mes': 'Mês de Referência',
             'ano': 'Ano',
@@ -63,7 +70,6 @@ class CronogramaForm(forms.ModelForm):
             'data_fim': 'Último Post',
         }
         
-        # 2. Adiciona o hover (tooltip) para explicar a integração com a nuvem
         widgets = {
             'mes': forms.NumberInput(attrs={
                 'class': 'form-control', 
@@ -112,7 +118,6 @@ class PostForm(forms.ModelForm):
 
     class Meta:
         model = Post
-        # REMOVIDO 'rede_social' DAQUI
         fields = ['cronograma', 'formato', 'titulo', 'data_publicacao', 'legenda', 'briefing_arte', 'status']
         labels = {
             'legenda': 'Legenda (Texto da publicação)',
@@ -126,9 +131,6 @@ class PostForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        
-        # A lógica de filtrar as redes_sociais foi removida porque o post não escolhe mais a rede.
-        # Apenas mantivemos a inicialização da data_publicacao
         if self.instance and self.instance.data_publicacao:
             self.fields['data_publicacao'].initial = self.instance.data_publicacao
 
@@ -145,3 +147,24 @@ class UserRegistrationForm(forms.ModelForm):
         if cleaned_data.get("password") != cleaned_data.get("confirm_password"):
             raise forms.ValidationError("As senhas não conferem.")
         return cleaned_data
+    
+class ConviteForm(forms.ModelForm):
+    class Meta:
+        model = Convite
+        fields = ['nome', 'email', 'tipo', 'funcoes', 'cliente_vinculado']
+        labels = {
+            'nome': 'Nome da Pessoa',
+            'tipo': 'Tipo de Acesso',
+            'funcoes': 'Funções na Agência',
+            'cliente_vinculado': 'Vincular a qual Cliente?'
+        }
+        widgets = {
+            'funcoes': forms.CheckboxSelectMultiple(),
+        }
+
+    def __init__(self, *args, **kwargs):
+        agencia = kwargs.pop('agencia', None)
+        super(ConviteForm, self).__init__(*args, **kwargs)
+        if agencia:
+            self.fields['cliente_vinculado'].queryset = Cliente.objects.filter(agencia=agencia)
+            self.fields['funcoes'].queryset = Funcao.objects.filter(agencia=agencia)
