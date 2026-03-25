@@ -11,13 +11,32 @@
 
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f4f7fe; color: #333; min-height: 100vh; }
-        .sidebar { width: 260px; height: 100vh; position: fixed; background: #ffffff; border-right: 1px solid #e9ecef; z-index: 1045; display: flex; flex-direction: column; }
+        
+        /* Sidebar Desktop */
+        .sidebar { width: 260px; height: 100vh; position: fixed; background: #ffffff; border-right: 1px solid #e9ecef; z-index: 1045; display: flex; flex-direction: column; overflow-y: auto; }
         .main-content { margin-left: 260px; padding: 40px; transition: all 0.3s; }
-        .nav-link { color: #6c757d; padding: 12px 25px; font-weight: 600; display: flex; align-items: center; border-radius: 0; transition: 0.2s; }
-        .nav-link i { font-size: 1.2rem; margin-right: 15px; }
+        
+        /* Estilo dos Links Base */
+        .nav-link { color: #6c757d; padding: 12px 25px; font-weight: 600; display: flex; align-items: center; border-radius: 0; transition: 0.2s; cursor: pointer; }
+        .nav-link i.menu-icon { font-size: 1.2rem; margin-right: 15px; width: 20px; text-align: center; }
         .nav-link:hover { background: #f8f9fa; color: #6c5ce7; }
         .nav-link.active { background: #f0eeff; color: #6c5ce7; border-right: 4px solid #6c5ce7; }
+        
+        /* Submenus e Setinhas */
+        .menu-arrow { font-size: 0.8rem; transition: transform 0.3s ease; margin-left: auto; }
+        .nav-link.collapsed .menu-arrow { transform: rotate(-90deg); }
+        
+        .submenu-container { background-color: #fdfdfe; border-left: 2px solid #f0f0f0; margin-left: 25px; }
+        .submenu-container .nav-link { padding: 10px 15px 10px 20px; font-size: 0.9rem; }
+        .submenu-container .nav-link i.menu-icon { font-size: 1rem; margin-right: 10px; }
+        
+        .sub-submenu-container { background-color: #fafafa; border-left: 2px solid #e9ecef; margin-left: 20px; }
+        .sub-submenu-container .nav-link { padding: 8px 15px 8px 15px; font-size: 0.85rem; }
+
+        /* Navbar Mobile */
         .mobile-header { display: none; background: #fff; padding: 10px 20px; border-bottom: 1px solid #e9ecef; position: sticky; top: 0; z-index: 1040; }
+        
+        /* RESPONSIVIDADE */
         @media (max-width: 991.98px) {
             .sidebar { display: none; }
             .main-content { margin-left: 0; padding: 20px; }
@@ -34,46 +53,74 @@
         <h4 class="fw-bold text-primary mb-0">AgencyOS</h4>
     </header>
 
+    <!-- INÍCIO SIDEBAR DESKTOP -->
     <aside class="sidebar d-none d-lg-flex py-4">
-        <div class="px-4 mb-5">
+        <div class="px-4 mb-4">
             <h3 class="fw-bold text-primary mb-0">AgencyOS</h3>
             <p class="text-muted small">Powering Your Agency</p>
         </div>
 
         <nav class="nav flex-column mb-auto">
             <a href="{% url 'home' %}" class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
-                <i class="bi bi-grid-1x2"></i>Dashboard
+                <i class="bi bi-grid-1x2 menu-icon"></i>Dashboard
             </a>
-            <a href="{% url 'listar_clientes' %}" class="nav-link {% if 'cliente' in request.resolver_match.url_name %}active{% endif %}">
-                <i class="bi bi-people"></i>Clientes
-            </a>
+            
             <a href="{% url 'listar_cronogramas' %}" class="nav-link {% if 'cronograma' in request.resolver_match.url_name or 'post' in request.resolver_match.url_name %}active{% endif %}">
-                <i class="bi bi-calendar-event"></i>Cronogramas
+                <i class="bi bi-calendar-event menu-icon"></i>Cronogramas
             </a>
-            <a href="{% url 'gerenciar_funcoes' %}" class="nav-link {% if 'funcao' in request.resolver_match.url_name %}active{% endif %}">
-                <i class="bi bi-person-lines-fill"></i>Funções
+
+            <!-- MÓDULO CADASTROS (Dropdown Pai) -->
+            <a href="#menuCadastrosDesktop" data-bs-toggle="collapse" class="nav-link {% if 'cliente' not in request.resolver_match.url_name and 'configurar_agencia' not in request.resolver_match.url_name and 'funcao' not in request.resolver_match.url_name and 'convite' not in request.resolver_match.url_name %}collapsed{% endif %}">
+                <i class="bi bi-folder2-open menu-icon"></i> Cadastros
+                <i class="bi bi-chevron-down menu-arrow"></i>
             </a>
-            <a href="{% url 'gerar_convite' %}" class="nav-link {% if 'convite' in request.resolver_match.url_name %}active{% endif %}">
-                <i class="bi bi-envelope-paper"></i>Convites
-            </a>
-            <a href="{% url 'configurar_agencia' %}" class="nav-link {% if request.resolver_match.url_name == 'configurar_agencia' %}active{% endif %}">
-                <i class="bi bi-gear"></i>Ajustes
-            </a>
-            <a href="{% url 'lixeira' %}" class="nav-link {% if request.resolver_match.url_name == 'lixeira' %}active{% endif %}">
-                <i class="bi bi-trash3"></i>Lixeira
+            <div class="collapse {% if 'cliente' in request.resolver_match.url_name or 'configurar_agencia' in request.resolver_match.url_name or 'funcao' in request.resolver_match.url_name or 'convite' in request.resolver_match.url_name %}show{% endif %}" id="menuCadastrosDesktop">
+                <div class="submenu-container py-1">
+                    
+                    <a href="{% url 'configurar_agencia' %}" class="nav-link {% if request.resolver_match.url_name == 'configurar_agencia' %}text-primary fw-bold{% endif %}">
+                        <i class="bi bi-buildings menu-icon"></i> Empresa
+                    </a>
+                    
+                    <a href="{% url 'listar_clientes' %}" class="nav-link {% if 'cliente' in request.resolver_match.url_name %}text-primary fw-bold{% endif %}">
+                        <i class="bi bi-people menu-icon"></i> Clientes
+                    </a>
+
+                    <!-- SUB-MÓDULO USUÁRIOS (Dropdown Filho) -->
+                    <a href="#menuUsuariosDesktop" data-bs-toggle="collapse" class="nav-link {% if 'funcao' not in request.resolver_match.url_name and 'convite' not in request.resolver_match.url_name %}collapsed{% endif %}">
+                        <i class="bi bi-person-badge menu-icon"></i> Usuários
+                        <i class="bi bi-chevron-down menu-arrow"></i>
+                    </a>
+                    <div class="collapse {% if 'funcao' in request.resolver_match.url_name or 'convite' in request.resolver_match.url_name %}show{% endif %}" id="menuUsuariosDesktop">
+                        <div class="sub-submenu-container py-1">
+                            <a href="{% url 'gerenciar_funcoes' %}" class="nav-link {% if 'funcao' in request.resolver_match.url_name %}text-primary fw-bold{% endif %}">
+                                <i class="bi bi-person-lines-fill menu-icon"></i> Funções
+                            </a>
+                            <a href="{% url 'gerar_convite' %}" class="nav-link {% if 'convite' in request.resolver_match.url_name %}text-primary fw-bold{% endif %}">
+                                <i class="bi bi-envelope-paper menu-icon"></i> Convites
+                            </a>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <a href="{% url 'lixeira' %}" class="nav-link mt-2 {% if request.resolver_match.url_name == 'lixeira' %}active{% endif %}">
+                <i class="bi bi-trash3 menu-icon"></i>Lixeira
             </a>
         </nav>
 
-        <div class="mt-auto px-2">
+        <div class="mt-auto px-2 pt-3">
             <form action="{% url 'logout' %}" method="post">
                 {% csrf_token %}
                 <button type="submit" class="btn btn-link nav-link text-danger w-100 border-0" style="border-radius: 8px;">
-                    <i class="bi bi-box-arrow-right"></i>Sair
+                    <i class="bi bi-box-arrow-right menu-icon"></i>Sair
                 </button>
             </form>
         </div>
     </aside>
+    <!-- FIM SIDEBAR DESKTOP -->
 
+    <!-- INÍCIO SIDEBAR MOBILE -->
     <div class="offcanvas offcanvas-start" tabindex="-1" id="sidebarMobile" style="width: 280px;">
         <div class="offcanvas-header border-bottom">
             <h5 class="offcanvas-title fw-bold text-primary">Menu</h5>
@@ -82,27 +129,53 @@
         <div class="offcanvas-body d-flex flex-column p-0">
             <nav class="nav flex-column mb-auto py-3">
                 <a href="{% url 'home' %}" class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
-                    <i class="bi bi-grid-1x2"></i>Dashboard
+                    <i class="bi bi-grid-1x2 menu-icon"></i>Dashboard
                 </a>
-                <a href="{% url 'listar_clientes' %}" class="nav-link {% if 'cliente' in request.resolver_match.url_name %}active{% endif %}">
-                    <i class="bi bi-people"></i>Clientes
-                </a>
+                
                 <a href="{% url 'listar_cronogramas' %}" class="nav-link {% if 'cronograma' in request.resolver_match.url_name or 'post' in request.resolver_match.url_name %}active{% endif %}">
-                    <i class="bi bi-calendar-event"></i>Cronogramas
+                    <i class="bi bi-calendar-event menu-icon"></i>Cronogramas
                 </a>
-                <a href="{% url 'gerenciar_funcoes' %}" class="nav-link {% if 'funcao' in request.resolver_match.url_name %}active{% endif %}">
-                    <i class="bi bi-person-lines-fill"></i>Funções
+
+                <!-- MÓDULO CADASTROS MOBILE -->
+                <a href="#menuCadastrosMobile" data-bs-toggle="collapse" class="nav-link {% if 'cliente' not in request.resolver_match.url_name and 'configurar_agencia' not in request.resolver_match.url_name and 'funcao' not in request.resolver_match.url_name and 'convite' not in request.resolver_match.url_name %}collapsed{% endif %}">
+                    <i class="bi bi-folder2-open menu-icon"></i> Cadastros
+                    <i class="bi bi-chevron-down menu-arrow"></i>
                 </a>
-                <a href="{% url 'gerar_convite' %}" class="nav-link {% if 'convite' in request.resolver_match.url_name %}active{% endif %}">
-                    <i class="bi bi-envelope-paper"></i>Convites
-                </a>
-                <a href="{% url 'configurar_agencia' %}" class="nav-link {% if request.resolver_match.url_name == 'configurar_agencia' %}active{% endif %}">
-                    <i class="bi bi-gear"></i>Ajustes
-                </a>
-                <a href="{% url 'lixeira' %}" class="nav-link {% if request.resolver_match.url_name == 'lixeira' %}active{% endif %}">
-                    <i class="bi bi-trash3"></i>Lixeira
+                <div class="collapse {% if 'cliente' in request.resolver_match.url_name or 'configurar_agencia' in request.resolver_match.url_name or 'funcao' in request.resolver_match.url_name or 'convite' in request.resolver_match.url_name %}show{% endif %}" id="menuCadastrosMobile">
+                    <div class="submenu-container py-1">
+                        
+                        <a href="{% url 'configurar_agencia' %}" class="nav-link {% if request.resolver_match.url_name == 'configurar_agencia' %}text-primary fw-bold{% endif %}">
+                            <i class="bi bi-buildings menu-icon"></i> Empresa
+                        </a>
+                        
+                        <a href="{% url 'listar_clientes' %}" class="nav-link {% if 'cliente' in request.resolver_match.url_name %}text-primary fw-bold{% endif %}">
+                            <i class="bi bi-people menu-icon"></i> Clientes
+                        </a>
+
+                        <!-- SUB-MÓDULO USUÁRIOS MOBILE -->
+                        <a href="#menuUsuariosMobile" data-bs-toggle="collapse" class="nav-link {% if 'funcao' not in request.resolver_match.url_name and 'convite' not in request.resolver_match.url_name %}collapsed{% endif %}">
+                            <i class="bi bi-person-badge menu-icon"></i> Usuários
+                            <i class="bi bi-chevron-down menu-arrow"></i>
+                        </a>
+                        <div class="collapse {% if 'funcao' in request.resolver_match.url_name or 'convite' in request.resolver_match.url_name %}show{% endif %}" id="menuUsuariosMobile">
+                            <div class="sub-submenu-container py-1">
+                                <a href="{% url 'gerenciar_funcoes' %}" class="nav-link {% if 'funcao' in request.resolver_match.url_name %}text-primary fw-bold{% endif %}">
+                                    <i class="bi bi-person-lines-fill menu-icon"></i> Funções
+                                </a>
+                                <a href="{% url 'gerar_convite' %}" class="nav-link {% if 'convite' in request.resolver_match.url_name %}text-primary fw-bold{% endif %}">
+                                    <i class="bi bi-envelope-paper menu-icon"></i> Convites
+                                </a>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <a href="{% url 'lixeira' %}" class="nav-link mt-2 {% if request.resolver_match.url_name == 'lixeira' %}active{% endif %}">
+                    <i class="bi bi-trash3 menu-icon"></i>Lixeira
                 </a>
             </nav>
+            
             <div class="p-3 border-top mt-auto">
                 <form action="{% url 'logout' %}" method="post">
                     {% csrf_token %}
@@ -113,6 +186,7 @@
             </div>
         </div>
     </div>
+    <!-- FIM SIDEBAR MOBILE -->
 
     <main class="main-content">
         {% if messages %}
