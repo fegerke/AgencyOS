@@ -50,14 +50,25 @@
         <button class="btn btn-primary" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMobile">
             <i class="bi bi-list fs-4"></i>
         </button>
-        <h4 class="fw-bold text-primary mb-0">AgencyOS</h4>
+        <h4 class="fw-bold text-primary mb-0">
+            <i class="bi bi-rocket-takeoff-fill me-1"></i>AgencyOS
+        </h4>
     </header>
 
     <!-- INÍCIO SIDEBAR DESKTOP -->
     <aside class="sidebar d-none d-lg-flex py-4">
-        <div class="px-4 mb-4">
-            <h3 class="fw-bold text-primary mb-0">AgencyOS</h3>
-            <p class="text-muted small">Powering Your Agency</p>
+        <div class="px-4 mb-4"> 
+            <h3 class="fw-bold text-primary mb-0">
+                <i class="bi bi-rocket-takeoff-fill me-1"></i>AgencyOS
+            </h3>
+            <p class="text-muted small mb-1">Powering Your Agency</p>
+            
+            <!-- Etiqueta do Cliente (Só aparece pra cliente) -->
+            {% if not request.user.is_equipe %}
+                <div class="badge bg-primary bg-opacity-10 text-primary rounded mt-2 border border-primary border-opacity-25 text-wrap text-start lh-sm py-2 px-2 w-100 shadow-sm">
+                    <i class="bi bi-building me-1"></i> {{ request.user.clientes_acesso.first.nome_fantasia }}
+                </div>
+            {% endif %}
         </div>
 
         <nav class="nav flex-column mb-auto">
@@ -94,7 +105,6 @@
                         </a>
                         <div class="collapse {% if 'funcao' in request.resolver_match.url_name or 'convite' in request.resolver_match.url_name or 'usuarios' in request.resolver_match.url_name %}show{% endif %}" id="menuUsuariosDesktop">
                             <div class="sub-submenu-container py-1">
-                                <!-- NOVO LINK AQUI -->
                                 <a href="{% url 'listar_usuarios' %}" class="nav-link {% if request.resolver_match.url_name == 'listar_usuarios' %}text-primary fw-bold{% endif %}">
                                     <i class="bi bi-people-fill menu-icon"></i> Ver Todos
                                 </a>
@@ -132,9 +142,23 @@
 
     <!-- INÍCIO SIDEBAR MOBILE -->
     <div class="offcanvas offcanvas-start" tabindex="-1" id="sidebarMobile" style="width: 280px;">
-        <div class="offcanvas-header border-bottom">
-            <h5 class="offcanvas-title fw-bold text-primary">Menu</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+        <div class="offcanvas-header border-bottom d-flex flex-column align-items-start">
+            <div class="d-flex justify-content-between w-100 align-items-center">
+                <div>
+                    <h5 class="offcanvas-title fw-bold text-primary mb-0">
+                        <i class="bi bi-rocket-takeoff-fill me-1"></i>AgencyOS
+                    </h5>
+                    <p class="text-muted mb-0" style="font-size: 0.75rem;">Powering Your Agency</p>
+                </div>
+                <button type="button" class="btn-close mb-3" data-bs-dismiss="offcanvas"></button>
+            </div>
+            
+            <!-- Etiqueta do Cliente (Só aparece pra cliente) -->
+            {% if not request.user.is_equipe %}
+                <div class="badge bg-primary bg-opacity-10 text-primary rounded mt-3 border border-primary border-opacity-25 text-wrap text-start lh-sm py-2 px-2 w-100 shadow-sm">
+                    <i class="bi bi-building me-1"></i> {{ request.user.clientes_acesso.first.nome_fantasia }}
+                </div>
+            {% endif %}
         </div>
         <div class="offcanvas-body d-flex flex-column p-0">
             <nav class="nav flex-column mb-auto py-3">
@@ -171,7 +195,6 @@
                             </a>
                             <div class="collapse {% if 'funcao' in request.resolver_match.url_name or 'convite' in request.resolver_match.url_name or 'usuarios' in request.resolver_match.url_name %}show{% endif %}" id="menuUsuariosMobile">
                                 <div class="sub-submenu-container py-1">
-                                    <!-- NOVO LINK AQUI -->
                                     <a href="{% url 'listar_usuarios' %}" class="nav-link {% if request.resolver_match.url_name == 'listar_usuarios' %}text-primary fw-bold{% endif %}">
                                         <i class="bi bi-people-fill menu-icon"></i> Ver Todos
                                     </a>

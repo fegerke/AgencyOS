@@ -381,18 +381,33 @@ def gerar_convite(request):
 @login_required
 def listar_cronogramas(request):
     agencia = request.user.minha_agencia
-    clientes = Cliente.objects.filter(agencia=agencia)
-    cronogramas = Cronograma.objects.filter(cliente__agencia=agencia, excluido=False)
     
-    # 1. Pegando os parâmetros da URL (Filtros)
+    if not agencia:
+        messages.error(request, "Agência não encontrada.")
+        return redirect('home')
+
+    # 1. TRAVA DE SEGURANÇA E ESCOPO DE DADOS
+    if request.user.is_equipe:
+        # Equipe vê todos os clientes e cronogramas da agência
+        clientes = Cliente.objects.filter(agencia=agencia)
+        cronogramas = Cronograma.objects.filter(cliente__agencia=agencia, excluido=False)
+    else:
+        # Cliente vê APENAS a empresa dele e os cronogramas dela
+        clientes = request.user.clientes_acesso.all()
+        cronogramas = Cronograma.objects.filter(cliente__in=clientes, excluido=False)
+    
+    # 2. Pegando os parâmetros da URL (Filtros)
     cliente_id = request.GET.get('cliente')
     rede_selecionada = request.GET.get('rede')
     mes_selecionado = request.GET.get('mes')
     ano_selecionado = request.GET.get('ano')
 
-    # 2. Aplicando os filtros inteligentes
+    # 3. Aplicando os filtros inteligentes
     if cliente_id:
-        cronogramas = cronogramas.filter(cliente_id=cliente_id)
+        # Segurança extra: garante que o ID passado na URL pertence aos clientes permitidos
+        if clientes.filter(id=cliente_id).exists():
+            cronogramas = cronogramas.filter(cliente_id=cliente_id)
+            
     if rede_selecionada:
         cronogramas = cronogramas.filter(rede_social=rede_selecionada)
     if mes_selecionado:
@@ -402,18 +417,16 @@ def listar_cronogramas(request):
 
     cronogramas = cronogramas.order_by('-id')
 
-    # 3. A Mágica das Cores Dinâmicas
-    # Paleta premium de 10 cores. O resto da divisão do ID garante a mesma cor sempre!
+    # 4. A Mágica das Cores Dinâmicas
     cores_paleta = ['#6c5ce7', '#00b894', '#0984e3', '#e17055', '#e84393', '#fdcb6e', '#00cec9', '#ff9f43', '#f368e0', '#ff6b6b']
     
     for c in cronogramas:
         c.cor_cliente = cores_paleta[c.cliente_id % len(cores_paleta)]
-        # Calcula total de posts rapidinho para o badge do card
         c.total_posts = sum(f.posts.filter(excluido=False).count() for f in c.feeds.all())
 
-    # 4. Opções para os selects do Filtro
+    # 5. Opções para os selects do Filtro
     meses_opcoes = [(1, 'Janeiro'), (2, 'Fevereiro'), (3, 'Março'), (4, 'Abril'), (5, 'Maio'), (6, 'Junho'), (7, 'Julho'), (8, 'Agosto'), (9, 'Setembro'), (10, 'Outubro'), (11, 'Novembro'), (12, 'Dezembro')]
-    anos_opcoes = range(2025, 2030) # Ajuste a margem de anos aqui se precisar
+    anos_opcoes = range(2025, 2030) 
 
     return render(request, 'core/listar_cronogramas.html', {
         'cronogramas': cronogramas, 
@@ -862,22 +875,40 @@ def editar_usuario(request, user_id):
     
     colaborador = Colaborador.objects.filter(usuario=usuario_editar, agencia=agencia).first()
     perfil_cliente = None
+    clientes_agencia = None # NOVO: Para o dropdown
     
     if not colaborador:
         perfil_cliente = PerfilUsuarioCliente.objects.filter(usuario=usuario_editar, cliente__agencia=agencia).first()
         if not perfil_cliente:
             messages.error(request, "Usuário não encontrado ou não pertence à sua agência.")
             return redirect('listar_usuarios')
+        # Pega a lista de clientes da agência para poder trocar
+        clientes_agencia = Cliente.objects.filter(agencia=agencia)
 
     if request.method == 'POST':
         user_form = EditarUsuarioAdminForm(request.POST, instance=usuario_editar)
         if user_form.is_valid():
             user_form.save()
             
-            # Se for da equipe, salva as funções selecionadas
+            # 1. Se for da equipe, salva as funções
             if colaborador:
                 funcoes_ids = request.POST.getlist('funcoes')
                 colaborador.funcoes.set(funcoes_ids)
+                
+            # 2. NOVO: Se for cliente, troca a empresa vinculada
+            if perfil_cliente:
+                novo_cliente_id = request.POST.get('cliente_vinculado')
+                if novo_cliente_id:
+                    novo_cliente = Cliente.objects.filter(id=novo_cliente_id, agencia=agencia).first()
+                    # Só faz o rolo todo se a empresa escolhida for diferente da atual
+                    if novo_cliente and novo_cliente != perfil_cliente.cliente:
+                        # Tira o usuário da empresa velha
+                        perfil_cliente.cliente.usuarios.remove(usuario_editar)
+                        # Coloca o usuário na empresa nova
+                        novo_cliente.usuarios.add(usuario_editar)
+                        # Atualiza a ficha do perfil
+                        perfil_cliente.cliente = novo_cliente
+                        perfil_cliente.save()
                 
             messages.success(request, "Usuário atualizado com sucesso!")
             return redirect('listar_usuarios')
@@ -891,5 +922,6 @@ def editar_usuario(request, user_id):
         'colaborador': colaborador,
         'perfil_cliente': perfil_cliente,
         'funcoes_agencia': funcoes_agencia,
+        'clientes_agencia': clientes_agencia, # Manda pro HTML
         'usuario_editar': usuario_editar
     })

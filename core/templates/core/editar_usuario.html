@@ -53,6 +53,23 @@
                 </div>
                 {% endif %}
 
+                {% if perfil_cliente %}
+                <h5 class="fw-bold mt-4 mb-3 border-bottom pb-2">Vínculo Empresarial</h5>
+                <div class="row px-2">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label text-muted small fw-bold">Empresa (Cliente) Vinculada</label>
+                        <select name="cliente_vinculado" class="form-select border-primary shadow-sm">
+                            {% for c in clientes_agencia %}
+                                <option value="{{ c.id }}" {% if c == perfil_cliente.cliente %}selected{% endif %}>
+                                    {{ c.nome_fantasia }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text small">Você pode transferir este usuário para outra empresa, caso o convite tenha sido gerado errado.</div>
+                    </div>
+                </div>
+                {% endif %}
+
                 <div class="mt-4 pt-3 border-top text-end">
                     <a href="{% url 'listar_usuarios' %}" class="btn btn-light border fw-bold me-2">Cancelar</a>
                     <button type="submit" class="btn btn-primary fw-bold px-4 rounded-pill">Salvar Alterações</button>

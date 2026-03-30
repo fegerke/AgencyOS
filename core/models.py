@@ -150,18 +150,23 @@ class DropboxConfig(models.Model):
 def get_agencia_inteligente(self):
     # 1. Se for Superusuário (Você)
     if self.is_superuser:
-        from core.models import Agencia # Import local para não dar erro
+        from core.models import Agencia
         return Agencia.objects.first()
         
     # 2. Se for Sócio/Dono
     if self.agencias_socio.exists():
         return self.agencias_socio.first()
         
-    # 3. Se for Colaborador (Usuário do convite)
+    # 3. Se for Colaborador (Equipe)
     from core.models import Colaborador 
     colaborador = Colaborador.objects.filter(usuario=self).first()
     if colaborador:
         return colaborador.agencia
+        
+    # --- NOVO: Se for Cliente (Usuário de Cliente) ---
+    cliente = self.clientes_acesso.first() # Pega a primeira empresa vinculada a ele
+    if cliente:
+        return cliente.agencia
         
     return None
 
