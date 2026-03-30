@@ -1,0 +1,172 @@
+{% extends 'core/base.html' %}
+{% block title %}Gerenciar Usuários | AgencyOS{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0">
+    <div class="d-flex justify-content-between align-items-center mb-4 px-1">
+        <div>
+            <h2 class="fw-bold h4 mb-1 text-dark"><i class="bi bi-people-fill text-primary me-2"></i>Gerenciar Usuários</h2>
+            <p class="text-muted small">Controle os acessos da sua equipe e dos seus clientes.</p>
+        </div>
+        <a href="{% url 'gerar_convite' %}" class="btn btn-primary fw-bold rounded-pill shadow-sm">
+            <i class="bi bi-envelope-plus me-1"></i> Convidar Usuário
+        </a>
+    </div>
+
+    <div class="mb-4">
+        <form method="get" class="d-flex gap-2">
+            <div class="input-group shadow-sm rounded-pill overflow-hidden" style="max-width: 400px;">
+                <span class="input-group-text border-0 bg-white ps-3"><i class="bi bi-search text-muted"></i></span>
+                <input type="text" name="q" class="form-control border-0 py-2" placeholder="Buscar por nome ou empresa..." value="{{ busca }}">
+            </div>
+            {% if busca %}
+                <a href="{% url 'listar_usuarios' %}" class="btn btn-light rounded-pill border shadow-sm">Limpar</a>
+            {% endif %}
+            <button type="submit" class="btn btn-dark rounded-pill px-4 shadow-sm">Buscar</button>
+        </form>
+    </div>
+
+    <div class="card border-0 shadow-sm" style="border-radius: 15px; overflow: hidden;">
+        
+        <ul class="nav nav-tabs bg-light px-3 pt-3 border-bottom-0" id="usuariosTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active fw-bold text-dark" data-bs-toggle="tab" data-bs-target="#equipe" type="button" role="tab">
+                    Equipe ({{ colaboradores|length }})
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link fw-bold text-muted" data-bs-toggle="tab" data-bs-target="#clientes" type="button" role="tab">
+                    Clientes ({{ clientes_perfis|length }})
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link fw-bold text-muted" data-bs-toggle="tab" data-bs-target="#inativos" type="button" role="tab">
+                    Inativos ({{ inativos|length }})
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content p-0" id="usuariosTabsContent">
+            
+            <div class="tab-pane fade show active" id="equipe" role="tabpanel">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-4 border-0">Usuário</th>
+                                <th class="border-0">Contato</th>
+                                <th class="border-0">Funções</th>
+                                <th class="text-end pe-4 border-0">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for colab in colaboradores %}
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="fw-bold">{{ colab.usuario.get_full_name|default:colab.usuario.username }}</div>
+                                    <div class="small text-muted">@{{ colab.usuario.username }}</div>
+                                </td>
+                                <td>
+                                    <div class="small">{{ colab.usuario.email }}</div>
+                                    <div class="small text-muted">{{ colab.telefone|default:"-" }}</div>
+                                </td>
+                                <td>
+                                    {% for funcao in colab.funcoes.all %}
+                                        <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 rounded-pill fw-normal">{{ funcao.nome }}</span>
+                                    {% empty %}<span class="text-muted small">-</span>{% endfor %}
+                                </td>
+                                <td class="text-end pe-4">
+                                    <a href="{% url 'editar_usuario' colab.usuario.id %}" class="btn btn-sm btn-light border" title="Editar"><i class="bi bi-pencil"></i></a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="4" class="text-center py-5 text-muted">Nenhum colaborador ativo encontrado.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="clientes" role="tabpanel">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-4 border-0">Usuário</th>
+                                <th class="border-0">Contato</th>
+                                <th class="border-0">Empresa Vinculada</th>
+                                <th class="text-end pe-4 border-0">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for perfil in clientes_perfis %}
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="fw-bold">{{ perfil.usuario.get_full_name|default:perfil.usuario.username }}</div>
+                                    <div class="small text-muted">@{{ perfil.usuario.username }}</div>
+                                </td>
+                                <td>
+                                    <div class="small">{{ perfil.usuario.email }}</div>
+                                    <div class="small text-muted">{{ perfil.telefone|default:"-" }}</div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 rounded-pill fw-normal">{{ perfil.cliente.nome_fantasia }}</span>
+                                </td>
+                                <td class="text-end pe-4">
+                                    <a href="{% url 'editar_usuario' perfil.usuario.id %}" class="btn btn-sm btn-light border" title="Editar"><i class="bi bi-pencil"></i></a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="4" class="text-center py-5 text-muted">Nenhum cliente ativo encontrado.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="inativos" role="tabpanel">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 text-muted">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-4 border-0">Usuário</th>
+                                <th class="border-0">Tipo / Origem</th>
+                                <th class="border-0">Motivo</th>
+                                <th class="text-end pe-4 border-0">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for inativo in inativos %}
+                            <tr>
+                                <!-- AQUI ESTAVA O SEU ERRO! DEVOLVI OS DADOS DO USUÁRIO -->
+                                <td class="ps-4">
+                                    <div class="fw-bold">{{ inativo.usuario.get_full_name|default:inativo.usuario.username }}</div>
+                                    <div class="small">@{{ inativo.usuario.username }}</div>
+                                </td>
+                                <td>
+                                    {% if inativo.cliente %}
+                                        <span class="small">Cliente: <strong>{{ inativo.cliente.nome_fantasia }}</strong></span>
+                                    {% else %}
+                                        <span class="small">Membro da Equipe</span>
+                                    {% endif %}
+                                </td>
+                                <td><span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 rounded-pill">Desativado</span></td>
+                                <td class="text-end pe-4">
+                                    <!-- AQUI ESTÁ O BOTÃO ÚNICO DE EDITAR/REATIVAR -->
+                                    <a href="{% url 'editar_usuario' inativo.usuario.id %}" class="btn btn-sm btn-light border" title="Ver Cadastro / Editar">
+                                        <i class="bi bi-pencil"></i> Editar
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="4" class="text-center py-5 text-muted">Nenhum usuário inativo.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

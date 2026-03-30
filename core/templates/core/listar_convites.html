@@ -1,0 +1,70 @@
+{% extends 'core/base.html' %}
+{% block title %}Convites | AgencyOS{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0">
+    <div class="d-flex justify-content-between align-items-center mb-4 px-1">
+        <div>
+            <h2 class="fw-bold h4 mb-1 text-dark"><i class="bi bi-envelope-paper-fill text-primary me-2"></i>Gerenciar Convites</h2>
+            <p class="text-muted small">Acompanhe quem já acessou o sistema.</p>
+        </div>
+        <a href="{% url 'gerar_convite' %}" class="btn btn-primary fw-bold rounded-pill shadow-sm">
+            <i class="bi bi-plus-lg me-1"></i> Novo Convite
+        </a>
+    </div>
+
+    <div class="card border-0 shadow-sm" style="border-radius: 15px;">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-4 border-0">Nome</th>
+                        <th class="border-0">Tipo</th>
+                        <th class="border-0">Status</th>
+                        <th class="border-0">Gerado em</th>
+                        <th class="text-end pe-4 border-0">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for convite in convites %}
+                    <tr>
+                        <td class="ps-4">
+                            <div class="fw-bold">{{ convite.nome }}</div>
+                            <div class="small text-muted">{{ convite.email }}</div>
+                        </td>
+                        <td>
+                            <span class="badge bg-light text-dark border">{{ convite.get_tipo_display }}</span>
+                        </td>
+                        <td>
+                            {% if convite.aceito %}
+                                <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill"><i class="bi bi-check-circle me-1"></i>Aceito</span>
+                            {% else %}
+                                <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 rounded-pill"><i class="bi bi-hourglass-split me-1"></i>Pendente</span>
+                            {% endif %}
+                        </td>
+                        <td class="small text-muted">{{ convite.criado_em|date:"d/m/Y H:i" }}</td>
+                        <td class="text-end pe-4">
+                            {% if not convite.aceito %}
+                                <button onclick="copiarLink('{{ request.scheme }}://{{ request.get_host }}/convite/{{ convite.token }}/')" class="btn btn-sm btn-light border" title="Copiar Link"><i class="bi bi-copy"></i></button>
+                            {% endif %}
+                            <a href="{% url 'excluir_convite' convite.pk %}" class="btn btn-sm btn-outline-danger border ms-1" title="Excluir/Cancelar"><i class="bi bi-trash3"></i></a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="5" class="text-center py-5 text-muted">Nenhum convite gerado.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+    function copiarLink(link) {
+        navigator.clipboard.writeText(link).then(function() {
+            alert("Link copiado para a área de transferência!");
+        });
+    }
+</script>
+{% endblock %}

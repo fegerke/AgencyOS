@@ -100,3 +100,5 @@ LOGIN_URL = 'login'
 
 DROPBOX_APP_KEY = 'jf8rb5tmabkifg5'
 DROPBOX_APP_SECRET = 'qbiswjt5ifz3yt3'
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')

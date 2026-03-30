@@ -1,5 +1,5 @@
 from django import forms
-from .models import Agencia, Cliente, Post, Cronograma, PostArquivo, REDES_OPCOES, FORMATO_CHOICES, Feed, Funcao, Convite
+from .models import Agencia, Cliente, Post, Cronograma, PostArquivo, REDES_OPCOES, FORMATO_CHOICES, Feed, Funcao, Convite, Colaborador, PerfilUsuarioCliente
 from django.contrib.auth.models import User
 from datetime import datetime
 
@@ -168,3 +168,52 @@ class ConviteForm(forms.ModelForm):
         if agencia:
             self.fields['cliente_vinculado'].queryset = Cliente.objects.filter(agencia=agencia)
             self.fields['funcoes'].queryset = Funcao.objects.filter(agencia=agencia)
+
+class AceitarConviteForm(forms.ModelForm):
+    password = forms.CharField(label="Criar Senha", widget=forms.PasswordInput(attrs={'class': 'form-control'}))
+    confirm_password = forms.CharField(label="Confirmar Senha", widget=forms.PasswordInput(attrs={'class': 'form-control'}))
+    telefone = forms.CharField(label="Celular/WhatsApp", required=False, widget=forms.TextInput(attrs={'class': 'form-control mask-tel'}))
+
+    class Meta:
+        model = User
+        fields = ['username', 'first_name', 'last_name']
+        labels = {
+            'username': 'Nome de Usuário (Login)',
+            'first_name': 'Primeiro Nome',
+            'last_name': 'Sobrenome',
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if cleaned_data.get("password") != cleaned_data.get("confirm_password"):
+            raise forms.ValidationError("As senhas não conferem.")
+        return cleaned_data
+
+class PerfilUserForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ['first_name', 'last_name', 'email']
+
+class PerfilColaboradorForm(forms.ModelForm):
+    class Meta:
+        model = Colaborador
+        fields = ['telefone', 'foto']
+
+class PerfilClienteForm(forms.ModelForm):
+    class Meta:
+        model = PerfilUsuarioCliente
+        fields = ['telefone']
+        labels = {'telefone': 'Celular/WhatsApp'}
+        widgets = {
+            'telefone': forms.TextInput(attrs={'class': 'form-control mask-tel'}),
+        }
+
+class EditarUsuarioAdminForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ['first_name', 'last_name', 'email', 'is_active']
+        labels = {
+            'first_name': 'Nome',
+            'last_name': 'Sobrenome',
+            'is_active': 'Usuário Ativo (Pode acessar o sistema)'
+        }

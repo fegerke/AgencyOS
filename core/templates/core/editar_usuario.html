@@ -1,0 +1,64 @@
+{% extends 'core/base.html' %}
+{% load crispy_forms_tags %}
+{% block title %}Editar Usuário | AgencyOS{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0">
+    <div class="mb-4 px-1">
+        <a href="{% url 'listar_usuarios' %}" class="text-decoration-none text-muted small mb-2 d-block">
+            <i class="bi bi-arrow-left me-1"></i>Voltar para Usuários
+        </a>
+        <h2 class="fw-bold h4 mb-1 text-dark">
+            <i class="bi bi-person-gear text-primary me-2"></i>Editar Usuário
+        </h2>
+        <p class="text-muted small">
+            {% if colaborador %}Colaborador da Equipe{% else %}Usuário de Cliente ({{ perfil_cliente.cliente.nome_fantasia }}){% endif %}
+        </p>
+    </div>
+
+    <div class="card border-0 shadow-sm" style="border-radius: 15px; max-width: 800px;">
+        <div class="card-body p-4">
+            <form method="post">
+                {% csrf_token %}
+                
+                <h5 class="fw-bold mb-3 border-bottom pb-2">Dados Básicos</h5>
+                <div class="row">
+                    <div class="col-md-6 mb-3">{{ user_form.first_name|as_crispy_field }}</div>
+                    <div class="col-md-6 mb-3">{{ user_form.last_name|as_crispy_field }}</div>
+                    <div class="col-md-8 mb-3">{{ user_form.email|as_crispy_field }}</div>
+                    <div class="col-md-4 mb-3 pt-md-4">
+                        <div class="form-check form-switch fs-5">
+                            {{ user_form.is_active }}
+                            <label class="form-check-label ms-2 fs-6 text-muted" for="{{ user_form.is_active.id_for_label }}">Ativo</label>
+                        </div>
+                    </div>
+                </div>
+
+                {% if colaborador %}
+                <h5 class="fw-bold mt-4 mb-3 border-bottom pb-2">Competências / Funções</h5>
+                <div class="row px-2">
+                    {% for funcao in funcoes_agencia %}
+                    <div class="col-md-4 mb-2">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="funcoes" value="{{ funcao.id }}" id="funcao_{{ funcao.id }}" 
+                            {% if funcao in colaborador.funcoes.all %}checked{% endif %}>
+                            <label class="form-check-label" for="funcao_{{ funcao.id }}">
+                                {{ funcao.nome }}
+                            </label>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted small">Nenhuma função cadastrada na agência.</p>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <div class="mt-4 pt-3 border-top text-end">
+                    <a href="{% url 'listar_usuarios' %}" class="btn btn-light border fw-bold me-2">Cancelar</a>
+                    <button type="submit" class="btn btn-primary fw-bold px-4 rounded-pill">Salvar Alterações</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

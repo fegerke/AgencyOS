@@ -2,10 +2,13 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.contrib.auth import login
+from django.contrib.auth.models import User
 from django.http import JsonResponse, HttpResponse
 from django.conf import settings
 from django.utils import timezone
 from django.utils.text import slugify
+from django.db.models import Q
 from datetime import timedelta
 import dropbox
 import requests
@@ -13,8 +16,8 @@ import base64
 import os
 from dropbox.files import ThumbnailSize, ThumbnailFormat, PathOrLink
 import traceback
-from .models import Agencia, Cliente, Post, DropboxConfig, Cronograma, PostArquivo, REDES_OPCOES, Feed, Funcao, Convite
-from .forms import AgenciaForm, ClienteForm, PostForm, CronogramaForm, UserRegistrationForm, FeedForm, FuncaoForm, ConviteForm
+from .models import Agencia, Cliente, Post, DropboxConfig, Cronograma, PostArquivo, REDES_OPCOES, Feed, Funcao, Convite, Colaborador
+from .forms import AgenciaForm, ClienteForm, PostForm, CronogramaForm, UserRegistrationForm, FeedForm, FuncaoForm, ConviteForm, PerfilUserForm, AceitarConviteForm, PerfilColaboradorForm, PerfilClienteForm, PerfilUsuarioCliente, EditarUsuarioAdminForm
 from .services import upload_file_dropbox
 from .utils import gerar_pdf_cronograma 
 import threading
@@ -309,6 +312,11 @@ def excluir_cliente(request, pk):
 
 @login_required
 def gerenciar_funcoes(request, funcao_id=None):
+    # SEGURANÇA: Verifica logo de cara se o usuário é da equipe (dono ou colaborador)
+    if not request.user.is_equipe:
+        messages.error(request, "Acesso restrito à equipe da agência.")
+        return redirect('home')
+
     agencia = request.user.minha_agencia
     
     instancia = get_object_or_404(Funcao, pk=funcao_id, agencia=agencia) if funcao_id else None
@@ -684,3 +692,204 @@ def api_get_redes_cliente(request, cliente_id):
             redes_formatadas.append({'id': rede_id, 'nome': rede_nome})
             
     return JsonResponse({'redes': redes_formatadas})
+
+@login_required
+def listar_convites(request):
+    agencia = request.user.minha_agencia
+    convites = Convite.objects.filter(agencia=agencia)
+    return render(request, 'core/listar_convites.html', {'convites': convites})
+
+@login_required
+def excluir_convite(request, pk):
+    agencia = request.user.minha_agencia
+    convite = get_object_or_404(Convite, pk=pk, agencia=agencia)
+    convite.delete()
+    messages.success(request, "Convite cancelado/excluído com sucesso.")
+    return redirect('listar_convites')
+
+# NÃO VAI @login_required AQUI (Pois a pessoa ainda não tem conta!)
+def aceitar_convite(request, token):
+    convite = get_object_or_404(Convite, token=token)
+    
+    # Se o convite já foi aceito, bloqueia
+    if convite.aceito:
+        return render(request, 'core/aceitar_convite.html', {'convite': convite, 'invalido': True})
+        
+    if request.method == 'POST':
+        form = AceitarConviteForm(request.POST)
+        if form.is_valid():
+            user = form.save(commit=False)
+            user.set_password(form.cleaned_data['password'])
+            user.email = convite.email # Força o email do convite
+            user.save()
+            
+            # Distribui os acessos corretos
+            if convite.tipo == 'EQUIPE':
+                colab = Colaborador.objects.create(usuario=user, agencia=convite.agencia)
+                colab.funcoes.set(convite.funcoes.all())
+            elif convite.tipo == 'CLIENTE' and convite.cliente_vinculado:
+                convite.cliente_vinculado.usuarios.add(user)
+            
+            # Invalida o convite
+            convite.aceito = True
+            convite.save()
+            
+            # Loga o cara no sistema automaticamente
+            login(request, user)
+            return redirect('home')
+    else:
+        # Preenche o form com o nome que a agência digitou
+        partes_nome = convite.nome.split()
+        nome = partes_nome[0]
+        sobrenome = " ".join(partes_nome[1:]) if len(partes_nome) > 1 else ""
+        form = AceitarConviteForm(initial={'first_name': nome, 'last_name': sobrenome})
+        
+    return render(request, 'core/aceitar_convite.html', {'form': form, 'convite': convite})
+
+@login_required
+def listar_usuarios(request):
+    if not request.user.is_equipe:
+        messages.error(request, "Acesso negado.")
+        return redirect('home')
+
+    agencia = request.user.minha_agencia
+    q = request.GET.get('q', '') # Termo de busca
+
+    # --- 1. FILTRANDO EQUIPE ATIVA ---
+    colaboradores = Colaborador.objects.filter(agencia=agencia, usuario__is_active=True).select_related('usuario')
+    if q:
+        colaboradores = colaboradores.filter(
+            Q(usuario__first_name__icontains=q) | 
+            Q(usuario__last_name__icontains=q) | 
+            Q(usuario__username__icontains=q)
+        )
+
+    # --- 2. FILTRANDO CLIENTES ATIVOS ---
+    clientes_perfis = PerfilUsuarioCliente.objects.filter(cliente__agencia=agencia, usuario__is_active=True).select_related('usuario', 'cliente')
+    if q:
+        clientes_perfis = clientes_perfis.filter(
+            Q(usuario__first_name__icontains=q) | 
+            Q(usuario__last_name__icontains=q) | 
+            Q(cliente__nome_fantasia__icontains=q)
+        )
+
+    # --- 3. FILTRANDO INATIVOS (Equipe + Clientes) ---
+    # Pegamos todos os usuários inativos vinculados à agência
+    colabs_inativos = Colaborador.objects.filter(agencia=agencia, usuario__is_active=False)
+    clientes_inativos = PerfilUsuarioCliente.objects.filter(cliente__agencia=agencia, usuario__is_active=False)
+    
+    # Combinamos as listas para a aba de inativos
+    inativos = list(colabs_inativos) + list(clientes_inativos)
+    
+    # Filtro simples para a lista combinada de inativos se houver busca
+    if q:
+        q_low = q.lower()
+        inativos = [i for i in inativos if q_low in i.usuario.get_full_name().lower() or (hasattr(i, 'cliente') and q_low in i.cliente.nome_fantasia.lower())]
+
+    return render(request, 'core/listar_usuarios.html', {
+        'colaboradores': colaboradores,
+        'clientes_perfis': clientes_perfis,
+        'inativos': inativos,
+        'busca': q
+    })
+
+@login_required
+def meu_perfil(request):
+    user = request.user
+    agencia = request.user.minha_agencia
+    perfil_extra_form = None
+
+    # 1. Se for da EQUIPE (Dono ou Funcionário)
+    if request.user.is_equipe:
+        # Busca o perfil apenas pelo usuário (muito mais seguro)
+        colaborador = Colaborador.objects.filter(usuario=user).first()
+        
+        # Se for o Dono e ainda não tiver ficha, cria uma agora:
+        if not colaborador and agencia:
+            colaborador = Colaborador.objects.create(usuario=user, agencia=agencia)
+            
+        # Se achou ou criou com sucesso, monta o form
+        if colaborador:
+            if request.method == 'POST':
+                perfil_extra_form = PerfilColaboradorForm(request.POST, request.FILES, instance=colaborador)
+            else:
+                perfil_extra_form = PerfilColaboradorForm(instance=colaborador)
+            
+    # 2. Se for CLIENTE
+    else:
+        # Busca o cliente vinculado
+        cliente_vinculado = Cliente.objects.filter(usuarios=user).first()
+        
+        if cliente_vinculado:
+            # Busca o perfil apenas pelo usuário também
+            perfil_cliente = PerfilUsuarioCliente.objects.filter(usuario=user).first()
+            
+            if not perfil_cliente:
+                perfil_cliente = PerfilUsuarioCliente.objects.create(usuario=user, cliente=cliente_vinculado)
+                
+            if request.method == 'POST':
+                perfil_extra_form = PerfilClienteForm(request.POST, instance=perfil_cliente)
+            else:
+                perfil_extra_form = PerfilClienteForm(instance=perfil_cliente)
+
+    # 3. Processamento do Salvamento
+    if request.method == 'POST':
+        user_form = PerfilUserForm(request.POST, instance=user)
+        
+        # Verifica se ambos os forms são válidos (caso o extra exista)
+        if user_form.is_valid() and (not perfil_extra_form or perfil_extra_form.is_valid()):
+            user_form.save()
+            if perfil_extra_form:
+                perfil_extra_form.save()
+            messages.success(request, "Perfil atualizado com sucesso!")
+            return redirect('meu_perfil')
+    else:
+        user_form = PerfilUserForm(instance=user)
+
+    return render(request, 'core/meu_perfil.html', {
+        'user_form': user_form, 
+        'perfil_extra_form': perfil_extra_form
+    })
+
+@login_required
+def editar_usuario(request, user_id):
+    if not request.user.is_equipe:
+        messages.error(request, "Acesso negado.")
+        return redirect('home')
+
+    agencia = request.user.minha_agencia
+    usuario_editar = get_object_or_404(User, id=user_id)
+    
+    colaborador = Colaborador.objects.filter(usuario=usuario_editar, agencia=agencia).first()
+    perfil_cliente = None
+    
+    if not colaborador:
+        perfil_cliente = PerfilUsuarioCliente.objects.filter(usuario=usuario_editar, cliente__agencia=agencia).first()
+        if not perfil_cliente:
+            messages.error(request, "Usuário não encontrado ou não pertence à sua agência.")
+            return redirect('listar_usuarios')
+
+    if request.method == 'POST':
+        user_form = EditarUsuarioAdminForm(request.POST, instance=usuario_editar)
+        if user_form.is_valid():
+            user_form.save()
+            
+            # Se for da equipe, salva as funções selecionadas
+            if colaborador:
+                funcoes_ids = request.POST.getlist('funcoes')
+                colaborador.funcoes.set(funcoes_ids)
+                
+            messages.success(request, "Usuário atualizado com sucesso!")
+            return redirect('listar_usuarios')
+    else:
+        user_form = EditarUsuarioAdminForm(instance=usuario_editar)
+
+    funcoes_agencia = Funcao.objects.filter(agencia=agencia) if colaborador else None
+
+    return render(request, 'core/editar_usuario.html', {
+        'user_form': user_form,
+        'colaborador': colaborador,
+        'perfil_cliente': perfil_cliente,
+        'funcoes_agencia': funcoes_agencia,
+        'usuario_editar': usuario_editar
+    })

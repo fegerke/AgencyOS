@@ -147,15 +147,35 @@ class DropboxConfig(models.Model):
     refresh_token = models.TextField()
     expires_at = models.DateTimeField()
 
-@property
 def get_agencia_inteligente(self):
-    agencia_propria = self.agencias_socio.first()
-    if agencia_propria: return agencia_propria
-    cliente_vinculado = self.clientes_acesso.first()
-    if cliente_vinculado: return cliente_vinculado.agencia
+    # 1. Se for Superusuário (Você)
+    if self.is_superuser:
+        from core.models import Agencia # Import local para não dar erro
+        return Agencia.objects.first()
+        
+    # 2. Se for Sócio/Dono
+    if self.agencias_socio.exists():
+        return self.agencias_socio.first()
+        
+    # 3. Se for Colaborador (Usuário do convite)
+    from core.models import Colaborador 
+    colaborador = Colaborador.objects.filter(usuario=self).first()
+    if colaborador:
+        return colaborador.agencia
+        
     return None
 
-User.add_to_class('minha_agencia', get_agencia_inteligente)
+def check_is_equipe(self):
+    if self.is_superuser: 
+        return True
+    if self.agencias_socio.exists(): 
+        return True
+    from core.models import Colaborador
+    return Colaborador.objects.filter(usuario=self).exists()
+
+# Gruda as funções no User como propriedades
+User.add_to_class('minha_agencia', property(get_agencia_inteligente))
+User.add_to_class('is_equipe', property(check_is_equipe))
 
 class Funcao(models.Model):
     agencia = models.ForeignKey(Agencia, on_delete=models.CASCADE, related_name='funcoes')
@@ -179,6 +199,14 @@ class Colaborador(models.Model):
 
     def __str__(self):
         return self.usuario.get_full_name() or self.usuario.username
+
+class PerfilUsuarioCliente(models.Model):
+    usuario = models.OneToOneField(User, on_delete=models.CASCADE, related_name='perfil_cliente_user')
+    cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name='perfis_usuarios')
+    telefone = models.CharField(max_length=20, blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.usuario.username} - {self.cliente.nome_fantasia}"
 
 class Convite(models.Model):
     TIPO_ESCOLHAS = (

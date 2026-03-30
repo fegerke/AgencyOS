@@ -13,6 +13,15 @@ urlpatterns = [
     path('clientes/excluir/<int:pk>/', views.excluir_cliente, name='excluir_cliente'),
     path('convites/novo/', views.gerar_convite, name='gerar_convite'),
 
+    # Convites e Perfil
+    path('convites/', views.listar_convites, name='listar_convites'),
+    path('convites/excluir/<int:pk>/', views.excluir_convite, name='excluir_convite'),
+    path('convite/<uuid:token>/', views.aceitar_convite, name='aceitar_convite'), # Link público!
+    path('perfil/', views.meu_perfil, name='meu_perfil'),
+    
+    path('usuarios/', views.listar_usuarios, name='listar_usuarios'),
+    path('usuarios/editar/<int:user_id>/', views.editar_usuario, name='editar_usuario'),
+
     # Cargos e Funções
     path('funcoes/', views.gerenciar_funcoes, name='gerenciar_funcoes'),
     path('funcoes/editar/<int:funcao_id>/', views.gerenciar_funcoes, name='editar_funcao'),

@@ -1,0 +1,64 @@
+{% extends 'core/base.html' %}
+{% load crispy_forms_tags %}
+{% block title %}Meu Perfil | AgencyOS{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0">
+    <div class="mb-4 px-1">
+        <h2 class="fw-bold h4 mb-1 text-dark"><i class="bi bi-person-circle text-primary me-2"></i>Meu Perfil</h2>
+        <p class="text-muted small">Gerencie suas informações pessoais e integrações.</p>
+    </div>
+
+    <div class="card border-0 shadow-sm" style="border-radius: 15px; overflow: hidden;">
+        
+        <!-- Abas -->
+        <ul class="nav nav-tabs bg-light px-3 pt-3 border-bottom-0" id="perfilTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active fw-bold text-dark" id="dados-tab" data-bs-toggle="tab" data-bs-target="#dados" type="button" role="tab">Dados Pessoais</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link fw-bold text-muted" id="integracoes-tab" data-bs-toggle="tab" data-bs-target="#integracoes" type="button" role="tab">Integrações</button>
+            </li>
+        </ul>
+
+        <!-- Conteúdo das Abas -->
+        <div class="tab-content p-4" id="perfilTabsContent">
+            
+            <!-- ABA 1: DADOS -->
+            <div class="tab-pane fade show active" id="dados" role="tabpanel">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-6 mb-3">{{ user_form.first_name|as_crispy_field }}</div>
+                        <div class="col-md-6 mb-3">{{ user_form.last_name|as_crispy_field }}</div>
+                        <div class="col-md-6 mb-3">{{ user_form.email|as_crispy_field }}</div>
+                        
+                        {% if perfil_extra_form %}
+                            <div class="col-md-6 mb-3">{{ perfil_extra_form.telefone|as_crispy_field }}</div>
+                            
+                            <!-- Só mostra campo de foto se o form tiver foto (Equipe) -->
+                            {% if 'foto' in perfil_extra_form.fields %}
+                                <div class="col-12 mb-3">{{ perfil_extra_form.foto|as_crispy_field }}</div>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                    <button type="submit" class="btn btn-primary fw-bold rounded-pill px-4 mt-2">Salvar Alterações</button>
+                </form>
+            </div>
+
+            <!-- ABA 2: INTEGRAÇÕES -->
+            <div class="tab-pane fade" id="integracoes" role="tabpanel">
+                <div class="border rounded p-4 text-center bg-light">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/a/a5/Google_Calendar_icon_%282020%29.svg" alt="Google Agenda" width="60" class="mb-3">
+                    <h5 class="fw-bold">Google Agenda</h5>
+                    <p class="text-muted small mb-4">Sincronize os cronogramas da agência direto na sua agenda pessoal.</p>
+                    <button class="btn btn-outline-secondary rounded-pill fw-bold" disabled>
+                        <i class="bi bi-lock-fill me-1"></i> Em Breve
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
